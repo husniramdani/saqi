@@ -6,7 +6,7 @@ You are building **Saqi**, an irrigation decision cockpit for a fictional farm n
 
 - This repo (`saqi/`, a pnpm monorepo) is the code. Run commands from here unless a task says otherwise.
 - The plan lives in `../plan/` and the tasks in `../tasks/`, done in the order `../tasks/00-HOW-TO-RUN.md` gives (skeleton first, then design, then T05 onward).
-- The design system is `../design.md` until T02 copies it to `./design.md`; from then on the repo copy is canonical.
+- The design system is `./design.md` (Saqi Nightfield, Day and Night themes). It is canonical; `../design.md` is a copy for the plan docs, and the old "Saqi Sand" system is archived in `../design-archive/`.
 - `NOTES.md` lists every placeholder seam and the task that fills it. Read it before starting a task.
 - When a task says "read X", read it before writing code.
 
@@ -19,7 +19,7 @@ You are building **Saqi**, an irrigation decision cockpit for a fictional farm n
 5. **RTL from day one.** Use CSS logical properties and `dir` on `<html>`; never hard-code left/right for layout or for GSAP x offsets (multiply by `dir === 'rtl' ? -1 : 1`).
 6. **Honest data.** Weather and ET₀ are live from Open-Meteo. Sensors are simulated and the UI always says so ("Simulated sensors" badge). Never invent a real company, client or brand; the farm is fictional.
 7. **Every data panel has four states:** loading (skeleton), empty, error (with retry), and stale (sensor older than 3 h).
-8. **Accessibility:** keyboard reachable, visible focus ring (accent), text contrast ≥ 4.5:1, the SVG map has an accessible list alternative.
+8. **Accessibility:** keyboard reachable, visible focus ring (the `focus` token), text contrast ≥ 4.5:1, the SVG map has an accessible list alternative.
 
 ## Stack (do not swap without being asked)
 
