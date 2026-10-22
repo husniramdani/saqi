@@ -56,8 +56,8 @@ export function createApp(deps: Deps) {
 export function defaultDeps(): Deps {
   const config = loadConfig();
   const now = () => new Date();
-  const stored = createRepo(config);
-  // Everything the API serves is the stored scenario replayed at the current hour.
+  const stored = createRepo(config, now);
+  // pg: the stored scenario replayed at the current hour. Memory is already live (zero shift).
   const repo = withTimeShift(stored, now);
   const weather = createWeatherService({
     fetch: globalThis.fetch,

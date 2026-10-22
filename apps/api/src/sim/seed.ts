@@ -88,11 +88,22 @@ export function buildSeed({
     rng: mulberry32(SEED),
   });
 
+  // The D-3 template says "since 12:00"; write the real start of the probe's silence instead.
+  const silentSince = new Date(Date.parse(anchor) - (GAPS['D-3-60'] ?? 0) * HOUR_MS + 4 * HOUR_MS)
+    .toISOString()
+    .slice(11, 16);
   const tasks: Task[] = taskTemplates.map((t, i) => ({
     id: `task-${i + 1}`,
     blockId: t.blockId,
     kind: t.kind,
-    title: t.title,
+    title:
+      t.key === 'd3-sensor'
+        ? {
+            en: t.title.en.replace('12:00', silentSince),
+            ar: t.title.ar.replace('12:00', silentSince),
+            ur: t.title.ur.replace('12:00', silentSince),
+          }
+        : t.title,
     assignee: t.assignee,
     dueDate: gstDate(anchor),
     status: 'todo',

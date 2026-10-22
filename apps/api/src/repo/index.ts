@@ -1,10 +1,12 @@
 import type { Config } from '../config';
-import { buildSeed } from '../sim/seed';
-import { createMemoryRepo } from './memory';
+import { createHourlyMemoryRepo } from './hourly';
 import { createPgRepo } from './pg';
 import type { Repo } from './types';
 
-/** Memory mode serves the deterministic simulator seed, built once per process. */
-export function createRepo(config: Config): Repo {
-  return config.DATA_SOURCE === 'pg' ? createPgRepo() : createMemoryRepo(buildSeed());
+/**
+ * Memory mode rebuilds the simulated scenario for the current hour (real wall-clock history).
+ * pg mode stores one seed and is time-shifted on read (services/timeshift.ts).
+ */
+export function createRepo(config: Config, now: () => Date): Repo {
+  return config.DATA_SOURCE === 'pg' ? createPgRepo() : createHourlyMemoryRepo(now);
 }

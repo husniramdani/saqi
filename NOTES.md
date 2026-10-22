@@ -53,16 +53,16 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Repo interface changes:** `getSeedAnchor()` was added; `getMonthUsage(month)` became `getUsage(sinceIso, untilIso)` (half-open), so the shifted view can translate bounds. `/api/health` returns `seedAnchor`.
 - **Every timestamp leaves the API as UTC `Z`**, including schedule times (the engine works in `+04:00`). Reason params keep `HH:mm` in GST.
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
-- **D-3's task title is static seed text** ("no data since 12:00") while the stale gap now moves with the clock. T17: render the time from the sensor's `lastAt` instead.
 
-## Open issue: time-shift moves wall-clock times (decide before the demo)
+## Live scenario: memory mode rebuilds hourly (decided after T14)
 
-- The API shifts the stored scenario by `floorHour(now) − seedAnchor` in **hours** (T10). History always ends "now", but wall-clock times move with the hour the app is opened. Night refills recorded at 22:00 GST show at 18:00 at 17:00 GST, and at 10:00 at 09:00 GST (the email time). The diurnal sawtooth in the chart moves the same way, and D-3's "offline since" reads 08:00 instead of 12:00.
-- Tonight's plan is unaffected: the engine schedules in real GST (22:00 → 05:00, pulses 07/11/15).
-- **Options:**
-  1. **Memory mode rebuilds the seed for the current hour** (about 60–180 ms, once per hour). History is then real wall-clock and still ends now. pg mode would need the same at read time, or a periodic re-seed.
-  2. **Shift by whole days**, with the scenario frozen at the last 21:00. Times are correct, but data is up to 24 h old, so sensors read stale unless the engine's "now" is the anchor too.
-  3. **Leave it** and say so in the README.
+- **Memory mode builds the scenario for the current hour** (`repo/hourly.ts`): anchor = `floorHour(now)`, rebuilt when the hour turns (about 60–180 ms, once an hour). History ends now and every past time is real wall-clock: night refills at 22:00 GST, pulses at 07/11/15, D-3's probe silent for the last 9 h. `withTimeShift` stays in the chain but sees a zero shift.
+- **Why:** the hourly time-shift from T10 moved wall-clock times with the hour the app was opened (refills showed at 18:00 when opened at 17:00 GST).
+- **Writes survive the rebuild:** manual irrigation logs keep their ids; task updates carry over within the same GST day; a new GST day starts with that day's tasks fresh. Weather's repo cache resets hourly, which is harmless (the weather service keeps its own TTL cache).
+- **The scenario now lands at the current hour, not 21:00.** The budget is evaluated at that moment and the allocation is calibrated for it, so "fodder on deficit, month tight" holds whenever the demo is opened (route test).
+- **D-3's task title is written from the anchor** ("no data since 10:00" when opened at 19:00 GST), fixing the T10 note.
+- **pg mode (T07) still stores one seed and time-shifts on read**, so wall-clock times drift there. T07/T23 should either re-seed on a schedule or shift by whole days for history while keeping the latest hour live.
+- `/api/health` `seedAnchor` is the current hour in memory mode.
 
 ## Block detail (T14)
 

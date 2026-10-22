@@ -80,6 +80,16 @@ describe('simulator', () => {
     },
   );
 
+  it.each([
+    [ANCHOR, '12:00'], // 21:00 GST anchor: silent since 12:00
+    ['2026-10-23T05:00:00.000Z', '00:00'], // 09:00 GST anchor
+  ])('names when D-3’s probe went silent (anchor %s → %s GST)', (anchor, since) => {
+    const task = buildSeed({ anchor }).tasks.find((t) => t.blockId === 'D-3');
+    expect(task?.title.en).toBe(`Check 60 cm sensor, no data since ${since}`);
+    expect(task?.title.ar).toContain(since);
+    expect(task?.title.ur).toContain(since);
+  });
+
   it('dates the 8 tasks on the anchor day', () => {
     expect(seed.tasks).toHaveLength(8);
     expect(new Set(seed.tasks.map((t) => t.dueDate))).toEqual(new Set(['2026-10-23']));

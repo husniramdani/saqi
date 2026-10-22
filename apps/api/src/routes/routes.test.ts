@@ -15,11 +15,10 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '../app';
 import { loadConfig } from '../config';
-import { createMemoryRepo } from '../repo/memory';
+import { createHourlyMemoryRepo } from '../repo/hourly';
 import { withTimeShift } from '../services/timeshift';
 import { createWeatherService } from '../services/weather';
 import recordedForecast from '../sim/fixtures/openmeteo-forecast.json' with { type: 'json' };
-import { buildSeed } from '../sim/seed';
 
 /** The recorded Open-Meteo payload with ET₀ pinned to the worked example's 5.8 mm. */
 const forecast58 = {
@@ -31,11 +30,11 @@ const forecast58 = {
 };
 const recordedFetch: typeof fetch = async () => Response.json(forecast58);
 
-/** Wired like production: the default seed (latest 21:00 GST), time-shifted to the real clock. */
+/** Wired like production: memory mode rebuilt for the current hour, behind the (zero) time-shift. */
 const makeApp = () => {
   const now = () => new Date();
   const config = loadConfig({});
-  const stored = createMemoryRepo(buildSeed());
+  const stored = createHourlyMemoryRepo(now);
   const weather = createWeatherService({
     fetch: recordedFetch,
     repo: stored,
@@ -72,7 +71,10 @@ describe('routes: happy paths return schema-valid bodies', () => {
 
   it('reports the seed anchor on /health', async () => {
     const health = HealthSchema.parse(await (await makeApp().request('/api/health')).json());
-    expect(health.seedAnchor.slice(11, 16)).toBe('17:00'); // 21:00 GST
+    // Memory mode is rebuilt for the current hour.
+    expect(health.seedAnchor).toBe(
+      new Date(Math.floor(Date.now() / 3_600_000) * 3_600_000).toISOString(),
+    );
   });
 
   it('serves the scenario live: D-1 irrigates tonight, F-1 on deficit, month tight', async () => {
