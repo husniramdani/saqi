@@ -1,0 +1,43 @@
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
+import globals from 'globals';
+
+export default tseslint.config(
+  { ignores: ['**/dist/**', '**/coverage/**', '**/node_modules/**', 'apps/api/src/db/migrations/**'] },
+  js.configs.recommended,
+  ...tseslint.configs.strict,
+  {
+    languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    files: ['apps/web/**/*.{ts,tsx}'],
+    ...jsxA11y.flatConfigs.recommended,
+    languageOptions: {
+      ...jsxA11y.flatConfigs.recommended.languageOptions,
+      globals: { ...globals.browser },
+    },
+  },
+  {
+    files: ['apps/web/**/*.{ts,tsx}'],
+    ...reactHooks.configs.flat.recommended,
+  },
+  {
+    // The engine is pure: time and randomness are inputs, never ambient.
+    files: ['packages/engine/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.object.name='Date'][callee.property.name='now']",
+          message: 'The engine is pure: pass `now` in instead of calling Date.now().',
+        },
+        {
+          selector: "MemberExpression[object.name='Math'][property.name='random']",
+          message: 'The engine is deterministic: no Math.random().',
+        },
+      ],
+    },
+  },
+);
