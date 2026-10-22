@@ -2,11 +2,11 @@ import { useId, type ReactNode } from 'react';
 import { cx } from './cx';
 
 interface PanelProps {
-  title?: ReactNode;
+  title?: ReactNode | undefined;
   /** End of the title row: a timestamp or unit, set in mono. */
-  meta?: ReactNode;
-  actions?: ReactNode;
-  className?: string;
+  meta?: ReactNode | undefined;
+  actions?: ReactNode | undefined;
+  className?: string | undefined;
   children: ReactNode;
 }
 

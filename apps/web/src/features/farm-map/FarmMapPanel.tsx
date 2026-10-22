@@ -1,6 +1,6 @@
 import type { DayPlan, Farm } from '@saqi/shared';
 import type { UseQueryResult } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocale } from '@/i18n';
 import { EmptyState, ErrorState, Panel, SegmentedControl } from '@/ui';
@@ -37,11 +37,19 @@ export function FarmMapPanel({
   plan,
   selectedId,
   onSelect,
+  header,
+  footer,
+  className,
 }: {
   farm: UseQueryResult<Farm>;
   plan: UseQueryResult<DayPlan>;
-  selectedId?: string;
+  selectedId?: string | undefined;
   onSelect: (blockId: string) => void;
+  /** Replaces the default title (Today puts its page heading here). */
+  header?: ReactNode;
+  /** Below the map and legend (Today puts tonight's schedule here). */
+  footer?: ReactNode;
+  className?: string;
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
@@ -85,24 +93,33 @@ export function FarmMapPanel({
     );
   };
 
+  const viewSwitch = (
+    <SegmentedControl
+      label={t('map.view')}
+      value={view}
+      onChange={setView}
+      options={[
+        { value: 'map', label: t('map.map') },
+        { value: 'list', label: t('map.list') },
+      ]}
+    />
+  );
+
   return (
     <Panel
-      title={farm.data?.name[locale] ?? t('map.title')}
-      actions={
-        <SegmentedControl
-          label={t('map.view')}
-          value={view}
-          onChange={setView}
-          options={[
-            { value: 'map', label: t('map.map') },
-            { value: 'list', label: t('map.list') },
-          ]}
-        />
-      }
+      className={className}
+      {...(header ? {} : { title: farm.data?.name[locale] ?? t('map.title'), actions: viewSwitch })}
     >
       <div className="flex flex-col gap-4">
+        {header ? (
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            {header}
+            {viewSwitch}
+          </div>
+        ) : null}
         {body()}
         {view === 'map' ? <MapLegend /> : null}
+        {footer}
       </div>
     </Panel>
   );

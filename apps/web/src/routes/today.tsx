@@ -1,122 +1,178 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
-import { useFarm, usePlanToday } from '@/api/queries';
-import { PageHeader } from '@/app/PageHeader';
+import { useFarm, usePlanToday, useWeather } from '@/api/queries';
 import { QueryState } from '@/app/QueryState';
+import { BlockRail, byRisk, DecisionList } from '@/features/attention';
+import { BudgetSection } from '@/features/budget/BudgetSection';
+import { FarmMapPanel } from '@/features/farm-map';
+import { SchedulePanel } from '@/features/schedule/SchedulePanel';
+import { WeatherSection } from '@/features/weather/WeatherSection';
 import { useLocale } from '@/i18n';
 import { formatDateGst } from '@/i18n/format';
-import { Chip, DECISION_CHIP, Figure, MoistureSwatch, Panel, Skeleton, Stat } from '@/ui';
+import { ErrorState, Figure, SegmentedControl, Skeleton } from '@/ui';
 
-const th = 'border-b border-border py-2 pe-4 text-start text-xs font-medium text-text-muted';
-const td = 'border-b border-border py-3 pe-4 align-middle';
+const panel = 'rounded-lg border border-border bg-surface shadow-raised';
 
-// TODO(T12/T13): the farm map and schedule cockpit; this table becomes the map's list view.
+/**
+ * Today: the Nightfield dashboard. Blocks rail | map with tonight's schedule | tonight's plan.
+ * One column under 1180 px: map first, then the plan, then the rail.
+ */
 export function Component() {
   const { t } = useTranslation();
   const locale = useLocale();
-  const plan = usePlanToday();
   const farm = useFarm();
-  const nameOf = (id: string) => farm.data?.blocks.find((b) => b.id === id)?.name[locale];
+  const plan = usePlanToday();
+  const weather = useWeather();
+  const [picked, setSelected] = useState<string | undefined>();
+  const [tab, setTab] = useState<'plan' | 'water'>('plan');
 
-  return (
-    <QueryState
-      query={plan}
-      isEmpty={(p) => p.decisions.length === 0}
-      emptyText={t('today.empty')}
-      skeleton={
-        <div className="flex flex-col gap-6 pt-6">
-          <Skeleton block={56} inline="40%" />
-          <Skeleton block={360} />
-        </div>
-      }
-    >
-      {(p) => (
-        <>
-          <PageHeader title={t('today.title', { date: formatDateGst(p.date, locale) })}>
-            <Stat
-              label={t('today.plannedTonight')}
-              value={p.totals.tonightM3}
-              unit="m³"
-              size="lg"
-              accent
-            />
-            <Stat
-              label={t('today.savedVsFixed')}
+  const p = plan.data;
+  // Until someone picks, open on the riskiest block, as the canvas does.
+  const selected = picked ?? (p ? byRisk(p.decisions)[0]?.blockId : undefined);
+  const f = farm.data;
+  const date = p ? formatDateGst(p.date, locale) : '';
+
+  const header = (
+    <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+      <h1 className="text-2xl font-light tracking-[-0.03em]">
+        {p ? t('today.heading', { date }) : t('today.title', { date: '' })}
+      </h1>
+      {p ? (
+        <div className="flex items-end gap-6">
+          <Figure value={p.totals.tonightM3} unit="m³" size="md" accent />
+          <span className="text-sm text-success">
+            <Figure
               value={p.totals.savedVsFixedM3}
               unit="m³"
               precision={0}
-              size="lg"
-            />
-          </PageHeader>
-          <Panel title={t('today.decisions', { date: formatDateGst(p.date, locale) })}>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] border-collapse">
-                <thead>
-                  <tr>
-                    <th scope="col" className={th}>
-                      {t('today.columns.block')}
-                    </th>
-                    <th scope="col" className={th}>
-                      {t('today.columns.decision')}
-                    </th>
-                    <th scope="col" className={th}>
-                      {t('today.columns.paw')}
-                    </th>
-                    <th scope="col" className={th}>
-                      {t('today.columns.volume')}
-                    </th>
-                    <th scope="col" className={th}>
-                      {t('today.columns.confidence')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {p.decisions.map((d) => (
-                    <tr key={d.blockId}>
-                      <th scope="row" className={`${td} text-start font-normal`}>
-                        <Link
-                          to={`/blocks/${d.blockId}`}
-                          className="inline-flex min-h-11 items-center gap-2.5 text-text-primary"
-                        >
-                          <span className="num font-medium">{d.blockId}</span>
-                          <span>{nameOf(d.blockId)}</span>
-                        </Link>
-                      </th>
-                      <td className={td}>
-                        <Chip variant={DECISION_CHIP[d.decision]}>
-                          {t(`decision.${d.decision}`)}
-                        </Chip>
-                      </td>
-                      <td className={td}>
-                        {d.pawNow === null ? (
-                          <span className="text-text-muted">{t('state.noData')}</span>
-                        ) : (
-                          <span className="inline-flex items-center gap-2">
-                            <MoistureSwatch paw={d.pawNow} />
-                            <Figure value={d.pawNow} unit="%" size="sm" />
-                          </span>
-                        )}
-                      </td>
-                      <td className={td}>
-                        <Figure value={d.volumeM3} unit="m³" size="sm" />
-                      </td>
-                      <td className={td}>
-                        {d.confidence === 'low' ? (
-                          <Chip variant="warn">{t(`confidence.${d.confidence}`)}</Chip>
-                        ) : (
-                          <span className="text-text-secondary">
-                            {t(`confidence.${d.confidence}`)}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              size="sm"
+              className="text-success"
+            />{' '}
+            {t('today.savedVsFixed').toLowerCase()}
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+
+  const loading = <Skeleton block={320} className="m-4" />;
+  const failed = (
+    <div className="p-4">
+      <ErrorState
+        message={t('state.error', { message: plan.error?.message ?? '' })}
+        onRetry={() => void plan.refetch()}
+      />
+    </div>
+  );
+
+  return (
+    <div className="grid gap-3 pt-2 min-[1180px]:grid-cols-[330px_minmax(0,1fr)_340px] min-[1180px]:items-start">
+      <aside
+        aria-label={t('today.blocks')}
+        className={`${panel} order-3 overflow-hidden min-[1180px]:order-none`}
+      >
+        <div className="flex items-end justify-between gap-3 border-b border-border px-4 pt-4 pb-3">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-md font-semibold">{t('today.blocks')}</h2>
+            {p ? (
+              <span className="text-xs text-text-muted">
+                {t('today.blocksSub', { count: p.decisions.length })}
+              </span>
+            ) : null}
+          </div>
+          <span className="text-xs text-text-muted">{t('today.waterNow')}</span>
+        </div>
+        {plan.isError ? (
+          failed
+        ) : p && f ? (
+          <BlockRail
+            farm={f}
+            decisions={p.decisions}
+            schedule={p.schedule}
+            selectedId={selected}
+            onSelect={setSelected}
+          />
+        ) : (
+          loading
+        )}
+      </aside>
+
+      <FarmMapPanel
+        className="order-1 min-[1180px]:order-none"
+        farm={farm}
+        plan={plan}
+        selectedId={selected}
+        onSelect={setSelected}
+        header={header}
+        footer={p && f ? <SchedulePanel plan={p} farm={f} onSelect={setSelected} /> : null}
+      />
+
+      <aside
+        aria-label={t('today.plan')}
+        className={`${panel} order-2 overflow-hidden min-[1180px]:order-none`}
+      >
+        <div className="flex flex-col gap-3 border-b border-border px-4 pt-4 pb-3">
+          <h2 className="text-md font-semibold">{t('today.plan')}</h2>
+          <SegmentedControl
+            label={t('today.tabs.label')}
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'plan', label: t('today.tabs.plan') },
+              { value: 'water', label: t('today.tabs.water') },
+            ]}
+          />
+        </div>
+        <div role="tabpanel" aria-label={t(`today.tabs.${tab}`)} className="p-4">
+          {tab === 'plan' ? (
+            plan.isError ? (
+              failed
+            ) : p && f ? (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-surface-raised p-4">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-medium text-text-muted">
+                      {t('today.plannedTonight')}
+                    </span>
+                    <Figure value={p.totals.tonightM3} unit="m³" size="md" accent />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-medium text-text-muted">
+                      {t('today.savedVsFixed')}
+                    </span>
+                    <Figure
+                      value={p.totals.savedVsFixedM3}
+                      unit="m³"
+                      precision={0}
+                      size="md"
+                      className="text-success"
+                    />
+                  </div>
+                </div>
+                <h3 id="attention" className="scroll-mt-4 text-xs font-medium text-text-muted">
+                  {t('today.decisionsCount', { count: p.decisions.length })}
+                </h3>
+                <DecisionList
+                  farm={f}
+                  decisions={p.decisions}
+                  schedule={p.schedule}
+                  selectedId={selected}
+                  onSelect={setSelected}
+                />
+              </div>
+            ) : (
+              loading
+            )
+          ) : (
+            <div className="flex flex-col gap-6">
+              {p ? <BudgetSection budget={p.budget} decisions={p.decisions} /> : loading}
+              <QueryState query={weather} skeleton={<Skeleton block={220} />}>
+                {(w) => <WeatherSection weather={w} />}
+              </QueryState>
             </div>
-          </Panel>
-        </>
-      )}
-    </QueryState>
+          )}
+        </div>
+      </aside>
+    </div>
   );
 }

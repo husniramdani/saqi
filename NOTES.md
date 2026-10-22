@@ -55,6 +55,20 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
 - **D-3's task title is static seed text** ("no data since 12:00") while the stale gap now moves with the clock. T17: render the time from the sensor's `lastAt` instead.
 
+## Today cockpit (T13)
+
+- **Layout follows the Nightfield Dashboard:** Blocks rail (330 px) | map card (heading with planned / saved, map, legend, tonight's schedule) | Tonight's plan (340 px) with Plan and Water tabs. Under 1180 px it becomes one column ordered map → plan → rail, so the answer ("what tonight, how much") comes first on a phone.
+- **Deviations from the canvas and from T13's text:**
+  - Selecting a block (map, rail, decision row, schedule row) **selects in place** and keeps all four in sync, as on the canvas; the rail's "Open D-1" pill goes to the detail page. T13 asked map clicks to navigate. Default selection is the riskiest block, derived (no effect).
+  - The schedule sits **below** the map instead of floating over it, so it never hides blocks on small screens.
+  - No Layers tab yet (map layer toggles); no per-sensor values or 14-day sparkline in the rail (T14 builds that chart); no crop icons on rail rows (design.md: no icon on every line).
+  - Budget, ET₀, weather and sources live in the **Water** tab (canvas), not a full-width weather strip (plan/05).
+- **The budget status moves with live ET₀**, as intended: with today's forecast the month sat at 96.99 %, "On track", while F-1 was still cut. The allocation is calibrated on recorded ET₀ (see T08), so the tight/ok line can flip between forecasts.
+- **Bidi gotcha:** the `num` utility sets `direction: ltr` (so "90.4 m³" never reorders). Never put it on a layout container whose children should follow the reading direction (the schedule ruler did, and ran backwards in RTL). Keep separators outside `num` spans.
+- **Targets:** each schedule row is one 44 px button spanning the ruler's columns (`grid-cols-subgrid`); the bars inside are graphics.
+- `features/attention/risk.ts` is the single "needs attention" rule (the header count uses it too).
+- Not checked visually: the API-down states on Today (each panel has its error state; T20's scenario switcher will exercise them).
+
 ## Farm map (T12)
 
 - `features/farm-map/`: `FarmMap` (site plan SVG), `MapTooltip`, `MapLegend`, `BlockList` (the full text alternative), `FarmMapPanel` (Panel with a Map | List switch and loading / error / empty states; the loading skeleton is the plan's outlines at the final size). Pure helpers in `geometry.ts` and `window.ts`; `scenario.ts` holds the demo night for the kitchen and tests only.

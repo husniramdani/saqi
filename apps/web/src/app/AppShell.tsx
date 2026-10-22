@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router';
 import { useFarm, usePlanToday } from '@/api/queries';
+import { needsAttention } from '@/features/attention/risk';
 import { useLocale } from '@/i18n';
 import { formatTimeGst } from '@/i18n/format';
 import { cx } from '@/ui';
@@ -41,9 +42,7 @@ export function AppShell() {
     main.current?.focus({ preventScroll: true });
   }, [pathname]);
 
-  const attention = plan.data?.decisions.filter(
-    (d) => d.decision === 'irrigate' || d.decision === 'deficit' || d.confidence === 'low',
-  ).length;
+  const attention = plan.data?.decisions.filter(needsAttention).length;
 
   return (
     <>
