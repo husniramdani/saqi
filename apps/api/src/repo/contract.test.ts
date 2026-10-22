@@ -1,7 +1,8 @@
 import { FarmSchema, gstDate, SensorSeriesSchema } from '@saqi/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { floorHour } from '../services/timeshift';
-import { buildInlineSeed, createMemoryRepo } from './memory';
+import { buildSeed } from '../sim/seed';
+import { createMemoryRepo } from './memory';
 import { createPgRepo } from './pg';
 import { ConflictError, type Repo } from './types';
 
@@ -42,7 +43,7 @@ function describeRepo(name: string, factory: () => Repo) {
     it('returns events for one block since the bound, newest first', async () => {
       const events = await repo.getEvents(
         'D-1',
-        new Date(anchor.getTime() - 72 * HOUR_MS).toISOString(),
+        new Date(anchor.getTime() - 30 * 24 * HOUR_MS).toISOString(),
       );
       expect(events.length).toBeGreaterThan(0);
       expect(events.every((e) => e.blockId === 'D-1')).toBe(true);
@@ -113,7 +114,8 @@ function describeRepo(name: string, factory: () => Repo) {
   });
 }
 
-describeRepo('memory', () => createMemoryRepo(buildInlineSeed(anchor)));
+const seed = buildSeed({ anchor: anchor.toISOString() });
+describeRepo('memory', () => createMemoryRepo(seed));
 
 // TODO(T07): seed the pg database with the same anchor before this suite runs.
 describe.skipIf(!process.env.DATABASE_URL)('pg', () => {

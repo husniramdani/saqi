@@ -15,14 +15,17 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { createApp } from '../app';
 import { loadConfig } from '../config';
-import { buildInlineSeed, createMemoryRepo } from '../repo/memory';
+import { createMemoryRepo } from '../repo/memory';
+import { floorHour } from '../services/timeshift';
+import { buildSeed } from '../sim/seed';
 import { createWeatherService } from '../services/weather';
 
 const makeApp = () => {
   const now = () => new Date();
   return createApp({
     config: loadConfig({}),
-    repo: createMemoryRepo(buildInlineSeed(now())),
+    // Anchor on the current hour so seeded data is "now" without time-shifting.
+    repo: createMemoryRepo(buildSeed({ anchor: new Date(floorHour(now())).toISOString() })),
     weather: createWeatherService({ now }),
     now,
   });
