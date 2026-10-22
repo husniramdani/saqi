@@ -1,34 +1,74 @@
+import { gstDate, type SensorSeries } from '@saqi/shared';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { ApiError } from '@/api/client';
-import { useEvents, useFarm, useReadings, useRecommendation } from '@/api/queries';
-import { QueryState } from '@/app/QueryState';
-import { useLocale } from '@/i18n';
-import { ReasonText } from '@/i18n/ReasonText';
 import {
-  Arrow,
-  Chip,
-  DECISION_CHIP,
-  EmptyState,
-  Figure,
-  MoistureSwatch,
-  Panel,
-  textLinkClasses,
-} from '@/ui';
+  useEvents,
+  useFarm,
+  usePlanToday,
+  useReadings,
+  useRecommendation,
+  useTasks,
+} from '@/api/queries';
+import { QueryState } from '@/app/QueryState';
+import { MoistureChart } from '@/features/moisture-chart/MoistureChart';
+import { EventsTable } from '@/features/recommendation/EventsTable';
+import { LogIrrigation } from '@/features/recommendation/LogIrrigation';
+import { RecommendationCard } from '@/features/recommendation/RecommendationCard';
+import { BlockTasks } from '@/features/tasks/BlockTasks';
+import { useLocale } from '@/i18n';
+import { formatTimeGst } from '@/i18n/format';
+import { Arrow, Chip, EmptyState, MoistureSwatch, Panel, Skeleton, textLinkClasses } from '@/ui';
 
-// TODO(T14): moisture chart, events table, tasks and the manual irrigation log.
+/** "60 cm sensor offline since 12:00 GST…": stale sensors say so inside the chart panel. */
+function StaleBanner({ series }: { series: SensorSeries[] }) {
+  const { t } = useTranslation();
+  const locale = useLocale();
+  const stale = series.filter((s) => s.stale);
+  if (stale.length === 0) return null;
+  const depth = (s: SensorSeries) =>
+    s.depthCm === null ? t('block.chart.substrate') : `${s.depthCm} cm`;
+  const fresh = series.find((s) => !s.stale);
+  return (
+    <div
+      role="status"
+      className="flex items-start gap-3 rounded-md bg-warning-soft p-3 text-sm text-text-primary"
+    >
+      <Chip variant="warn">{t('map.stale')}</Chip>
+      <p className="pt-0.5">
+        {fresh
+          ? stale
+              .map((s) =>
+                t('block.staleBanner', {
+                  sensor: depth(s),
+                  since: formatTimeGst(s.lastAt, locale),
+                  fresh: depth(fresh),
+                }),
+              )
+              .join(' ')
+          : t('block.allStale')}
+      </p>
+    </div>
+  );
+}
+
 export function Component() {
   const { t } = useTranslation();
   const locale = useLocale();
   const { blockId = '' } = useParams();
   const farm = useFarm();
+  const plan = usePlanToday();
   const recommendation = useRecommendation(blockId);
   const readings = useReadings(blockId, 14);
   const events = useEvents(blockId, 30);
+  const [today] = useState(() => gstDate(new Date()));
+  const tasks = useTasks(today);
   const block = farm.data?.blocks.find((b) => b.id === blockId);
+  const source = farm.data?.sources.find((s) => s.id === block?.sourceId);
 
   const back = (
-    <Link to="/" className={`${textLinkClasses} gap-2`}>
+    <Link to="/" className={`${textLinkClasses} gap-2 self-start`}>
       <span className="-scale-x-100 rtl:scale-x-100">
         <Arrow size={14} />
       </span>
@@ -46,67 +86,80 @@ export function Component() {
   }
 
   return (
-    <div className="flex flex-col gap-6 pt-6">
+    <div className="flex flex-col gap-5 pt-4">
       {back}
-      <div className="flex flex-wrap items-center gap-4">
-        <MoistureSwatch paw={recommendation.data?.pawNow ?? null} size={28} />
-        <h1 className="flex items-baseline gap-3 text-3xl font-light tracking-[-0.035em] sm:text-4xl">
-          <span className="num font-normal">{blockId}</span>
-          <span>{block?.name[locale]}</span>
-        </h1>
-      </div>
-      {block ? (
-        <p className="text-text-secondary">
-          {block.variety} · <span className="num">{block.areaHa} ha</span>
-          {block.trees ? <> · {t('block.trees', { count: block.trees })}</> : null}
-        </p>
-      ) : null}
+      <header className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* The Flip target (T16): the map block's swatch morphs into this one. */}
+          <span data-flip-id={`block-${blockId}`} className="inline-flex">
+            <MoistureSwatch paw={recommendation.data?.pawNow ?? null} size={32} />
+          </span>
+          <h1 className="flex items-baseline gap-3 text-3xl font-light tracking-[-0.035em] sm:text-4xl">
+            <span className="num font-normal">{blockId}</span>
+            <span>{block?.name[locale]}</span>
+          </h1>
+        </div>
+        {block ? (
+          <p className="text-text-secondary">
+            {[
+              t(`block.crop.${block.crop}`),
+              block.variety,
+              t('block.area', { ha: block.areaHa }),
+              block.trees ? t('block.trees', { count: block.trees }) : null,
+              t(`block.method.${block.method}`),
+              source?.name[locale],
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        ) : null}
+      </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <QueryState query={recommendation}>
-          {(d) => (
-            <Panel
-              title={t('block.recommendation', { decision: t(`decision.${d.decision}`) })}
-              actions={
-                <Chip variant={DECISION_CHIP[d.decision]}>{t(`decision.${d.decision}`)}</Chip>
-              }
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
+        <Panel title={t('block.chartPanel')} meta="GST">
+          <div className="flex flex-col gap-4">
+            {readings.data ? <StaleBanner series={readings.data} /> : null}
+            <QueryState
+              query={readings}
+              isEmpty={(s) => s.every((x) => x.points.length === 0)}
+              emptyText={t('block.noReadings')}
+              skeleton={<Skeleton block={300} />}
             >
-              <div className="flex flex-wrap items-end gap-6 pb-5">
-                <Figure value={d.volumeM3} unit="m³" size="lg" accent={d.volumeM3 > 0} />
-                {d.litresPerTree === null ? null : (
-                  <Figure value={d.litresPerTree} unit="L/tree" precision={0} size="md" />
-                )}
-              </div>
-              <h3 className="pb-2 text-xs font-medium text-text-muted">{t('block.why')}</h3>
-              {d.reasons.length === 0 ? (
-                <p className="text-text-secondary">{t('block.noReasons')}</p>
-              ) : (
-                <ol className="flex flex-col">
-                  {d.reasons.map((r, i) => (
-                    <li
-                      key={`${r.code}-${i}`}
-                      data-reason
-                      className="border-t border-border py-2.5"
-                    >
-                      <ReasonText reason={r} />
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </Panel>
-          )}
+              {(series) =>
+                block ? (
+                  <MoistureChart
+                    series={series}
+                    sensors={farm.data?.sensors.filter((s) => s.blockId === blockId) ?? []}
+                    threshold={block.pawThreshold}
+                    target={block.pawTarget}
+                    events={events.data ?? []}
+                  />
+                ) : (
+                  <Skeleton block={300} />
+                )
+              }
+            </QueryState>
+          </div>
+        </Panel>
+
+        <QueryState query={recommendation} skeleton={<Skeleton block={420} />}>
+          {(d) => <RecommendationCard decision={d} schedule={plan.data?.schedule ?? []} />}
         </QueryState>
-        <Panel title={t('block.sensorSeries')}>
-          <dl className="grid grid-cols-2 gap-6">
-            <div className="flex flex-col gap-1.5">
-              <dt className="text-xs font-medium text-text-muted">{t('block.sensorSeries')}</dt>
-              <dd className="num text-2xl">{readings.data?.length ?? '–'}</dd>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <dt className="text-xs font-medium text-text-muted">{t('block.irrigationEvents')}</dt>
-              <dd className="num text-2xl">{events.data?.length ?? '–'}</dd>
-            </div>
-          </dl>
+      </div>
+
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
+        <Panel title={t('block.events')}>
+          <QueryState query={events} skeleton={<Skeleton block={200} />}>
+            {(list) => <EventsTable events={list} />}
+          </QueryState>
+        </Panel>
+        <Panel title={t('block.tasks', { code: blockId })}>
+          <div className="flex flex-col gap-5">
+            <QueryState query={tasks} skeleton={<Skeleton block={120} />}>
+              {(list) => <BlockTasks tasks={list.filter((task) => task.blockId === blockId)} />}
+            </QueryState>
+            {block ? <LogIrrigation block={block} /> : null}
+          </div>
         </Panel>
       </div>
     </div>

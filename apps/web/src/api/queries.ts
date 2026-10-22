@@ -7,6 +7,7 @@ import {
   TaskSchema,
   WeatherSchema,
   type Assignee,
+  type IrrigationEvent,
   type NewIrrigationEvent,
   type TaskPatch,
 } from '@saqi/shared';
@@ -69,10 +70,30 @@ export function useUpdateTask() {
 
 export function useLogEvent(blockId: string) {
   const queryClient = useQueryClient();
+  const eventsKey = [...keys.block(blockId), 'events'];
   return useMutation({
     mutationFn: (event: NewIrrigationEvent) =>
       apiPost(`${block(blockId)}/events`, IrrigationEventSchema, event),
-    onSuccess: () =>
+    // Optimistic: the log shows at once, newest first; rolled back if the API refuses it.
+    onMutate: async (event) => {
+      await queryClient.cancelQueries({ queryKey: eventsKey });
+      const previous = queryClient.getQueriesData<IrrigationEvent[]>({ queryKey: eventsKey });
+      const pending: IrrigationEvent = {
+        ...event,
+        id: `pending-${event.startedAt}`,
+        blockId,
+        status: 'done',
+        source: 'manual',
+      };
+      queryClient.setQueriesData<IrrigationEvent[]>({ queryKey: eventsKey }, (old) =>
+        old ? [pending, ...old].sort((a, b) => b.startedAt.localeCompare(a.startedAt)) : old,
+      );
+      return { previous };
+    },
+    onError: (_err, _event, context) => {
+      for (const [key, data] of context?.previous ?? []) queryClient.setQueryData(key, data);
+    },
+    onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: keys.block(blockId) }),
         queryClient.invalidateQueries({ queryKey: keys.planToday }),

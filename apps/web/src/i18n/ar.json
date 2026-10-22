@@ -93,12 +93,70 @@
     "why": "Why",
     "noReasons": "No reasons recorded.",
     "readings": "Sensor series in the last 14 days: {count}",
-    "events": "Irrigation events in the last 30 days: {count}",
+    "events": "Irrigation, last 30 days",
     "notFound": "This block doesn't exist on Farm 07.",
     "sensorSeries": "Sensor series, 14 days",
     "irrigationEvents": "Irrigation events, 30 days",
     "volume": "Volume tonight",
-    "trees": "{count} trees"
+    "trees": "{count} trees",
+    "crop": {
+      "date_palm": "Date palm",
+      "tomato": "Tomato",
+      "cucumber": "Cucumber",
+      "fodder": "Fodder"
+    },
+    "method": {
+      "bubbler": "bubbler",
+      "subsurface_drip": "subsurface drip",
+      "drip": "drip",
+      "sprinkler": "sprinkler"
+    },
+    "area": "{ha} ha",
+    "chartPanel": "Water now · last 14 days",
+    "chart": {
+      "title": "Plant-available water over the last 14 days",
+      "desc": "Now {now}. Threshold {threshold}%, target {target}%. {events} irrigation events in the window.",
+      "thresholdLabel": "{threshold}% threshold",
+      "substrate": "Substrate",
+      "block": "Block (weighted)",
+      "band": "Target band {threshold}–{target}%",
+      "irrigation": "Irrigation",
+      "tableCaption": "Daily mean plant-available water, last 7 days",
+      "day": "Day",
+      "mean": "Mean PAW"
+    },
+    "noReadings": "No sensor readings in the last 14 days.",
+    "staleBanner": "{sensor} sensor offline since {since}. Decision uses the {fresh} sensor only (low confidence).",
+    "allStale": "Every sensor on this block is offline. Check it by hand before watering.",
+    "tonight": "Tonight",
+    "confidence": "Confidence: {level}",
+    "noEvents": "No irrigation in the last 30 days.",
+    "eventCols": {
+      "date": "Date",
+      "start": "Start",
+      "duration": "Duration",
+      "volume": "Volume",
+      "source": "Source"
+    },
+    "source": {
+      "auto": "Scheduled",
+      "manual": "Manual"
+    },
+    "minutes": "{min} min",
+    "tasks": "Tasks for {code}",
+    "noTasks": "No tasks for this block today.",
+    "openField": "Open Field",
+    "log": {
+      "open": "Log manual irrigation",
+      "title": "Log manual irrigation",
+      "volume": "Volume (m³)",
+      "start": "Start (GST)",
+      "note": "Note (optional)",
+      "submit": "Save",
+      "cancel": "Cancel",
+      "saved": "Saved {m3} at {time}.",
+      "volumeError": "Enter between 0.1 and 500 m³."
+    }
   },
   "field": {
     "title": "Field",
@@ -180,6 +238,14 @@
       "tank": "Tank {label}",
       "pump": "Pump {capacity} m³/h",
       "tse": "TSE inlet"
+    }
+  },
+  "task": {
+    "kind": {
+      "inspect": "Inspect",
+      "maintenance": "Maintenance",
+      "record": "Record",
+      "pest": "Pest check"
     }
   }
 }

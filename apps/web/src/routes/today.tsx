@@ -65,8 +65,9 @@ export function Component() {
     </div>
   );
 
+  // Explicit minmax(0,1fr): an implicit grid column would grow to its widest content (tables).
   return (
-    <div className="grid gap-3 pt-2 min-[1180px]:grid-cols-[330px_minmax(0,1fr)_340px] min-[1180px]:items-start">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-3 pt-2 min-[1180px]:grid-cols-[330px_minmax(0,1fr)_340px] min-[1180px]:items-start">
       <aside
         aria-label={t('today.blocks')}
         className={`${panel} order-3 overflow-hidden min-[1180px]:order-none`}

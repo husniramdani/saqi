@@ -55,6 +55,27 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
 - **D-3's task title is static seed text** ("no data since 12:00") while the stale gap now moves with the clock. T17: render the time from the sensor's `lastAt` instead.
 
+## Open issue: time-shift moves wall-clock times (decide before the demo)
+
+- The API shifts the stored scenario by `floorHour(now) − seedAnchor` in **hours** (T10). History always ends "now", but wall-clock times move with the hour the app is opened. Night refills recorded at 22:00 GST show at 18:00 at 17:00 GST, and at 10:00 at 09:00 GST (the email time). The diurnal sawtooth in the chart moves the same way, and D-3's "offline since" reads 08:00 instead of 12:00.
+- Tonight's plan is unaffected: the engine schedules in real GST (22:00 → 05:00, pulses 07/11/15).
+- **Options:**
+  1. **Memory mode rebuilds the seed for the current hour** (about 60–180 ms, once per hour). History is then real wall-clock and still ends now. pg mode would need the same at read time, or a periodic re-seed.
+  2. **Shift by whole days**, with the scenario frozen at the last 21:00. Times are correct, but data is up to 24 h old, so sensors read stale unless the engine's "now" is the anchor too.
+  3. **Leave it** and say so in the README.
+
+## Block detail (T14)
+
+- `features/moisture-chart/` (hand SVG + pure `chart.ts`), `features/recommendation/` (card, events table, manual log), `features/tasks/BlockTasks`. The page: header with the Flip swatch (`data-flip-id="block-…"`, for T16), chart panel with the stale banner, recommendation card, events, the block's tasks and the manual log.
+- **Chart:**
+  - Block PAW is the weighted mean per hour over the sensors that reported (as the engine does), so D-3's line continues on the 30 cm sensor while the dashed 60 cm line stops (no interpolation across gaps; tested).
+  - Time runs with the reading direction; RTL is computed into the coordinates, so the SVG is `direction: ltr` inside (otherwise text anchors flip twice).
+  - Day labels thin out by available space (every 2 days on desktop, every 5 at 375 px).
+  - Event markers have `<title>` on hover; the events table is the keyboard and screen-reader alternative, since the markers aren't actions. Summary in `<title>`/`<desc>` plus a hidden table of 7 daily means.
+- **Manual log:** a disclosure form validated with the API's `NewIrrigationEventSchema`. The end time comes from the block's flow (`volume ÷ flowM3h`). Saved optimistically with rollback; the plan is invalidated.
+- **Not done:** reason numbers aren't set in mono (ReasonText renders one ICU string; splitting numbers out is a T18 concern). No sparkline in the Today rail yet; the chart could be reused there.
+- **Layout gotcha:** a grid without explicit columns sizes its implicit column to the widest content. The events table's 420 px minimum made the whole page 478 px on a phone. Both pages now say `grid-cols-[minmax(0,1fr)]`.
+
 ## Today cockpit (T13)
 
 - **Layout follows the Nightfield Dashboard:** Blocks rail (330 px) | map card (heading with planned / saved, map, legend, tonight's schedule) | Tonight's plan (340 px) with Plan and Water tabs. Under 1180 px it becomes one column ordered map → plan → rail, so the answer ("what tonight, how much") comes first on a phone.
