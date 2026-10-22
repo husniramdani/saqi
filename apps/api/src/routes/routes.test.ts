@@ -17,18 +17,27 @@ import { createApp } from '../app';
 import { loadConfig } from '../config';
 import { createMemoryRepo } from '../repo/memory';
 import { floorHour } from '../services/timeshift';
+import recordedForecast from '../sim/fixtures/openmeteo-forecast.json' with { type: 'json' };
 import { buildSeed } from '../sim/seed';
 import { createWeatherService } from '../services/weather';
 
+/** Serves the recorded Open-Meteo payload so route tests never touch the network. */
+const recordedFetch: typeof fetch = async () => Response.json(recordedForecast);
+
 const makeApp = () => {
   const now = () => new Date();
-  return createApp({
-    config: loadConfig({}),
-    // Anchor on the current hour so seeded data is "now" without time-shifting.
-    repo: createMemoryRepo(buildSeed({ anchor: new Date(floorHour(now())).toISOString() })),
-    weather: createWeatherService({ now }),
+  const config = loadConfig({});
+  // Anchor on the current hour so seeded data is "now" without time-shifting.
+  const repo = createMemoryRepo(buildSeed({ anchor: new Date(floorHour(now())).toISOString() }));
+  const weather = createWeatherService({
+    fetch: recordedFetch,
+    repo,
     now,
+    lat: config.FARM_LAT,
+    lon: config.FARM_LON,
+    ttlSeconds: config.WEATHER_TTL_SECONDS,
   });
+  return createApp({ config, repo, weather, now });
 };
 
 const json = (body: unknown) => ({

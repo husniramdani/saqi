@@ -49,7 +49,16 @@ export function createApp(deps: Deps) {
 export function defaultDeps(): Deps {
   const config = loadConfig();
   const now = () => new Date();
-  return { config, repo: createRepo(config), weather: createWeatherService({ now }), now };
+  const repo = createRepo(config);
+  const weather = createWeatherService({
+    fetch: globalThis.fetch,
+    repo,
+    now,
+    lat: config.FARM_LAT,
+    lon: config.FARM_LON,
+    ttlSeconds: config.WEATHER_TTL_SECONDS,
+  });
+  return { config, repo, weather, now };
 }
 
 export const app = createApp(defaultDeps());
