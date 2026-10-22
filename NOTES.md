@@ -12,7 +12,6 @@ Search the code for `TODO(Txx)` to find each seam.
 | Tailwind v4 and the IBM Plex fonts                                                    | `apps/web/src/index.css` (comment only), `apps/web/index.html`  | T02          |
 | UI primitives (Button, Panel, Stat, Badge, states)                                    | `apps/web/src/ui/` (empty), `app/QueryState.tsx` (plain markup) | T03, T20     |
 | GSAP setup, MotionProvider                                                            | `apps/web/src/motion/` (empty), `app/providers.tsx`             | T15          |
-| Budget guard, night scheduling                                                        | `packages/engine/src/index.ts`: `applyBudget`, `schedule`       | T06          |
 | Postgres repo, Neon client, `db:migrate` driver                                       | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`)        | T07          |
 | Simulator and seed (30 days, scenario, D-3 gap)                                       | `apps/api/src/sim/`, `buildInlineSeed` in `repo/memory.ts`      | T08          |
 | Time-shift wired into services (helpers are done)                                     | `services/plan.ts`, routes in `routes/blocks.ts`                | T08, T10     |
@@ -43,7 +42,7 @@ Search the code for `TODO(Txx)` to find each seam.
 | `WINDOW_ASSIGNED`                    | `start`, `end` (formatted `HH:mm`)                      |
 | `WINDOW_OVERFLOW`                    | `cutM3`                                                 |
 
-The engine passes pre-rounded numbers (T05 emits everything except the `WINDOW_*` codes, which T06 adds). Avoid ICU `#` and `{x, number}` in messages: they format with the locale's digits, which breaks the Western-digits rule in Arabic. A plain `{x}` stays Western.
+The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messages: they format with the locale's digits, which breaks the Western-digits rule in Arabic. A plain `{x}` stays Western.
 
 ## Deviations from the plan
 
@@ -52,8 +51,12 @@ The engine passes pre-rounded numbers (T05 emits everything except the `WINDOW_*
 - **Added schemas:** `NewIrrigationEventSchema` (POST body, 0.1–500 m³), `TaskTemplateSchema`, `HealthSchema`, `MonthSchema`. The shared error type is exported as `ApiErrorBody`, leaving the short name `ApiError` free for the web's thrown error class.
 - **`pawNow` and `pawProjected` are nullable** (T05). When every sensor is stale there is no honest PAW, so the API sends `null` instead of a made-up 0. The web shows "No data".
 - **`blockPaw` takes `WeightedSeries`** (a `SensorSeries` plus its `weight`). Weights live on `farm.sensors`, not on readings, so `planDay` attaches them. The positional signature from plan/04 §1 is unchanged.
-- **The engine is split across files** (`paw.ts`, `decide.ts`, `round.ts`); `index.ts` keeps the pipeline and the T06 placeholders.
-- **`gstDate()` lives in `@saqi/shared/time.ts`** so the API, engine and web share one GST date helper. T06's `time.ts` can build on it.
+- **The engine is split across files**: `paw.ts`, `decide.ts`, `budget.ts`, `schedule.ts`, `time.ts` and `round.ts`, with `index.ts` holding `planDay`.
+- **`schedule()` returns `{ items, decisions }`** instead of mutating the decisions to add `WINDOW_*` reasons (plan/04 §1). The engine stays free of mutation; `planDay` uses the returned decisions.
+- **Schedule times leave the engine as ISO with `+04:00`**, rounded to the minute. T10 decides whether the API re-emits them as UTC `Z`; the schema accepts both.
+- **Budget cuts scale the already-rounded decision** (222.1 × 0.7 = 155.5 m³, matching plan/04 §3), so net, gross and L/tree of a deficit block can differ from the unrounded maths by 0.1.
+- **Window overflow also lowers `volumeM3`** on the decision, so totals and the recommendation card show what will actually run.
+- **`gstDate()` lives in `@saqi/shared/time.ts`** so the API, engine and web share one GST date helper. The engine's `time.ts` adds GST wall-clock helpers on top.
 - **`/making-of` sits outside the app shell**, per plan/05 §0.
 - **The API has no `build` script yet.** Vercel bundles `src/vercel.ts` itself (T23). Check there that the JSON import (`with { type: 'json' }`) in `services/weather.ts` bundles cleanly.
 - **The skeleton's seed anchor is the server's start hour**, so memory data "ends now" without time-shifting. Restarting the API (including `tsx watch` reloads) resets memory data, task updates included.
