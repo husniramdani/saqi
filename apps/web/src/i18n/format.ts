@@ -41,3 +41,7 @@ export const formatDateGst = (date: string, locale: Locale) =>
     day: 'numeric',
     month: 'short',
   }).format(new Date(`${date}T00:00:00Z`));
+
+/** "22:00 → 01:03 GST": one label for a window that may cross midnight. */
+export const formatTimeRangeGst = (startIso: string, endIso: string, locale: Locale) =>
+  `${formatTimeGst(startIso, locale).replace(' GST', '')} → ${formatTimeGst(endIso, locale)}`;

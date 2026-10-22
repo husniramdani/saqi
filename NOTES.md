@@ -55,6 +55,24 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
 - **D-3's task title is static seed text** ("no data since 12:00") while the stale gap now moves with the clock. T17: render the time from the sensor's `lastAt` instead.
 
+## Farm map (T12)
+
+- `features/farm-map/`: `FarmMap` (site plan SVG), `MapTooltip`, `MapLegend`, `BlockList` (the full text alternative), `FarmMapPanel` (Panel with a Map | List switch and loading / error / empty states; the loading skeleton is the plan's outlines at the final size). Pure helpers in `geometry.ts` and `window.ts`; `scenario.ts` holds the demo night for the kitchen and tests only.
+- **Drawn as on the Nightfield canvas**, not the older T12 text:
+  - Tags carry only the block code (no PAW% or decision chip); figures live in the tooltip and the list.
+  - Selection is an orange outline plus an orange tag.
+  - Blocks are rounded rectangles (radius 10) from the polygon's bounding box; Farm 07's blocks are all axis-aligned.
+  - Utility labels are sentence case ("Well W-1", "RO", "Pump 60 m³/h"), not the canvas's uppercase (design.md bans micro-caps).
+- **Legibility rule implemented, not in the canvas:** the map measures its width (ResizeObserver) and grows tag text so codes stay ≥ 12.5 px on screen. The size is capped at 40 units so a tag still fits G-2, which gives exactly 12 px at 375 px. Utility labels hide below 12 px.
+- **The plan never mirrors in RTL.** Tooltip anchoring uses physical `left` on purpose (comment in `MapTooltip`). The tooltip opens inward at the plan's edges so it never leaves a narrow map. Arrow keys follow reading order: rows top to bottom, then the reading direction within a row.
+- **Accessibility:**
+  - The `<svg>` is `role="group"` with a summary label (`role="img"` would hide the block buttons inside it).
+  - Each block is a `<g role="button" tabIndex={0} aria-pressed>` named "D-1 Khalas palms, 68 percent water, Irrigate, 90.4 cubic metres".
+  - SVG can't show `:focus-visible` outlines reliably, so focus draws its own ring in the `focus` token.
+- **Motion hooks for T16:** `.layer-*` groups, `data-flip-id="block-…"` on fills, `data-scheduled` on tonight's pipes. Tonight's flow is a static dashed line until GSAP animates it.
+- **Night's water scale runs dark → light** (charcoal → mint), as on the canvas: in Night, lighter means wetter. design.md's "darker always means wetter" holds for Day only; the token check accepts either direction as long as lightness is ordered.
+- `/dev/kitchen` shows the map with the demo night (D-3 stale). T13 puts `FarmMapPanel` on Today and wires `onSelect` to the block route.
+
 ## App shell (T11)
 
 - **Header follows the Nightfield Dashboard top bar:** logo mark, section tabs (Today, Field, Making-of; the canvas's Blocks/Schedule/Budget tabs are anchors inside Today and arrive with T13), "Simulated sensors", "Updated hh:mm GST" (the newest successful query, via the query cache), "N need attention" (irrigate, deficit or low confidence; links to `/#attention`), EN / ع / ار, and the Day/Night toggle.

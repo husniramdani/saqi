@@ -110,5 +110,31 @@
     "LOW_CONFIDENCE": "No fresh sensor data; check the block by hand",
     "WINDOW_ASSIGNED": "Runs {start} → {end} GST",
     "WINDOW_OVERFLOW": "Cut by {cutM3} m³ to fit the night window"
+  },
+  "map": {
+    "title": "Farm map",
+    "view": "View",
+    "map": "Map",
+    "list": "List",
+    "summary": "Map of {farm}: {count} blocks shaded by plant-available water. Watered tonight: {tonight}. Stale sensors: {stale}. The list view has every figure.",
+    "none": "none",
+    "water": "{paw} percent water",
+    "noReading": "no fresh sensor reading",
+    "volumeTonight": "{m3} cubic metres",
+    "staleSensor": "stale sensor",
+    "legendLabel": "Map key",
+    "dry": "Dry",
+    "wet": "Wet",
+    "stale": "Stale sensor",
+    "route": "Tonight’s water route",
+    "window": "Window",
+    "pulses": "Pulses",
+    "utility": {
+      "well": "Well {label}",
+      "ro": "RO",
+      "tank": "Tank {label}",
+      "pump": "Pump {capacity} m³/h",
+      "tse": "TSE inlet"
+    }
   }
 }
