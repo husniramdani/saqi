@@ -1,0 +1,75 @@
+{
+  "shell": {
+    "brand": "Saqi",
+    "skipToContent": "Skip to content",
+    "nav": { "label": "Main", "today": "Today", "field": "Field", "makingOf": "Making-of" },
+    "simulated": "Simulated sensors",
+    "language": "Language",
+    "updated": "Updated {time}"
+  },
+  "today": {
+    "title": "Tonight",
+    "planned": "{volume} planned",
+    "saved": "{volume} saved",
+    "decisions": "Decisions for {date}",
+    "columns": {
+      "block": "Block",
+      "decision": "Decision",
+      "paw": "PAW now",
+      "volume": "Volume",
+      "confidence": "Confidence"
+    },
+    "empty": "No decisions for today."
+  },
+  "block": {
+    "back": "Today",
+    "recommendation": "Tonight: {decision}",
+    "litresPerTree": "{litres} L/tree",
+    "why": "Why",
+    "noReasons": "No reasons recorded.",
+    "readings": "Sensor series in the last 14 days: {count}",
+    "events": "Irrigation events in the last 30 days: {count}",
+    "notFound": "This block doesn't exist on Farm 07."
+  },
+  "field": {
+    "title": "Field",
+    "worker": "Worker",
+    "workers": { "rahim": "Rahim", "imran": "Imran" },
+    "tasksToday": "{date} · {count, plural, one {{count} task} other {{count} tasks}}",
+    "farm": "Farm",
+    "markDone": "Mark done",
+    "done": "Done",
+    "empty": "No tasks for today."
+  },
+  "makingOf": {
+    "title": "How Saqi is built",
+    "intro": "The story page arrives with the design session.",
+    "farm": "{name} · {count} blocks",
+    "home": "Back to Saqi"
+  },
+  "decision": { "irrigate": "Irrigate", "skip": "Skip", "pulse": "Pulse", "deficit": "Deficit" },
+  "confidence": { "high": "High", "medium": "Medium", "low": "Low" },
+  "state": {
+    "loading": "Loading…",
+    "error": "Couldn't load this: {message}",
+    "retry": "Retry",
+    "empty": "Nothing here yet.",
+    "notFound": "Page not found",
+    "home": "Back to Today"
+  },
+  "reason": {
+    "PAW_NOW": "PAW now {paw}%",
+    "PAW_PROJECTED": "PAW {from}% → {to}% by tomorrow (crop use {etcMm} mm)",
+    "ABOVE_THRESHOLD": "Stays above the {threshold}% threshold",
+    "BELOW_THRESHOLD": "Falls below the {threshold}% threshold",
+    "ET0_FORECAST": "ET₀ tomorrow {mm} mm",
+    "REFILL_TO_TARGET": "Refill to {target}% = {netMm} mm net, {grossMm} mm gross",
+    "SAVES_VS_FIXED": "Saves {m3} m³ against a fixed schedule",
+    "GREENHOUSE_PULSES": "{count} pulses of {m3} m³ at {times}",
+    "BUDGET_DEFICIT": "Deficit irrigation ×{factor}: the monthly water budget is tight",
+    "SENSOR_STALE": "Sensor {sensorId} has not reported for {hours} h",
+    "LOW_CONFIDENCE": "No fresh sensor data; check the block by hand",
+    "WINDOW_ASSIGNED": "Runs {start} → {end} GST",
+    "WINDOW_OVERFLOW": "Cut by {cutM3} m³ to fit the night window"
+  }
+}
