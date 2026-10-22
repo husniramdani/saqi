@@ -39,7 +39,7 @@ saqi/
 └── packages/
     ├── shared/              zod contracts, inferred types, Farm 07 fixture, task templates
     ├── engine/              pure planDay pipeline (placeholder maths)
-    └── tokens/              empty seam: generated from design.md in T02
+    └── tokens/              design.md → Tailwind @theme + TS tokens (Day and Night), validated
 ```
 
 ## API
@@ -65,5 +65,5 @@ Errors always look like `{ "error": { "code", "message", "details"? } }` with co
 - **Data:** memory mode serves 2 days of flat readings ending at the server's start hour (T08 simulator). Postgres mode throws `NotImplemented` (T07).
 - **Weather:** a committed fixture, not Open-Meteo yet (T09).
 - **Field:** marking a task done needs a connection; the offline outbox is a no-op (T17).
-- **Design:** no tokens, styles, fonts or motion; pages are plain semantic HTML (T02, T03, T15).
+- **Design:** tokens, Tailwind and fonts are wired from `design.md` (Saqi Nightfield); components, screens and motion are not built yet, so pages are still plain HTML on the themed page (T03, T12–T15).
 - **Arabic and Urdu:** UI strings are English copies; fixture names are translated (T18).

@@ -8,8 +8,6 @@ Search the code for `TODO(Txx)` to find each seam.
 
 | Seam                                                                                                                                                                                                                                                                    | Where                                                           | Filled by    |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------ |
-| Design tokens from design.md (CSS `@theme`, TS tokens, motion tokens), `design:check`                                                                                                                                                                                   | `packages/tokens/src/index.ts` (empty `tokens = {}`)            | T02          |
-| Tailwind v4 and the IBM Plex fonts                                                                                                                                                                                                                                      | `apps/web/src/index.css` (comment only), `apps/web/index.html`  | T02          |
 | UI primitives (Button, Panel, Stat, Badge, states)                                                                                                                                                                                                                      | `apps/web/src/ui/` (empty), `app/QueryState.tsx` (plain markup) | T03, T20     |
 | GSAP setup, MotionProvider                                                                                                                                                                                                                                              | `apps/web/src/motion/` (empty), `app/providers.tsx`             | T15          |
 | Postgres repo, Neon client, `db:migrate` driver                                                                                                                                                                                                                         | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`)        | T07          |
@@ -41,6 +39,15 @@ Search the code for `TODO(Txx)` to find each seam.
 | `WINDOW_OVERFLOW`                    | `cutM3`                                                 |
 
 The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messages: they format with the locale's digits, which breaks the Western-digits rule in Arabic. A plain `{x}` stays Western.
+
+## Design system: Saqi Nightfield (replaces Saqi Sand)
+
+- `design.md` is now **Saqi Nightfield v1.1**, transcribed from the Nightfield canvas (claude.ai design, artifact `YUcyDc9cn8fSxXjHvRs5zb`). The old "Saqi Sand" file is at `../design-archive/saqi-sand.design.md`. The plan docs (`../plan/05`, `06`) and the T03/T12–T16 task texts still describe Sand (IBM Plex, water-blue accent, bins at 35/50/…%, motion names quick/base/slow/story). **design.md wins wherever they disagree.** Motion names map tick ≈ instant, step ≈ quick, settle ≈ base, drift ≈ slow, tide ≈ story.
+- **Changed from the canvas on purpose:** Day `focus` is `accent-text` #A04709. The canvas's fill-orange ring is 2.63 : 1 on the page, under the 3 : 1 that WCAG 1.4.11 asks of a focus indicator.
+- **Not on the canvas, added:** `error` and `error-soft` in both themes, Night `inverse-*`, the Night `floating` shadow. Day `accent-text` is #A04709 (design-system board); the dashboard board had #A84B0C.
+- The canvas's "Nightfield Night" design-system board uses a green-black palette (#0B1410) that its own token table and the Night dashboard don't. Graphite (#111214) is used.
+- Night tokens exist (`[data-theme='night']` re-points every `--color-*` and `--shadow-*`); nothing sets `data-theme` yet. The toggle lands with the Today screen.
+- **Tokens pipeline (T02):** `pnpm design:check` validates against the committed Stylebase v1 schema plus 17 contrast rules per theme (text-primary ≥ 7 : 1, secondary/muted/accent-text ≥ 4.5 : 1, focus ≥ 3 : 1, …), the night theme defining every day colour, and a lightness-ordered water scale. It writes `packages/tokens/dist/` (gitignored, rebuilt on `postinstall`). Tailwind's default palette, type scale, radii and shadows are reset, so only design.md tokens compile. `@theme static` emits every variable, so `var(--color-water-3)` works in SVG and GSAP even when no utility uses it.
 
 ## Deviations from the plan
 

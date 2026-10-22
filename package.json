@@ -7,6 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "design:check": "pnpm --filter @saqi/tokens build",
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
     "lint": "eslint .",

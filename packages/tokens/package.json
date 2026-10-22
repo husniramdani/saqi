@@ -4,14 +4,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./motion": "./dist/motion.ts",
+    "./tokens.css": "./dist/tokens.css"
   },
   "scripts": {
+    "build": "tsx scripts/build.ts",
+    "postinstall": "tsx scripts/build.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
+    "ajv": "^8.20.0",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "yaml": "^2.9.1"
   }
 }

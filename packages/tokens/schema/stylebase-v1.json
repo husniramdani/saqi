@@ -1,0 +1,281 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://stylebase.dev/schema/v1.json",
+  "title": "design.md YAML Front Matter",
+  "description": "JSON Schema for validating the YAML front matter of design.md files following the Stylebase specification v1.0",
+  "type": "object",
+  "required": [
+    "version",
+    "name",
+    "description",
+    "colors",
+    "typography",
+    "spacing",
+    "rounded",
+    "components"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Spec version",
+      "pattern": "^[0-9]+\\.[0-9]+$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable template name",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "description": "One-line description of the design system",
+      "minLength": 5,
+      "maxLength": 500
+    },
+    "colors": {
+      "type": "object",
+      "description": "Color tokens as hex values",
+      "required": [
+        "primary",
+        "primary-foreground",
+        "secondary",
+        "secondary-foreground",
+        "accent",
+        "accent-foreground",
+        "background",
+        "surface",
+        "border",
+        "text-primary",
+        "text-secondary",
+        "text-muted",
+        "success",
+        "warning",
+        "error",
+        "info"
+      ],
+      "properties": {
+        "primary": { "$ref": "#/$defs/hexColor" },
+        "primary-foreground": { "$ref": "#/$defs/hexColor" },
+        "secondary": { "$ref": "#/$defs/hexColor" },
+        "secondary-foreground": { "$ref": "#/$defs/hexColor" },
+        "accent": { "$ref": "#/$defs/hexColor" },
+        "accent-foreground": { "$ref": "#/$defs/hexColor" },
+        "background": { "$ref": "#/$defs/hexColor" },
+        "surface": { "$ref": "#/$defs/hexColor" },
+        "surface-raised": { "$ref": "#/$defs/hexColor" },
+        "border": { "$ref": "#/$defs/hexColor" },
+        "border-strong": { "$ref": "#/$defs/hexColor" },
+        "text-primary": { "$ref": "#/$defs/hexColor" },
+        "text-secondary": { "$ref": "#/$defs/hexColor" },
+        "text-muted": { "$ref": "#/$defs/hexColor" },
+        "success": { "$ref": "#/$defs/hexColor" },
+        "warning": { "$ref": "#/$defs/hexColor" },
+        "error": { "$ref": "#/$defs/hexColor" },
+        "info": { "$ref": "#/$defs/hexColor" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/hexColor" }
+    },
+    "typography": {
+      "type": "object",
+      "description": "Typography definitions",
+      "required": ["headline", "body", "scale"],
+      "properties": {
+        "headline": { "$ref": "#/$defs/fontDef" },
+        "body": { "$ref": "#/$defs/fontDef" },
+        "mono": { "$ref": "#/$defs/fontDef" },
+        "scale": {
+          "type": "array",
+          "description": "Type scale from smallest to largest",
+          "minItems": 4,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "required": ["label", "size", "lineHeight"],
+            "properties": {
+              "label": { "type": "string", "minLength": 1 },
+              "size": { "$ref": "#/$defs/cssLength" },
+              "lineHeight": { "$ref": "#/$defs/cssLength" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "spacing": {
+      "type": "object",
+      "description": "Spacing scale definition",
+      "required": ["base", "scale", "unit"],
+      "properties": {
+        "base": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "Base spacing unit in the defined unit"
+        },
+        "scale": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 4,
+          "description": "Array of spacing values in the defined unit"
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["px", "rem", "em"],
+          "description": "CSS unit for spacing values"
+        }
+      },
+      "additionalProperties": false
+    },
+    "rounded": {
+      "type": "object",
+      "description": "Border-radius tokens",
+      "required": ["none", "sm", "md", "lg", "full"],
+      "properties": {
+        "none": { "$ref": "#/$defs/cssLength" },
+        "sm": { "$ref": "#/$defs/cssLength" },
+        "md": { "$ref": "#/$defs/cssLength" },
+        "lg": { "$ref": "#/$defs/cssLength" },
+        "full": { "$ref": "#/$defs/cssLength" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/cssLength" }
+    },
+    "components": {
+      "type": "object",
+      "description": "Component design specifications",
+      "required": ["button", "input", "card"],
+      "properties": {
+        "button": {
+          "type": "object",
+          "required": ["variants", "sizes"],
+          "properties": {
+            "variants": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["name", "background", "text", "radius", "weight"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "background": { "type": "string" },
+                  "text": { "$ref": "#/$defs/hexColor" },
+                  "border": { "$ref": "#/$defs/hexColor" },
+                  "radius": { "type": "string" },
+                  "weight": { "type": "integer", "minimum": 100, "maximum": 900 }
+                },
+                "additionalProperties": false
+              }
+            },
+            "sizes": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["name", "height", "padding", "fontSize"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "height": { "$ref": "#/$defs/cssLength" },
+                  "padding": { "type": "string" },
+                  "fontSize": { "$ref": "#/$defs/cssLength" }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "input": {
+          "type": "object",
+          "required": ["background", "border", "radius", "height", "focusRing", "placeholder"],
+          "properties": {
+            "background": { "$ref": "#/$defs/hexColor" },
+            "border": { "$ref": "#/$defs/hexColor" },
+            "radius": { "type": "string" },
+            "height": { "$ref": "#/$defs/cssLength" },
+            "focusRing": { "$ref": "#/$defs/hexColor" },
+            "placeholder": { "$ref": "#/$defs/hexColor" }
+          },
+          "additionalProperties": false
+        },
+        "card": {
+          "type": "object",
+          "required": ["background", "border", "radius", "padding"],
+          "properties": {
+            "background": { "$ref": "#/$defs/hexColor" },
+            "border": { "$ref": "#/$defs/hexColor" },
+            "radius": { "type": "string" },
+            "padding": { "type": "string" },
+            "shadow": { "type": "string" },
+            "hoverBorder": { "$ref": "#/$defs/hexColor" },
+            "hoverShadow": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+    "x-stylebase": {
+      "type": "object",
+      "description": "Stylebase-specific extensions",
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Semantic version of the template"
+        },
+        "template": {
+          "type": "string",
+          "description": "Template slug identifier"
+        },
+        "generated-by": {
+          "type": "string",
+          "description": "Tool that generated this file"
+        },
+        "ai-rules": {
+          "type": "object",
+          "properties": {
+            "always": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 5 },
+              "description": "Rules the AI must always follow"
+            },
+            "never": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 5 },
+              "description": "Rules the AI must never break"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "hexColor": {
+      "type": "string",
+      "pattern": "^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$",
+      "description": "Hex color value (6 or 8 digit)"
+    },
+    "fontDef": {
+      "type": "object",
+      "required": ["family", "weight", "use"],
+      "properties": {
+        "family": { "type": "string", "minLength": 1 },
+        "weight": { "type": "integer", "minimum": 100, "maximum": 900 },
+        "use": {
+          "type": "string",
+          "minLength": 5,
+          "description": "Description of when to use this font"
+        }
+      },
+      "additionalProperties": false
+    },
+    "cssLength": {
+      "type": "string",
+      "pattern": "^[0-9]+(\\.[0-9]+)?(px|rem|em|%|vw|vh)$",
+      "description": "CSS length value"
+    }
+  }
+}
