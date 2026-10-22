@@ -1,4 +1,4 @@
-import { gstDate, type SensorSeries, type Weather } from '@saqi/shared';
+import type { SensorSeries, Weather } from '@saqi/shared';
 import { ConflictError, NotFoundError, type ReadingRow, type Repo, type SeedData } from './types';
 
 const HOUR_MS = 3_600_000;
@@ -33,6 +33,8 @@ export function createMemoryRepo(seed: SeedData): Repo {
   return {
     getFarm: async () => structuredClone(farm),
 
+    getSeedAnchor: async () => seed.anchor,
+
     getReadings: async (blockId, sinceIso) =>
       farm.sensors
         .filter((s) => s.blockId === blockId)
@@ -60,10 +62,13 @@ export function createMemoryRepo(seed: SeedData): Repo {
       return { ...event };
     },
 
-    getMonthUsage: async (month) =>
-      events
-        .filter((e) => e.status === 'done' && gstDate(e.startedAt).startsWith(month))
-        .reduce((sum, e) => sum + e.volumeM3, 0),
+    getUsage: async (sinceIso, untilIso) => {
+      const [since, until] = [Date.parse(sinceIso), Date.parse(untilIso)];
+      return events
+        .filter((e) => e.status === 'done')
+        .filter((e) => Date.parse(e.startedAt) >= since && Date.parse(e.startedAt) < until)
+        .reduce((sum, e) => sum + e.volumeM3, 0);
+    },
 
     getAllocation: async (month) => seed.allocations[month] ?? 0,
 

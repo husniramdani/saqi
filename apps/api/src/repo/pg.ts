@@ -7,11 +7,12 @@ const todo = (method: string) => () =>
 export function createPgRepo(): Repo {
   return {
     getFarm: todo('getFarm'),
+    getSeedAnchor: todo('getSeedAnchor'),
     getReadings: todo('getReadings'),
     getLatestReadings: todo('getLatestReadings'),
     getEvents: todo('getEvents'),
     addEvent: todo('addEvent'),
-    getMonthUsage: todo('getMonthUsage'),
+    getUsage: todo('getUsage'),
     getAllocation: todo('getAllocation'),
     getTasks: todo('getTasks'),
     updateTask: todo('updateTask'),

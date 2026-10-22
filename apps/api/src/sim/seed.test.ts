@@ -97,7 +97,7 @@ describe('the seed drives the engine to the planned scenario', () => {
       budget: {
         month: '2026-10',
         allocationM3: seed.allocations['2026-10'] ?? 0,
-        usedM3: await createMemoryRepo(seed).getMonthUsage('2026-10'),
+        usedM3: await createMemoryRepo(seed).getUsage('2026-09-30T20:00:00Z', ANCHOR),
         daysInMonth: 31,
         dayOfMonth: 23,
       },

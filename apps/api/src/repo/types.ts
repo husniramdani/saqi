@@ -14,12 +14,15 @@ import type {
  */
 export interface Repo {
   getFarm(): Promise<Farm>;
+  /** The ISO hour the stored history ends on (meta.seed_anchor). */
+  getSeedAnchor(): Promise<string>;
   getReadings(blockId: string, sinceIso: string): Promise<SensorSeries[]>;
   /** By sensorId, the last 48 h. */
   getLatestReadings(): Promise<Record<string, SensorSeries>>;
   getEvents(blockId: string, sinceIso: string): Promise<IrrigationEvent[]>;
   addEvent(e: Omit<IrrigationEvent, 'id'>): Promise<IrrigationEvent>;
-  getMonthUsage(month: string): Promise<number>;
+  /** Sum of `done` irrigation, m³, for events starting in [sinceIso, untilIso). */
+  getUsage(sinceIso: string, untilIso: string): Promise<number>;
   getAllocation(month: string): Promise<number>;
   getTasks(q: { date: string; assignee?: Assignee | undefined }): Promise<Task[]>;
   /** Throws ConflictError when `clientUpdatedAt` is older than the stored task. */

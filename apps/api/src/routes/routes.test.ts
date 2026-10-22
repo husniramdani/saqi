@@ -16,28 +16,35 @@ import { z } from 'zod';
 import { createApp } from '../app';
 import { loadConfig } from '../config';
 import { createMemoryRepo } from '../repo/memory';
-import { floorHour } from '../services/timeshift';
+import { withTimeShift } from '../services/timeshift';
+import { createWeatherService } from '../services/weather';
 import recordedForecast from '../sim/fixtures/openmeteo-forecast.json' with { type: 'json' };
 import { buildSeed } from '../sim/seed';
-import { createWeatherService } from '../services/weather';
 
-/** Serves the recorded Open-Meteo payload so route tests never touch the network. */
-const recordedFetch: typeof fetch = async () => Response.json(recordedForecast);
+/** The recorded Open-Meteo payload with ET₀ pinned to the worked example's 5.8 mm. */
+const forecast58 = {
+  ...recordedForecast,
+  daily: {
+    ...recordedForecast.daily,
+    et0_fao_evapotranspiration: recordedForecast.daily.et0_fao_evapotranspiration.map(() => 5.8),
+  },
+};
+const recordedFetch: typeof fetch = async () => Response.json(forecast58);
 
+/** Wired like production: the default seed (latest 21:00 GST), time-shifted to the real clock. */
 const makeApp = () => {
   const now = () => new Date();
   const config = loadConfig({});
-  // Anchor on the current hour so seeded data is "now" without time-shifting.
-  const repo = createMemoryRepo(buildSeed({ anchor: new Date(floorHour(now())).toISOString() }));
+  const stored = createMemoryRepo(buildSeed());
   const weather = createWeatherService({
     fetch: recordedFetch,
-    repo,
+    repo: stored,
     now,
     lat: config.FARM_LAT,
     lon: config.FARM_LON,
     ttlSeconds: config.WEATHER_TTL_SECONDS,
   });
-  return createApp({ config, repo, weather, now });
+  return createApp({ config, repo: withTimeShift(stored, now), weather, now });
 };
 
 const json = (body: unknown) => ({
@@ -61,6 +68,34 @@ describe('routes: happy paths return schema-valid bodies', () => {
     const res = await makeApp().request(path);
     expect(res.status).toBe(200);
     expect(schema.safeParse(await res.json()).success).toBe(true);
+  });
+
+  it('reports the seed anchor on /health', async () => {
+    const health = HealthSchema.parse(await (await makeApp().request('/api/health')).json());
+    expect(health.seedAnchor.slice(11, 16)).toBe('17:00'); // 21:00 GST
+  });
+
+  it('serves the scenario live: D-1 irrigates tonight, F-1 on deficit, month tight', async () => {
+    const plan = DayPlanSchema.parse(await (await makeApp().request('/api/plan/today')).json());
+    const decision = Object.fromEntries(plan.decisions.map((d) => [d.blockId, d]));
+    expect(decision['D-1']).toMatchObject({
+      decision: 'irrigate',
+      volumeM3: 90.4,
+      confidence: 'high',
+    });
+    expect(decision['D-2']?.decision).toBe('skip');
+    expect(decision['D-3']).toMatchObject({ decision: 'skip', confidence: 'low' });
+    expect(decision['F-1']?.decision).toBe('deficit');
+    expect(decision['G-1']?.decision).toBe('pulse');
+    expect(plan.budget.status).toBe('tight');
+    expect(plan.schedule.every((i) => i.start.endsWith('Z'))).toBe(true);
+  });
+
+  it('ends the sensor history on the current hour', async () => {
+    const res = await makeApp().request('/api/blocks/D-1/readings?days=1');
+    const series = z.array(SensorSeriesSchema).parse(await res.json());
+    const thisHour = new Date(Math.floor(Date.now() / 3_600_000) * 3_600_000).toISOString();
+    expect(series.map((s) => s.lastAt)).toEqual([thisHour, thisHour]);
   });
 
   it('plans one decision per block', async () => {

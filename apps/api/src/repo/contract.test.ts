@@ -18,6 +18,10 @@ function describeRepo(name: string, factory: () => Repo) {
       repo = factory();
     });
 
+    it('knows the seed anchor', async () => {
+      expect(await repo.getSeedAnchor()).toBe(anchor.toISOString());
+    });
+
     it('returns Farm 07', async () => {
       const farm = FarmSchema.parse(await repo.getFarm());
       expect(farm.blocks).toHaveLength(7);
@@ -75,7 +79,9 @@ function describeRepo(name: string, factory: () => Repo) {
       const base = { blockId: 'F-1', startedAt: at, endedAt: at, source: 'manual' } as const;
       await repo.addEvent({ ...base, volumeM3: 12.5, status: 'done' });
       await repo.addEvent({ ...base, volumeM3: 5, status: 'skipped' });
-      expect(await repo.getMonthUsage('2030-01')).toBe(12.5);
+      expect(await repo.getUsage('2030-01-01T00:00:00Z', '2030-02-01T00:00:00Z')).toBe(12.5);
+      // The bound is half-open: an event exactly at `until` is next month's.
+      expect(await repo.getUsage('2029-12-01T00:00:00Z', '2030-01-15T10:00:00.000Z')).toBe(0);
     });
 
     it('returns the allocation for the seeded month', async () => {

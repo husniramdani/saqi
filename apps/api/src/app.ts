@@ -12,6 +12,8 @@ import { healthRoutes } from './routes/health';
 import { planRoutes } from './routes/plan';
 import { taskRoutes } from './routes/tasks';
 import { weatherRoutes } from './routes/weather';
+import { createPlanService, type PlanService } from './services/plan';
+import { withTimeShift } from './services/timeshift';
 import { createWeatherService, type WeatherService } from './services/weather';
 
 export interface Deps {
@@ -20,6 +22,9 @@ export interface Deps {
   weather: WeatherService;
   now: () => Date;
 }
+
+/** What routes receive: the deps plus the plan service built on them. */
+export type RouteDeps = Deps & { plan: PlanService };
 
 export function createApp(deps: Deps) {
   const app = new Hono();
@@ -33,6 +38,8 @@ export function createApp(deps: Deps) {
   });
   app.notFound((c) => c.json(notFoundBody(c.req.path), 404));
 
+  const routeDeps: RouteDeps = { ...deps, plan: createPlanService(deps) };
+
   for (const routes of [
     healthRoutes,
     farmRoutes,
@@ -41,7 +48,7 @@ export function createApp(deps: Deps) {
     blockRoutes,
     taskRoutes,
   ]) {
-    app.route('/api', routes(deps));
+    app.route('/api', routes(routeDeps));
   }
   return app;
 }
@@ -49,10 +56,12 @@ export function createApp(deps: Deps) {
 export function defaultDeps(): Deps {
   const config = loadConfig();
   const now = () => new Date();
-  const repo = createRepo(config);
+  const stored = createRepo(config);
+  // Everything the API serves is the stored scenario replayed at the current hour.
+  const repo = withTimeShift(stored, now);
   const weather = createWeatherService({
     fetch: globalThis.fetch,
-    repo,
+    repo: stored,
     now,
     lat: config.FARM_LAT,
     lon: config.FARM_LON,

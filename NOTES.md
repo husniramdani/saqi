@@ -6,17 +6,15 @@ Working notes for whoever (human or Claude Code) picks up the next task. Read th
 
 Search the code for `TODO(Txx)` to find each seam.
 
-| Seam                                                                                                                                                                                                                                                                    | Where                                                    | Filled by    |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ------------ |
-| GSAP setup, MotionProvider                                                                                                                                                                                                                                              | `apps/web/src/motion/` (empty), `app/providers.tsx`      | T15          |
-| Postgres repo, Neon client, `db:migrate` driver                                                                                                                                                                                                                         | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07          |
-| Time-shift wired into services and routes (helpers done). **Until then the dev app shows data as of the last 21:00 GST seed anchor, so sensors look stale (every block skips with low confidence) except right after 21:00.** Tests anchor on the current hour instead. | `services/plan.ts`, `routes/*`                           | T10          |
-| Plan memoisation, `seedAnchor` in `/api/health`                                                                                                                                                                                                                         | `services/plan.ts`, `routes/health.ts`                   | T10          |
-| Shell freshness, Badge, SegmentedControl, mobile nav                                                                                                                                                                                                                    | `apps/web/src/app/AppShell.tsx`                          | T11          |
-| Today, Block detail and Field screens                                                                                                                                                                                                                                   | `apps/web/src/routes/*`, `src/features/*` (empty)        | T12–T14, T17 |
-| Offline outbox and optimistic task updates                                                                                                                                                                                                                              | `apps/web/src/api/outbox.ts` (no-op), `useUpdateTask`    | T17          |
-| Arabic and Urdu UI strings                                                                                                                                                                                                                                              | `apps/web/src/i18n/ar.json`, `ur.json` (English copies)  | T18          |
-| Making-of story                                                                                                                                                                                                                                                         | `apps/web/src/routes/making-of.tsx`                      | T19          |
+| Seam                                                 | Where                                                    | Filled by    |
+| ---------------------------------------------------- | -------------------------------------------------------- | ------------ |
+| GSAP setup, MotionProvider                           | `apps/web/src/motion/` (empty), `app/providers.tsx`      | T15          |
+| Postgres repo, Neon client, `db:migrate` driver      | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07          |
+| Shell freshness, Badge, SegmentedControl, mobile nav | `apps/web/src/app/AppShell.tsx`                          | T11          |
+| Today, Block detail and Field screens                | `apps/web/src/routes/*`, `src/features/*` (empty)        | T12–T14, T17 |
+| Offline outbox and optimistic task updates           | `apps/web/src/api/outbox.ts` (no-op), `useUpdateTask`    | T17          |
+| Arabic and Urdu UI strings                           | `apps/web/src/i18n/ar.json`, `ur.json` (English copies)  | T18          |
+| Making-of story                                      | `apps/web/src/routes/making-of.tsx`                      | T19          |
 
 ## Reason params (engine → web contract)
 
@@ -47,6 +45,16 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - The canvas's "Nightfield Night" design-system board uses a green-black palette (#0B1410) that its own token table and the Night dashboard don't. Graphite (#111214) is used.
 - Night tokens exist (`[data-theme='night']` re-points every `--color-*` and `--shadow-*`); nothing sets `data-theme` yet. The toggle lands with the Today screen.
 - **Tokens pipeline (T02):** `pnpm design:check` validates against the committed Stylebase v1 schema plus 17 contrast rules per theme (text-primary ≥ 7 : 1, secondary/muted/accent-text ≥ 4.5 : 1, focus ≥ 3 : 1, …), the night theme defining every day colour, and a lightness-ordered water scale. It writes `packages/tokens/dist/` (gitignored, rebuilt on `postinstall`). Tailwind's default palette, type scale, radii and shadows are reset, so only design.md tokens compile. `@theme static` emits every variable, so `var(--color-water-3)` works in SVG and GSAP even when no utility uses it.
+
+## Time-shift and the API (T10)
+
+- **The API serves a frozen scenario replayed at the current hour.** `withTimeShift(repo, now)` (`services/timeshift.ts`) wraps the stored repo. Readings and irrigation events move by `floorHour(now) − seedAnchor` both ways, so query bounds are un-shifted going in. Manual event logs are stored in seed time and age with the rest of the farm. Task due dates move by whole GST days.
+- **Task `updatedAt` is never shifted.** It's a real version stamp: a shifted one would jump back every hour and turn honest edits into 409s.
+- **The budget is evaluated at the scenario's own moment**, not the real calendar: the seed's month, its day of month, its usage up to seed "now" (`services/plan.ts`). The allocation is calibrated for that moment, so "fodder on deficit, month tight" holds on any day the demo is opened (tested at three dates). Deviates from T10's "usage in the current GST month", which made the status flip to ok after midnight. `budget.month` is therefore the seed's month.
+- **Repo interface changes:** `getSeedAnchor()` was added; `getMonthUsage(month)` became `getUsage(sinceIso, untilIso)` (half-open), so the shifted view can translate bounds. `/api/health` returns `seedAnchor`.
+- **Every timestamp leaves the API as UTC `Z`**, including schedule times (the engine works in `+04:00`). Reason params keep `HH:mm` in GST.
+- **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
+- **D-3's task title is static seed text** ("no data since 12:00") while the stale gap now moves with the clock. T17: render the time from the sensor's `lastAt` instead.
 
 ## UI primitives (T03, Nightfield)
 
