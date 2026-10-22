@@ -1,0 +1,72 @@
+# Notes
+
+Working notes for whoever (human or Claude Code) picks up the next task. Read this before starting one.
+
+## TODO seams and the task that fills each
+
+Search the code for `TODO(Txx)` to find each seam.
+
+| Seam                                                                                  | Where                                                           | Filled by    |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------ |
+| Design tokens from design.md (CSS `@theme`, TS tokens, motion tokens), `design:check` | `packages/tokens/src/index.ts` (empty `tokens = {}`)            | T02          |
+| Tailwind v4 and the IBM Plex fonts                                                    | `apps/web/src/index.css` (comment only), `apps/web/index.html`  | T02          |
+| UI primitives (Button, Panel, Stat, Badge, states)                                    | `apps/web/src/ui/` (empty), `app/QueryState.tsx` (plain markup) | T03, T20     |
+| GSAP setup, MotionProvider                                                            | `apps/web/src/motion/` (empty), `app/providers.tsx`             | T15          |
+| Block PAW, confidence, decisions                                                      | `packages/engine/src/index.ts`: `blockPaw`, `decideBlock`       | T05          |
+| Budget guard, night scheduling                                                        | `packages/engine/src/index.ts`: `applyBudget`, `schedule`       | T06          |
+| Postgres repo, Neon client, `db:migrate` driver                                       | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`)        | T07          |
+| Simulator and seed (30 days, scenario, D-3 gap)                                       | `apps/api/src/sim/`, `buildInlineSeed` in `repo/memory.ts`      | T08          |
+| Time-shift wired into services (helpers are done)                                     | `services/plan.ts`, routes in `routes/blocks.ts`                | T08, T10     |
+| Open-Meteo fetch, TTL cache, stale fallback                                           | `apps/api/src/services/weather.ts` (serves the fixture)         | T09          |
+| Plan memoisation, `seedAnchor` in `/api/health`                                       | `services/plan.ts`, `routes/health.ts`                          | T10          |
+| Shell freshness, Badge, SegmentedControl, mobile nav                                  | `apps/web/src/app/AppShell.tsx`                                 | T11          |
+| Today, Block detail and Field screens                                                 | `apps/web/src/routes/*`, `src/features/*` (empty)               | T12–T14, T17 |
+| Offline outbox and optimistic task updates                                            | `apps/web/src/api/outbox.ts` (no-op), `useUpdateTask`           | T17          |
+| Arabic and Urdu UI strings                                                            | `apps/web/src/i18n/ar.json`, `ur.json` (English copies)         | T18          |
+| Making-of story                                                                       | `apps/web/src/routes/making-of.tsx`                             | T19          |
+
+## Contract the engine must honour (T05/T06)
+
+`en.json` already renders every `ReasonCode`, so the engine must emit these param names:
+
+| Code                                 | Params                             |
+| ------------------------------------ | ---------------------------------- |
+| `PAW_NOW`                            | `paw`                              |
+| `PAW_PROJECTED`                      | `from`, `to`, `etcMm`              |
+| `ABOVE_THRESHOLD`, `BELOW_THRESHOLD` | `threshold`                        |
+| `ET0_FORECAST`                       | `mm`                               |
+| `REFILL_TO_TARGET`                   | `target`, `netMm`, `grossMm`       |
+| `SAVES_VS_FIXED`                     | `m3`                               |
+| `GREENHOUSE_PULSES`                  | `count`, `m3`, `times`             |
+| `BUDGET_DEFICIT`                     | `factor`                           |
+| `SENSOR_STALE`                       | `sensorId`, `hours`                |
+| `LOW_CONFIDENCE`                     | none                               |
+| `WINDOW_ASSIGNED`                    | `start`, `end` (formatted `HH:mm`) |
+| `WINDOW_OVERFLOW`                    | `cutM3`                            |
+
+Pass pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messages: they format with the locale's digits, which breaks the Western-digits rule in Arabic. A plain `{x}` stays Western.
+
+## Deviations from the plan
+
+- **Arabic farm name uses Western digits** ("مزرعة 07"), not `٠٧` as in plan/03 §1, per the design.md rule.
+- **`FarmSchema.utilities`** (well, RO, tank, pump, TSE inlet) comes from T04; plan/03 §2 doesn't list it. The `farms` table gains a `utilities jsonb` column to match.
+- **Added schemas:** `NewIrrigationEventSchema` (POST body, 0.1–500 m³), `TaskTemplateSchema`, `HealthSchema`, `MonthSchema`. The shared error type is exported as `ApiErrorBody`, leaving the short name `ApiError` free for the web's thrown error class.
+- **`gstDate()` lives in `@saqi/shared/time.ts`** so the API, engine and web share one GST date helper. T06's `time.ts` can build on it.
+- **`/making-of` sits outside the app shell**, per plan/05 §0.
+- **The API has no `build` script yet.** Vercel bundles `src/vercel.ts` itself (T23). Check there that the JSON import (`with { type: 'json' }`) in `services/weather.ts` bundles cleanly.
+- **The skeleton's seed anchor is the server's start hour**, so memory data "ends now" without time-shifting. Restarting the API (including `tsx watch` reloads) resets memory data, task updates included.
+- **Tasks query requires `date`.** plan/02 §4 lists it as a parameter without saying whether it's optional.
+
+## Toolchain pins (latest majors that broke the stack)
+
+- **TypeScript `~6.0`.** 7.0 (the native port) is `latest`, but typescript-eslint 8 supports `<6.1`.
+- **ESLint `^9`.** eslint-plugin-jsx-a11y 6.10 peers on ESLint ≤ 9.
+- **React Router `^7`.** v8 is `latest`; the stack says RR7.
+- Also in use: zod 4, Vite 8 (rolldown), Vitest 5, Hono 4, drizzle-orm 0.45, TanStack Query 5, i18next 26.
+- pnpm is pinned to 9.15.9 via `packageManager`. On this machine `pnpm` is a shell alias to a missing `sfw`; use a real pnpm 9 binary or `corepack`.
+
+## Watch list
+
+- **Web bundle:** the entry chunk is about 150 kB gzip (React, Router, Query, zod 4, i18next + ICU). NFR2 caps the field route at 250 kB. Consider `zod/mini` on the web or trimming ICU before GSAP lands.
+- **Retries:** TanStack Query `retry: 1` also retries 404/422. T20 could skip retries on 4xx.
+- **pg contract suite:** `repo/contract.test.ts` runs only when `DATABASE_URL` is set, and it expects the database to be seeded with the current hour as anchor (T07/T08).
