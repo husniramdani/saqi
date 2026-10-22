@@ -16,3 +16,4 @@ export { EmptyState, ErrorState, Skeleton, StaleTag } from './states';
 export { TimeTrack } from './TimeTrack';
 export type { TrackBar } from './TimeTrack';
 export { Toggle } from './Toggle';
+export { Spinner } from './Spinner';

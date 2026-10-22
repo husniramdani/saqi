@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Arrow } from './Arrow';
 import { cx } from './cx';
+import { Spinner } from './Spinner';
 
 export type ButtonVariant = 'accent' | 'ink' | 'ghost';
 export type ButtonSize = 'md' | 'field' | 'icon';
@@ -79,17 +80,8 @@ export function Button({
         {arrow ? <PillArrow variant={variant} /> : null}
       </span>
       {loading ? (
-        // TODO(T15): spin with GSAP (motion goes through GSAP only); static ring until then.
         <span className="absolute inset-0 grid place-items-center" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" data-spinner>
-            <circle cx="9" cy="9" r="7" stroke="currentColor" strokeOpacity=".25" strokeWidth="2" />
-            <path
-              d="M9 2a7 7 0 0 1 7 7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
+          <Spinner />
         </span>
       ) : null}
     </button>

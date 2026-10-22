@@ -8,7 +8,6 @@ Search the code for `TODO(Txx)` to find each seam.
 
 | Seam                                            | Where                                                    | Filled by    |
 | ----------------------------------------------- | -------------------------------------------------------- | ------------ |
-| GSAP setup, MotionProvider                      | `apps/web/src/motion/` (empty), `app/providers.tsx`      | T15          |
 | Postgres repo, Neon client, `db:migrate` driver | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07          |
 | Today, Block detail and Field screens           | `apps/web/src/routes/*`, `src/features/*` (empty)        | T12–T14, T17 |
 | Offline outbox and optimistic task updates      | `apps/web/src/api/outbox.ts` (no-op), `useUpdateTask`    | T17          |
@@ -53,6 +52,27 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Repo interface changes:** `getSeedAnchor()` was added; `getMonthUsage(month)` became `getUsage(sinceIso, untilIso)` (half-open), so the shifted view can translate bounds. `/api/health` returns `seedAnchor`.
 - **Every timestamp leaves the API as UTC `Z`**, including schedule times (the engine works in `+04:00`). Reason params keep `HH:mm` in GST.
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
+
+## Motion foundation (T15)
+
+- `apps/web/src/motion/`:
+  - `gsap.ts` is the only plugin registration. `loadMapPlugins()` (DrawSVG, MotionPath, Flip) and `loadStoryPlugins()` (ScrollTrigger, SplitText) are cached dynamic imports.
+  - `tokens.ts` re-exports design.md's tokens and sets `gsap.defaults` to settle / power2.out.
+  - `MotionProvider` + `useMotion()` give `{ reduced, dirSign, originStart, forceReduced }` and set `<html data-motion>`.
+  - `withMotion(full, reduced)` wraps `gsap.matchMedia()`.
+  - `presets.ts`: `fadeUpStagger` (M7), `growFromStart` (M6), `countTo` (M3), `meterTo` (M4), `sheetIn` / `sheetOut` (M10), `crossfadeSwap` (M12), `spin`.
+- **Plan/06 motion names map onto the Nightfield tokens:**
+  - reasons: settle 0.48 s, `power2.out`, stagger 0.06;
+  - bars and meter: drift 0.9 s, `expo.out` (as on the canvas);
+  - counters: drift, snapped to the display precision;
+  - sheet: settle in, step out;
+  - language crossfade: step each way;
+  - spinner: one turn per drift, linear.
+- **RTL comes from the element**, not the page: presets read the nearest `dir` (`dirAt`), so a mirrored wrapper (the kitchen) mirrors too. `useMotion().dirSign` follows the locale.
+- **Reduced motion:** every preset sets its end state when `reduced`. `withMotion(…, forceReduced = true)` runs the reduced branch directly, because GSAP's `matchMedia` only runs a callback when one of its queries matches (found by the jsdom stub; a browser without `matchMedia` would otherwise leave from-states applied). The kitchen's switch simulates reduced motion through `forceReduced`.
+- **Click-time animations** join the component's GSAP context via `context.add(fn)` from `useGSAP`. The React Compiler lint flags `contextSafe(fn)` created during render when `fn` reads refs.
+- `Button`'s loading ring is now `Spinner`: it spins through GSAP and stays still under reduced motion.
+- **Bundle:** no plugin chunks exist yet (nothing calls the loaders until T16). Field's first load is about 205 kB gzip (entry 110 + shared `ui` 93, which now includes GSAP core, + 1), under NFR2's 250 kB. The only "ScrollTrigger" string in `ui` is GSAP core's lookup hook, not the plugin. Re-check after T16 adds the map plugins.
 
 ## Live scenario: memory mode rebuilds hourly (decided after T14)
 
@@ -125,7 +145,6 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - `apps/web/src/ui/` holds the Nightfield pieces, not T03's generic list: pill `Button` (accent / ink / ghost, `arrow`, `loading`, sizes md / field 56 px / icon 44 px) plus `buttonClasses` for links, `Panel`, `Figure` and `Stat`, `Chip` with `DECISION_CHIP`, `SourceDot`, `SegmentedControl` (tablist, arrow keys follow the reading direction), `Toggle`, `Meter` (scaleX fill for M4), `TimeTrack` (hour ticks, `data-schedule-bar`), `MoistureSwatch` with `moistureStep` / `moistureToken`, and the states `Skeleton`, `EmptyState`, `ErrorState`, `StaleTag`. `QueryState` now uses them.
 - **Feature-level pieces stay with their screens**: the decision row and map tag go with T12/T13, since they need domain data.
 - **Units scale with the figure.** The canvas's raised 0.42em unit is for lead figures only; at small sizes it came out around 6.5 px, so small figures use a baseline unit one step smaller.
-- **Loading spinner is static** until T15 animates it with GSAP (motion only through GSAP).
 - `/dev/kitchen` (dev builds only) shows every primitive with Day/Night and LTR/RTL switches. A test fails if a primitive contains a hex colour.
 - Geist has no subscript `₀`, so "ET₀" draws its zero in a fallback font. Decide in T13 whether to set "ET₀" with Geist Mono or the `<sub>0</sub>` markup.
 

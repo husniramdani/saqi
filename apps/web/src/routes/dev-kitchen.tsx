@@ -24,6 +24,7 @@ import {
   Toggle,
 } from '@/ui';
 import { BlockList, FarmMap, MapLegend } from '@/features/farm-map';
+import { MotionLab } from './dev-kitchen-motion';
 import { scenarioDecisions, scenarioSchedule } from '@/features/farm-map/scenario';
 
 // Dev-only review page (mounted at /dev/kitchen when import.meta.env.DEV). English only.
@@ -324,6 +325,13 @@ export function Component() {
             />
           </Cell>
         </div>
+      </Section>
+
+      <Section
+        title="Motion"
+        note="GSAP presets with design.md's motion tokens. Replay each; flip RTL above to see bars, meter and counter mirror; simulate reduced motion to see end states."
+      >
+        <MotionLab />
       </Section>
 
       <Section
