@@ -6,15 +6,22 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.5",
+    "@hono/zod-validator": "^0.9.1",
     "@saqi/engine": "workspace:^",
     "@saqi/shared": "workspace:^",
-    "hono": "^4.13.13"
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.13",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@types/node": "^26.6.5",
+    "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "vitest": "^5.0.5"

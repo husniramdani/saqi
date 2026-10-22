@@ -1,0 +1,63 @@
+{
+  "fetchedAt": "2026-10-22T17:00:00Z",
+  "stale": false,
+  "current": { "tempC": 31.4, "humidityPct": 38, "windKmh": 14.2, "isDay": false },
+  "daily": [
+    {
+      "date": "2026-10-22",
+      "et0Mm": 5.6,
+      "tMaxC": 36.1,
+      "tMinC": 23.4,
+      "humidityMeanPct": 41,
+      "windMaxKmh": 18.7
+    },
+    {
+      "date": "2026-10-23",
+      "et0Mm": 5.8,
+      "tMaxC": 36.5,
+      "tMinC": 23.9,
+      "humidityMeanPct": 39,
+      "windMaxKmh": 20.2
+    },
+    {
+      "date": "2026-10-24",
+      "et0Mm": 5.9,
+      "tMaxC": 36.8,
+      "tMinC": 24.1,
+      "humidityMeanPct": 37,
+      "windMaxKmh": 21.5
+    },
+    {
+      "date": "2026-10-25",
+      "et0Mm": 5.5,
+      "tMaxC": 35.7,
+      "tMinC": 23.2,
+      "humidityMeanPct": 43,
+      "windMaxKmh": 16.9
+    },
+    {
+      "date": "2026-10-26",
+      "et0Mm": 5.2,
+      "tMaxC": 35.0,
+      "tMinC": 22.8,
+      "humidityMeanPct": 46,
+      "windMaxKmh": 15.1
+    },
+    {
+      "date": "2026-10-27",
+      "et0Mm": 5.4,
+      "tMaxC": 35.4,
+      "tMinC": 22.6,
+      "humidityMeanPct": 44,
+      "windMaxKmh": 17.8
+    },
+    {
+      "date": "2026-10-28",
+      "et0Mm": 5.7,
+      "tMaxC": 36.0,
+      "tMinC": 23.0,
+      "humidityMeanPct": 40,
+      "windMaxKmh": 19.4
+    }
+  ]
+}
