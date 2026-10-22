@@ -2,7 +2,12 @@
   "shell": {
     "brand": "Saqi",
     "skipToContent": "Skip to content",
-    "nav": { "label": "Main", "today": "Today", "field": "Field", "makingOf": "Making-of" },
+    "nav": {
+      "label": "Main",
+      "today": "Today",
+      "field": "Field",
+      "makingOf": "Making-of"
+    },
     "simulated": "Simulated sensors",
     "language": "Language",
     "updated": "Updated {time}"
@@ -34,7 +39,10 @@
   "field": {
     "title": "Field",
     "worker": "Worker",
-    "workers": { "rahim": "Rahim", "imran": "Imran" },
+    "workers": {
+      "rahim": "Rahim",
+      "imran": "Imran"
+    },
     "tasksToday": "{date} · {count, plural, one {{count} task} other {{count} tasks}}",
     "farm": "Farm",
     "markDone": "Mark done",
@@ -47,15 +55,25 @@
     "farm": "{name} · {count} blocks",
     "home": "Back to Saqi"
   },
-  "decision": { "irrigate": "Irrigate", "skip": "Skip", "pulse": "Pulse", "deficit": "Deficit" },
-  "confidence": { "high": "High", "medium": "Medium", "low": "Low" },
+  "decision": {
+    "irrigate": "Irrigate",
+    "skip": "Skip",
+    "pulse": "Pulse",
+    "deficit": "Deficit"
+  },
+  "confidence": {
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low"
+  },
   "state": {
     "loading": "Loading…",
     "error": "Couldn't load this: {message}",
     "retry": "Retry",
     "empty": "Nothing here yet.",
     "notFound": "Page not found",
-    "home": "Back to Today"
+    "home": "Back to Today",
+    "noData": "No data"
   },
   "reason": {
     "PAW_NOW": "PAW now {paw}%",
@@ -65,7 +83,7 @@
     "ET0_FORECAST": "ET₀ tomorrow {mm} mm",
     "REFILL_TO_TARGET": "Refill to {target}% = {netMm} mm net, {grossMm} mm gross",
     "SAVES_VS_FIXED": "Saves {m3} m³ against a fixed schedule",
-    "GREENHOUSE_PULSES": "{count} pulses of {m3} m³ at {times}",
+    "GREENHOUSE_PULSES": "{count} pulses of {m3} m³ tomorrow",
     "BUDGET_DEFICIT": "Deficit irrigation ×{factor}: the monthly water budget is tight",
     "SENSOR_STALE": "Sensor {sensorId} has not reported for {hours} h",
     "LOW_CONFIDENCE": "No fresh sensor data; check the block by hand",

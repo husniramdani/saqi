@@ -11,6 +11,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^5",
     "typescript": "~6.0.3",
     "vitest": "^5.0.5"
   },

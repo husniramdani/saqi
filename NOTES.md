@@ -12,7 +12,6 @@ Search the code for `TODO(Txx)` to find each seam.
 | Tailwind v4 and the IBM Plex fonts                                                    | `apps/web/src/index.css` (comment only), `apps/web/index.html`  | T02          |
 | UI primitives (Button, Panel, Stat, Badge, states)                                    | `apps/web/src/ui/` (empty), `app/QueryState.tsx` (plain markup) | T03, T20     |
 | GSAP setup, MotionProvider                                                            | `apps/web/src/motion/` (empty), `app/providers.tsx`             | T15          |
-| Block PAW, confidence, decisions                                                      | `packages/engine/src/index.ts`: `blockPaw`, `decideBlock`       | T05          |
 | Budget guard, night scheduling                                                        | `packages/engine/src/index.ts`: `applyBudget`, `schedule`       | T06          |
 | Postgres repo, Neon client, `db:migrate` driver                                       | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`)        | T07          |
 | Simulator and seed (30 days, scenario, D-3 gap)                                       | `apps/api/src/sim/`, `buildInlineSeed` in `repo/memory.ts`      | T08          |
@@ -25,32 +24,35 @@ Search the code for `TODO(Txx)` to find each seam.
 | Arabic and Urdu UI strings                                                            | `apps/web/src/i18n/ar.json`, `ur.json` (English copies)         | T18          |
 | Making-of story                                                                       | `apps/web/src/routes/making-of.tsx`                             | T19          |
 
-## Contract the engine must honour (T05/T06)
+## Reason params (engine → web contract)
 
 `en.json` already renders every `ReasonCode`, so the engine must emit these param names:
 
-| Code                                 | Params                             |
-| ------------------------------------ | ---------------------------------- |
-| `PAW_NOW`                            | `paw`                              |
-| `PAW_PROJECTED`                      | `from`, `to`, `etcMm`              |
-| `ABOVE_THRESHOLD`, `BELOW_THRESHOLD` | `threshold`                        |
-| `ET0_FORECAST`                       | `mm`                               |
-| `REFILL_TO_TARGET`                   | `target`, `netMm`, `grossMm`       |
-| `SAVES_VS_FIXED`                     | `m3`                               |
-| `GREENHOUSE_PULSES`                  | `count`, `m3`, `times`             |
-| `BUDGET_DEFICIT`                     | `factor`                           |
-| `SENSOR_STALE`                       | `sensorId`, `hours`                |
-| `LOW_CONFIDENCE`                     | none                               |
-| `WINDOW_ASSIGNED`                    | `start`, `end` (formatted `HH:mm`) |
-| `WINDOW_OVERFLOW`                    | `cutM3`                            |
+| Code                                 | Params                                                  |
+| ------------------------------------ | ------------------------------------------------------- |
+| `PAW_NOW`                            | `paw`                                                   |
+| `PAW_PROJECTED`                      | `from`, `to`, `etcMm`                                   |
+| `ABOVE_THRESHOLD`, `BELOW_THRESHOLD` | `threshold`                                             |
+| `ET0_FORECAST`                       | `mm`                                                    |
+| `REFILL_TO_TARGET`                   | `target`, `netMm`, `grossMm`                            |
+| `SAVES_VS_FIXED`                     | `m3`                                                    |
+| `GREENHOUSE_PULSES`                  | `count`, `m3` (per pulse; times come from the schedule) |
+| `BUDGET_DEFICIT`                     | `factor`                                                |
+| `SENSOR_STALE`                       | `sensorId`, `hours`                                     |
+| `LOW_CONFIDENCE`                     | none                                                    |
+| `WINDOW_ASSIGNED`                    | `start`, `end` (formatted `HH:mm`)                      |
+| `WINDOW_OVERFLOW`                    | `cutM3`                                                 |
 
-Pass pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messages: they format with the locale's digits, which breaks the Western-digits rule in Arabic. A plain `{x}` stays Western.
+The engine passes pre-rounded numbers (T05 emits everything except the `WINDOW_*` codes, which T06 adds). Avoid ICU `#` and `{x, number}` in messages: they format with the locale's digits, which breaks the Western-digits rule in Arabic. A plain `{x}` stays Western.
 
 ## Deviations from the plan
 
 - **Arabic farm name uses Western digits** ("مزرعة 07"), not `٠٧` as in plan/03 §1, per the design.md rule.
 - **`FarmSchema.utilities`** (well, RO, tank, pump, TSE inlet) comes from T04; plan/03 §2 doesn't list it. The `farms` table gains a `utilities jsonb` column to match.
 - **Added schemas:** `NewIrrigationEventSchema` (POST body, 0.1–500 m³), `TaskTemplateSchema`, `HealthSchema`, `MonthSchema`. The shared error type is exported as `ApiErrorBody`, leaving the short name `ApiError` free for the web's thrown error class.
+- **`pawNow` and `pawProjected` are nullable** (T05). When every sensor is stale there is no honest PAW, so the API sends `null` instead of a made-up 0. The web shows "No data".
+- **`blockPaw` takes `WeightedSeries`** (a `SensorSeries` plus its `weight`). Weights live on `farm.sensors`, not on readings, so `planDay` attaches them. The positional signature from plan/04 §1 is unchanged.
+- **The engine is split across files** (`paw.ts`, `decide.ts`, `round.ts`); `index.ts` keeps the pipeline and the T06 placeholders.
 - **`gstDate()` lives in `@saqi/shared/time.ts`** so the API, engine and web share one GST date helper. T06's `time.ts` can build on it.
 - **`/making-of` sits outside the app shell**, per plan/05 §0.
 - **The API has no `build` script yet.** Vercel bundles `src/vercel.ts` itself (T23). Check there that the JSON import (`with { type: 'json' }`) in `services/weather.ts` bundles cleanly.

@@ -1,48 +1,17 @@
 /**
  * @saqi/engine: pure irrigation logic (plan/04-recommendation-engine.md).
- * No I/O, no clock, no randomness. The public API and the planDay pipeline are final;
- * the maths inside each step is a placeholder until T05/T06.
+ * No I/O, no clock, no randomness. blockPaw and decideBlock are real (T05);
+ * applyBudget and schedule are placeholders until T06.
  */
 import { gstDate, sensorsForBlock } from '@saqi/shared';
-import type {
-  Block,
-  BlockDecision,
-  Budget,
-  DayPlan,
-  Farm,
-  ScheduleItem,
-  SensorSeries,
-} from '@saqi/shared';
-import type { BlockPawInfo, BudgetInput, PlanDayInput } from './types';
+import type { BlockDecision, Budget, DayPlan, Farm, ScheduleItem } from '@saqi/shared';
+import { decideBlock } from './decide';
+import { blockPaw } from './paw';
+import type { BudgetInput, PlanDayInput } from './types';
 
-export type { BlockPawInfo, BudgetInput, PlanDayInput } from './types';
-
-export function blockPaw(_block: Block, _sensors: SensorSeries[], _now: string): BlockPawInfo {
-  // TODO(T05): weighted mean over fresh sensors (≤ 3 h old) and confidence rules, plan/04 §2.1.
-  return { paw: null, confidence: 'low', staleSensors: [] };
-}
-
-export function decideBlock(block: Block, pawInfo: BlockPawInfo, et0Mm: number): BlockDecision {
-  // TODO(T05): water-balance model and decision table, plan/04 §2 and §2.2.
-  const paw = pawInfo.paw ?? 0;
-  return {
-    blockId: block.id,
-    decision: 'skip',
-    pawNow: paw,
-    pawProjected: paw,
-    threshold: block.pawThreshold,
-    target: block.pawTarget,
-    et0Mm,
-    etcMm: 0,
-    netMm: 0,
-    grossMm: 0,
-    volumeM3: 0,
-    litresPerTree: block.trees === null ? null : 0,
-    savedVsFixedM3: 0,
-    confidence: pawInfo.confidence,
-    reasons: [],
-  };
-}
+export { decideBlock, PULSES_PER_DAY } from './decide';
+export { blockPaw, STALE_AFTER_HOURS } from './paw';
+export type { BlockPawInfo, BudgetInput, PlanDayInput, WeightedSeries } from './types';
 
 export function applyBudget(
   decisions: BlockDecision[],
@@ -78,7 +47,10 @@ export function planDay(input: PlanDayInput): DayPlan {
   const et0Avg = et0.length > 0 ? sum(et0.map((d) => d.et0Mm)) / et0.length : 0;
 
   const decided = farm.blocks.map((block) => {
-    const series = sensorsForBlock(farm, block.id).flatMap((s) => latest[s.id] ?? []);
+    const series = sensorsForBlock(farm, block.id).flatMap((s) => {
+      const found = latest[s.id];
+      return found ? [{ ...found, weight: s.weight }] : [];
+    });
     return decideBlock(block, blockPaw(block, series, now), et0Tomorrow);
   });
   const { decisions, budget } = applyBudget(decided, farm, input.budget, et0Avg);

@@ -19,6 +19,9 @@ export interface PlanDayInput {
   now: string;
 }
 
+/** A sensor's series plus its weight in the block mean (from `farm.sensors`). */
+export type WeightedSeries = SensorSeries & { weight: number };
+
 export interface BlockPawInfo {
   paw: number | null;
   confidence: Confidence;

@@ -34,8 +34,9 @@ export type Confidence = z.infer<typeof ConfidenceSchema>;
 export const BlockDecisionSchema = z.object({
   blockId: z.string(),
   decision: DecisionSchema,
-  pawNow: z.number(),
-  pawProjected: z.number(),
+  /** null when every sensor is stale: there is no honest PAW to show. */
+  pawNow: z.number().nullable(),
+  pawProjected: z.number().nullable(),
   threshold: z.number(),
   target: z.number(),
   et0Mm: z.number().nonnegative(),

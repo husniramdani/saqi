@@ -44,7 +44,7 @@ export function Component() {
                       <Link to={`/blocks/${d.blockId}`}>{d.blockId}</Link> {nameOf(d.blockId)}
                     </th>
                     <td>{t(`decision.${d.decision}`)}</td>
-                    <td>{formatPct(d.pawNow, locale)}</td>
+                    <td>{d.pawNow === null ? t('state.noData') : formatPct(d.pawNow, locale)}</td>
                     <td>{formatM3(d.volumeM3, locale)}</td>
                     <td>{t(`confidence.${d.confidence}`)}</td>
                   </tr>
