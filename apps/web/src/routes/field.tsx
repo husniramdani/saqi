@@ -4,46 +4,61 @@ import { useTranslation } from 'react-i18next';
 import { useTasks, useUpdateTask } from '@/api/queries';
 import { QueryState } from '@/app/QueryState';
 import { useLocale } from '@/i18n';
+import { formatDateGst } from '@/i18n/format';
+import { Button, Chip, SegmentedControl, Skeleton } from '@/ui';
 
+// TODO(T17): done sheet (note, photo), offline outbox, worker persisted on the device.
 export function Component() {
   const { t } = useTranslation();
   const locale = useLocale();
   const [today] = useState(() => gstDate(new Date()));
-  // TODO(T17): persist the worker on the device.
   const [assignee, setAssignee] = useState<Assignee>('rahim');
   const tasks = useTasks(today, assignee);
   const updateTask = useUpdateTask();
 
   return (
-    <>
-      <h1>{t('field.title')}</h1>
-      <label>
-        {t('field.worker')}{' '}
-        <select
+    <div className="mx-auto flex max-w-[480px] flex-col gap-6 pt-6">
+      <div className="flex flex-col gap-4">
+        <h1 className="text-3xl font-light tracking-[-0.035em]">{t('field.title')}</h1>
+        <SegmentedControl
+          label={t('field.worker')}
           value={assignee}
-          onChange={(e) => setAssignee(AssigneeSchema.parse(e.target.value))}
-        >
-          {AssigneeSchema.options.map((a) => (
-            <option key={a} value={a}>
-              {t(`field.workers.${a}`)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <QueryState query={tasks} isEmpty={(list) => list.length === 0} emptyText={t('field.empty')}>
+          onChange={setAssignee}
+          options={AssigneeSchema.options.map((a) => ({
+            value: a,
+            label: t(`field.workers.${a}`),
+          }))}
+        />
+      </div>
+      <QueryState
+        query={tasks}
+        isEmpty={(list) => list.length === 0}
+        emptyText={t('field.empty')}
+        skeleton={<Skeleton block={320} />}
+      >
         {(list) => (
           <>
-            <p>{t('field.tasksToday', { date: today, count: list.length })}</p>
-            <ul>
+            <p className="text-text-secondary">
+              {t('field.subtitle', { date: formatDateGst(today, locale), count: list.length })}
+            </p>
+            <ul className="flex flex-col gap-3">
               {list.map((task) => (
-                <li key={task.id}>
-                  {task.blockId ?? t('field.farm')} · {task.title[locale]}{' '}
+                <li
+                  key={task.id}
+                  className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-5 shadow-raised"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-lg font-medium">{task.title[locale]}</p>
+                    <span className="num shrink-0 text-sm text-text-muted">
+                      {task.blockId ?? t('field.farm')}
+                    </span>
+                  </div>
                   {task.status === 'done' ? (
-                    <strong>{t('field.done')}</strong>
+                    <Chip variant="ok">{t('field.done')}</Chip>
                   ) : (
-                    <button
-                      type="button"
-                      disabled={updateTask.isPending}
+                    <Button
+                      size="field"
+                      loading={updateTask.isPending && updateTask.variables.id === task.id}
                       onClick={() =>
                         updateTask.mutate({
                           id: task.id,
@@ -53,15 +68,19 @@ export function Component() {
                       }
                     >
                       {t('field.markDone')}
-                    </button>
+                    </Button>
                   )}
                 </li>
               ))}
             </ul>
-            {updateTask.isError ? <p role="alert">{updateTask.error.message}</p> : null}
+            {updateTask.isError ? (
+              <p role="alert" className="text-error">
+                {updateTask.error.message}
+              </p>
+            ) : null}
           </>
         )}
       </QueryState>
-    </>
+    </div>
   );
 }

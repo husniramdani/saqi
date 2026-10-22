@@ -6,15 +6,14 @@ Working notes for whoever (human or Claude Code) picks up the next task. Read th
 
 Search the code for `TODO(Txx)` to find each seam.
 
-| Seam                                                 | Where                                                    | Filled by    |
-| ---------------------------------------------------- | -------------------------------------------------------- | ------------ |
-| GSAP setup, MotionProvider                           | `apps/web/src/motion/` (empty), `app/providers.tsx`      | T15          |
-| Postgres repo, Neon client, `db:migrate` driver      | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07          |
-| Shell freshness, Badge, SegmentedControl, mobile nav | `apps/web/src/app/AppShell.tsx`                          | T11          |
-| Today, Block detail and Field screens                | `apps/web/src/routes/*`, `src/features/*` (empty)        | T12–T14, T17 |
-| Offline outbox and optimistic task updates           | `apps/web/src/api/outbox.ts` (no-op), `useUpdateTask`    | T17          |
-| Arabic and Urdu UI strings                           | `apps/web/src/i18n/ar.json`, `ur.json` (English copies)  | T18          |
-| Making-of story                                      | `apps/web/src/routes/making-of.tsx`                      | T19          |
+| Seam                                            | Where                                                    | Filled by    |
+| ----------------------------------------------- | -------------------------------------------------------- | ------------ |
+| GSAP setup, MotionProvider                      | `apps/web/src/motion/` (empty), `app/providers.tsx`      | T15          |
+| Postgres repo, Neon client, `db:migrate` driver | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07          |
+| Today, Block detail and Field screens           | `apps/web/src/routes/*`, `src/features/*` (empty)        | T12–T14, T17 |
+| Offline outbox and optimistic task updates      | `apps/web/src/api/outbox.ts` (no-op), `useUpdateTask`    | T17          |
+| Arabic and Urdu UI strings                      | `apps/web/src/i18n/ar.json`, `ur.json` (English copies)  | T18          |
+| Making-of story                                 | `apps/web/src/routes/making-of.tsx`                      | T19          |
 
 ## Reason params (engine → web contract)
 
@@ -56,6 +55,18 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
 - **D-3's task title is static seed text** ("no data since 12:00") while the stale gap now moves with the clock. T17: render the time from the sensor's `lastAt` instead.
 
+## App shell (T11)
+
+- **Header follows the Nightfield Dashboard top bar:** logo mark, section tabs (Today, Field, Making-of; the canvas's Blocks/Schedule/Budget tabs are anchors inside Today and arrive with T13), "Simulated sensors", "Updated hh:mm GST" (the newest successful query, via the query cache), "N need attention" (irrigate, deficit or low confidence; links to `/#attention`), EN / ع / ار, and the Day/Night toggle.
+- **Deviations from the canvas:**
+  - The "Simulated sensors" pill is always visible; the canvas hides it with CSS, but CLAUDE.md requires it. On phones it shrinks to its dashed dot with the words kept for screen readers.
+  - No "FM" avatar: there are no accounts.
+  - The language buttons and header pills are 44 px tall, not 32/38 px, to meet design.md's target rule; segmented controls are 44 px too.
+- **Night toggle shipped here** (planned for the Today screen): stored as `saqi.theme`, applied in `main.tsx` before the first paint, `theme-color` meta follows it. Day is the default.
+- **Route changes move focus to `<main>`** without scrolling; `ScrollRestoration` resets scroll. A test renders under StrictMode, since its double effects once made focus jump on first load and hide the header.
+- Breakpoints: tabs from `md`, freshness from `sm`, farm name and attention pill from `xl`; phones get the bottom bar (Today, Field, About). **Gotcha:** a class string carrying both `inline-flex` and `hidden` resolves by stylesheet order, not class order, so shared class strings must not set `display`.
+- Pages (Today, Block, Field, Making-of, 404) are interim layouts on the Nightfield primitives; T13, T14, T17 and T19 replace them. `formatDateGst` gives "Fri 23 Oct". **23 Oct 2026 is a Friday**: plan/05 and the canvas say "Thu 23 Oct".
+
 ## UI primitives (T03, Nightfield)
 
 - `apps/web/src/ui/` holds the Nightfield pieces, not T03's generic list: pill `Button` (accent / ink / ghost, `arrow`, `loading`, sizes md / field 56 px / icon 44 px) plus `buttonClasses` for links, `Panel`, `Figure` and `Stat`, `Chip` with `DECISION_CHIP`, `SourceDot`, `SegmentedControl` (tablist, arrow keys follow the reading direction), `Toggle`, `Meter` (scaleX fill for M4), `TimeTrack` (hour ticks, `data-schedule-bar`), `MoistureSwatch` with `moistureStep` / `moistureToken`, and the states `Skeleton`, `EmptyState`, `ErrorState`, `StaleTag`. `QueryState` now uses them.
@@ -64,7 +75,6 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Loading spinner is static** until T15 animates it with GSAP (motion only through GSAP).
 - `/dev/kitchen` (dev builds only) shows every primitive with Day/Night and LTR/RTL switches. A test fails if a primitive contains a hex colour.
 - Geist has no subscript `₀`, so "ET₀" draws its zero in a fallback font. Decide in T13 whether to set "ET₀" with Geist Mono or the `<sub>0</sub>` markup.
-- Console warning "No `HydrateFallback` element" comes from lazy routes on first load (React Router 7). Harmless; silence it in T11 with a root `HydrateFallback`.
 
 ## Deviations from the plan
 

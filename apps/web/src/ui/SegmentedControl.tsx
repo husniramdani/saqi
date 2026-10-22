@@ -77,7 +77,7 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cx(
-              'inline-flex min-h-[38px] items-center rounded-full px-4 text-sm font-medium',
+              'inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium',
               selected ? 'bg-primary text-primary-foreground' : 'text-text-secondary',
             )}
           >

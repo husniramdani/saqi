@@ -28,7 +28,7 @@ export function LanguageSwitch() {
           aria-label={t(`shell.languages.${l.value}`)}
           onClick={() => void setLocale(l.value)}
           className={cx(
-            'num h-9 min-w-9 rounded-full px-2 text-xs font-medium',
+            'num h-11 min-w-11 rounded-full px-2 text-xs font-medium',
             l.value === locale ? 'bg-primary text-primary-foreground' : 'text-text-secondary',
           )}
         >

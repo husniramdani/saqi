@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router';
 import { useFarm, usePlanToday } from '@/api/queries';
 import { useLocale } from '@/i18n';
 import { formatTimeGst } from '@/i18n/format';
@@ -17,7 +17,8 @@ const NAV = [
 ] as const;
 
 const pill =
-  'inline-flex min-h-[38px] items-center gap-2 rounded-full border border-border bg-surface px-3 text-sm font-medium text-text-secondary no-underline';
+  // No display value here: each pill sets its own, so `hidden sm:inline-flex` can't lose to it.
+  'min-h-11 items-center gap-2 whitespace-nowrap rounded-full border border-border bg-surface px-3 text-sm font-medium text-text-secondary no-underline';
 const dot = 'inline-block shrink-0 rounded-full';
 
 /** Header (logo, sections, honest data badges, language, theme) and a phone bottom bar. */
@@ -29,15 +30,15 @@ export function AppShell() {
   const lastUpdated = useLastUpdated();
   const main = useRef<HTMLElement>(null);
   const { pathname } = useLocation();
-  const firstRender = useRef(true);
+  const shownPath = useRef(pathname);
 
   // Route changes move focus to the new page, so keyboard and screen-reader users land on it.
+  // Compared with the last path (not a first-render flag, which StrictMode's double effect
+  // defeats); ScrollRestoration owns the scroll, so focusing must not scroll.
   useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
-    main.current?.focus();
+    if (shownPath.current === pathname) return;
+    shownPath.current = pathname;
+    main.current?.focus({ preventScroll: true });
   }, [pathname]);
 
   const attention = plan.data?.decisions.filter(
@@ -46,6 +47,7 @@ export function AppShell() {
 
   return (
     <>
+      <ScrollRestoration />
       <a
         href="#main"
         className="sr-only rounded-full bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50"
@@ -61,7 +63,7 @@ export function AppShell() {
         >
           <LogoMark />
           <span className="text-lg font-semibold tracking-[-0.02em]">{t('shell.brand')}</span>
-          <span className="hidden text-sm font-medium text-text-muted lg:inline">
+          <span className="hidden text-sm font-medium whitespace-nowrap text-text-muted xl:inline">
             {farm.data?.name[locale] ?? t('shell.farm')}
           </span>
         </Link>
@@ -75,7 +77,7 @@ export function AppShell() {
                   end={item.end}
                   className={({ isActive }) =>
                     cx(
-                      'inline-flex min-h-[38px] items-center rounded-full px-4 text-sm font-medium no-underline',
+                      'inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium whitespace-nowrap no-underline',
                       isActive
                         ? 'bg-primary text-primary-foreground'
                         : 'text-text-secondary hover:bg-surface-raised hover:text-text-primary',
@@ -91,7 +93,9 @@ export function AppShell() {
 
         <div className="flex items-center gap-2">
           {/* Always on screen (CLAUDE.md): on phones it shrinks to its dashed dot. */}
-          <span className={cx(pill, 'max-sm:border-0 max-sm:bg-transparent max-sm:px-1')}>
+          <span
+            className={cx(pill, 'inline-flex max-sm:border-0 max-sm:bg-transparent max-sm:px-1')}
+          >
             <span
               aria-hidden="true"
               className={cx(dot, 'size-[9px] border-[1.5px] border-dashed border-accent-text')}
@@ -109,7 +113,7 @@ export function AppShell() {
             </span>
           ) : null}
           {attention ? (
-            <Link to="/#attention" className={cx(pill, 'hidden lg:inline-flex')}>
+            <Link to="/#attention" className={cx(pill, 'hidden xl:inline-flex')}>
               <b className="num font-semibold text-accent-text">{attention}</b>
               {t('shell.needAttention', { count: attention })}
             </Link>

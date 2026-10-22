@@ -39,8 +39,7 @@
     },
     "empty": "No decisions for today.",
     "plannedTonight": "Planned tonight",
-    "savedVsFixed": "Saved vs fixed",
-    "listNote": "The farm map and schedule arrive with the Today screen."
+    "savedVsFixed": "Saved vs fixed"
   },
   "block": {
     "back": "Today",
@@ -51,10 +50,10 @@
     "readings": "Sensor series in the last 14 days: {count}",
     "events": "Irrigation events in the last 30 days: {count}",
     "notFound": "This block doesn't exist on Farm 07.",
-    "facts": "{crop} · {area} ha",
     "sensorSeries": "Sensor series, 14 days",
     "irrigationEvents": "Irrigation events, 30 days",
-    "volume": "Volume tonight"
+    "volume": "Volume tonight",
+    "trees": "{count} trees"
   },
   "field": {
     "title": "Field",
