@@ -1,60 +1,158 @@
-import { LocaleSchema } from '@saqi/shared';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet } from 'react-router';
-import { useFarm } from '@/api/queries';
-import { setLocale, useLocale } from '@/i18n';
+import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { useFarm, usePlanToday } from '@/api/queries';
+import { useLocale } from '@/i18n';
+import { formatTimeGst } from '@/i18n/format';
+import { cx } from '@/ui';
+import { LanguageSwitch } from './LanguageSwitch';
+import { LogoMark } from './Logo';
+import { ThemeToggle } from './ThemeToggle';
+import { useLastUpdated } from './useLastUpdated';
 
-const LANGUAGES = [
-  { value: 'en', label: 'English' },
-  { value: 'ar', label: 'العربية' },
-  { value: 'ur', label: 'اردو' },
+const NAV = [
+  { to: '/', key: 'today', end: true },
+  { to: '/field', key: 'field', end: false },
+  { to: '/making-of', key: 'makingOf', end: false },
 ] as const;
 
-// TODO(T11): freshness "Updated hh:mm GST", mobile bottom nav, Badge + SegmentedControl.
+const pill =
+  'inline-flex min-h-[38px] items-center gap-2 rounded-full border border-border bg-surface px-3 text-sm font-medium text-text-secondary no-underline';
+const dot = 'inline-block shrink-0 rounded-full';
+
+/** Header (logo, sections, honest data badges, language, theme) and a phone bottom bar. */
 export function AppShell() {
   const { t } = useTranslation();
   const locale = useLocale();
   const farm = useFarm();
+  const plan = usePlanToday();
+  const lastUpdated = useLastUpdated();
+  const main = useRef<HTMLElement>(null);
+  const { pathname } = useLocation();
+  const firstRender = useRef(true);
+
+  // Route changes move focus to the new page, so keyboard and screen-reader users land on it.
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    main.current?.focus();
+  }, [pathname]);
+
+  const attention = plan.data?.decisions.filter(
+    (d) => d.decision === 'irrigate' || d.decision === 'deficit' || d.confidence === 'low',
+  ).length;
 
   return (
     <>
-      <a href="#main">{t('shell.skipToContent')}</a>
-      <header>
-        <strong>{t('shell.brand')}</strong>{' '}
-        {farm.data ? <span>{farm.data.name[locale]}</span> : null}
-        <nav aria-label={t('shell.nav.label')}>
-          <ul>
-            <li>
-              <NavLink to="/" end>
-                {t('shell.nav.today')}
-              </NavLink>
-            </li>
-            <li>
-              <NavLink to="/field">{t('shell.nav.field')}</NavLink>
-            </li>
-            <li>
-              <NavLink to="/making-of">{t('shell.nav.makingOf')}</NavLink>
-            </li>
+      <a
+        href="#main"
+        className="sr-only rounded-full bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50"
+      >
+        {t('shell.skipToContent')}
+      </a>
+
+      <header className="mx-auto flex min-h-14 max-w-[1440px] items-center justify-between gap-4 px-4 py-2 sm:px-6">
+        <Link
+          to="/"
+          aria-label={t('shell.home')}
+          className="inline-flex min-h-11 items-center gap-2.5 text-text-primary no-underline"
+        >
+          <LogoMark />
+          <span className="text-lg font-semibold tracking-[-0.02em]">{t('shell.brand')}</span>
+          <span className="hidden text-sm font-medium text-text-muted lg:inline">
+            {farm.data?.name[locale] ?? t('shell.farm')}
+          </span>
+        </Link>
+
+        <nav aria-label={t('shell.nav.label')} className="hidden md:block">
+          <ul className="flex gap-0.5 rounded-full border border-border bg-surface p-[3px] shadow-raised">
+            {NAV.map((item) => (
+              <li key={item.to}>
+                <NavLink
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    cx(
+                      'inline-flex min-h-[38px] items-center rounded-full px-4 text-sm font-medium no-underline',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-text-secondary hover:bg-surface-raised hover:text-text-primary',
+                    )
+                  }
+                >
+                  {t(`shell.nav.${item.key}`)}
+                </NavLink>
+              </li>
+            ))}
           </ul>
         </nav>
-        <p>{t('shell.simulated')}</p>
-        <label>
-          {t('shell.language')}{' '}
-          <select
-            value={locale}
-            onChange={(e) => void setLocale(LocaleSchema.parse(e.target.value))}
-          >
-            {LANGUAGES.map((l) => (
-              <option key={l.value} value={l.value} lang={l.value}>
-                {l.label}
-              </option>
-            ))}
-          </select>
-        </label>
+
+        <div className="flex items-center gap-2">
+          {/* Always on screen (CLAUDE.md): on phones it shrinks to its dashed dot. */}
+          <span className={cx(pill, 'max-sm:border-0 max-sm:bg-transparent max-sm:px-1')}>
+            <span
+              aria-hidden="true"
+              className={cx(dot, 'size-[9px] border-[1.5px] border-dashed border-accent-text')}
+            />
+            <span className="max-sm:sr-only">{t('shell.simulated')}</span>
+          </span>
+          {lastUpdated > 0 ? (
+            <span className={cx(pill, 'hidden sm:inline-flex')}>
+              <span aria-hidden="true" className={cx(dot, 'size-2 bg-success')} />
+              <span className="num">
+                {t('shell.updated', {
+                  time: formatTimeGst(new Date(lastUpdated).toISOString(), locale),
+                })}
+              </span>
+            </span>
+          ) : null}
+          {attention ? (
+            <Link to="/#attention" className={cx(pill, 'hidden lg:inline-flex')}>
+              <b className="num font-semibold text-accent-text">{attention}</b>
+              {t('shell.needAttention', { count: attention })}
+            </Link>
+          ) : null}
+          <LanguageSwitch />
+          <ThemeToggle />
+        </div>
       </header>
-      <main id="main">
+
+      <main
+        id="main"
+        ref={main}
+        tabIndex={-1}
+        className="mx-auto max-w-[1440px] px-4 pt-4 pb-28 focus:outline-none sm:px-6 md:pb-16"
+      >
         <Outlet />
       </main>
+
+      <nav
+        aria-label={t('shell.nav.label')}
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-overlay pb-[env(safe-area-inset-bottom)] md:hidden"
+      >
+        <ul className="grid grid-cols-3">
+          {NAV.map((item) => (
+            <li key={item.to}>
+              <NavLink
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  cx(
+                    'flex min-h-14 items-center justify-center border-t-2 text-sm font-medium no-underline',
+                    isActive
+                      ? 'border-primary text-text-primary'
+                      : 'border-transparent text-text-secondary',
+                  )
+                }
+              >
+                {t(item.key === 'makingOf' ? 'shell.nav.about' : `shell.nav.${item.key}`)}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </>
   );
 }

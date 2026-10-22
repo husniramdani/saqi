@@ -32,3 +32,12 @@ export const formatTimeGst = (iso: string, locale: Locale) =>
     minute: '2-digit',
     hourCycle: 'h23',
   }).format(new Date(iso))} GST`;
+
+/** A GST calendar date (YYYY-MM-DD) as "Thu 23 Oct", localised, Western digits. */
+export const formatDateGst = (date: string, locale: Locale) =>
+  new Intl.DateTimeFormat(TAGS[locale], {
+    timeZone: 'UTC', // the date is already a GST calendar date
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(new Date(`${date}T00:00:00Z`));

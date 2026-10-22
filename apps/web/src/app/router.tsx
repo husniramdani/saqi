@@ -6,6 +6,8 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <AppShell />,
+    // Lazy routes resolve before the first render; nothing to show meanwhile.
+    HydrateFallback: () => null,
     children: [
       { index: true, lazy: () => import('@/routes/today') },
       { path: 'blocks/:blockId', lazy: () => import('@/routes/block') },

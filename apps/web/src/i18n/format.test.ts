@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { formatM3, formatMm, formatNumber, formatPct, formatTimeGst } from './format';
+import {
+  formatDateGst,
+  formatM3,
+  formatMm,
+  formatNumber,
+  formatPct,
+  formatTimeGst,
+} from './format';
 
 const easternDigits = /[٠-٩۰-۹]/;
 
@@ -29,5 +36,15 @@ describe('format', () => {
     expect(formatTimeGst('2026-10-23T18:00:00Z', 'en')).toBe('22:00 GST');
     expect(formatTimeGst('2026-10-23T21:01:00Z', 'en')).toBe('01:01 GST');
     expect(formatTimeGst('2026-10-23T18:00:00Z', 'ar')).toContain('22:00');
+  });
+});
+
+describe('formatDateGst', () => {
+  it('names the GST calendar day without shifting it', () => {
+    expect(formatDateGst('2026-10-23', 'en')).toBe('Fri 23 Oct'); // 23 Oct 2026 is a Friday (plan docs say Thu);
+  });
+
+  it('keeps Western digits in Arabic', () => {
+    expect(formatDateGst('2026-10-23', 'ar')).toContain('23');
   });
 });
