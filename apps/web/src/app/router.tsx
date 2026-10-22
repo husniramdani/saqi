@@ -15,4 +15,8 @@ export const router = createBrowserRouter([
   },
   // The story page has its own minimal header, not the app shell (plan/05 §0).
   { path: '/making-of', lazy: () => import('@/routes/making-of') },
+  // Component review page; never shipped in production builds.
+  ...(import.meta.env.DEV
+    ? [{ path: '/dev/kitchen', lazy: () => import('@/routes/dev-kitchen') }]
+    : []),
 ]);

@@ -73,7 +73,8 @@
     "empty": "Nothing here yet.",
     "notFound": "Page not found",
     "home": "Back to Today",
-    "noData": "No data"
+    "noData": "No data",
+    "stale": "Stale · {hours} h"
   },
   "reason": {
     "PAW_NOW": "PAW now {paw}%",
