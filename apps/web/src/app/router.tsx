@@ -17,8 +17,12 @@ export const router = createBrowserRouter([
   },
   // The story page has its own minimal header, not the app shell (plan/05 §0).
   { path: '/making-of', lazy: () => import('@/routes/making-of') },
-  // Component review page; never shipped in production builds.
+  // Dev-only pages, never shipped in production builds: the component review page and the
+  // social card that `pnpm og` screenshots into public/og.png.
   ...(import.meta.env.DEV
-    ? [{ path: '/dev/kitchen', lazy: () => import('@/routes/dev-kitchen') }]
+    ? [
+        { path: '/dev/kitchen', lazy: () => import('@/routes/dev-kitchen') },
+        { path: '/og', lazy: () => import('@/routes/dev-og') },
+      ]
     : []),
 ]);

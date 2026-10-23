@@ -3,6 +3,7 @@
 # render like CI's. Servers and the test runner stay on this machine; the browser reaches them
 # through Playwright's `exposeNetwork: '<loopback>'` (see playwright.config.ts).
 # Usage: pnpm e2e:docker [playwright args], e.g. pnpm e2e:docker --update-snapshots
+#        pnpm og (this script with `og`): renders public/og.png with the same browser (e2e/og.ts)
 set -eu
 VERSION=1.64.1
 NAME=saqi-playwright-browser
@@ -20,4 +21,9 @@ until curl -s "http://127.0.0.1:$PORT" >/dev/null 2>&1; do
   sleep 1
 done
 
-PW_BROWSER_WS="ws://127.0.0.1:$PORT/" pnpm exec playwright test -c e2e/playwright.config.ts "$@"
+export PW_BROWSER_WS="ws://127.0.0.1:$PORT/"
+if [ "${1:-}" = og ]; then
+  node e2e/og.ts
+else
+  pnpm exec playwright test -c e2e/playwright.config.ts "$@"
+fi

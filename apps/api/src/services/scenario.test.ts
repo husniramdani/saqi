@@ -1,3 +1,4 @@
+import type { Hono } from 'hono';
 import { DayPlanSchema, SensorSeriesSchema, WeatherSchema } from '@saqi/shared';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -23,14 +24,14 @@ const makeApp = (env: Record<string, string> = {}) => {
   return createApp({ config, repo: withTimeShift(stored, now), weather, now });
 };
 
-async function get<S extends z.ZodType>(app: ReturnType<typeof makeApp>, path: string, schema: S) {
+async function get<S extends z.ZodType>(app: Hono, path: string, schema: S) {
   const res = await app.request(path);
   expect(res.status).toBe(200);
   return schema.parse(await res.json()) as z.output<S>;
 }
 
-describe('dev scenarios (memory mode)', () => {
-  const app = makeApp();
+describe('dev scenarios (SCENARIOS=1, memory mode)', () => {
+  const app = makeApp({ SCENARIOS: '1' });
 
   it('weather-stale: serves the forecast, marked stale and hours old', async () => {
     const w = await get(app, '/api/weather?scenario=weather-stale', WeatherSchema);
@@ -72,9 +73,29 @@ describe('dev scenarios (memory mode)', () => {
       expect((await get(app, path, WeatherSchema)).stale).toBe(false);
     }
   });
+});
 
-  it('is never available in pg mode', async () => {
-    const pg = makeApp({ DATA_SOURCE: 'pg', DATABASE_URL: 'postgres://unused' });
-    expect((await get(pg, '/api/weather?scenario=weather-stale', WeatherSchema)).stale).toBe(false);
+describe('dev scenarios are off unless asked for', () => {
+  const ignored = async (app: Hono) => {
+    expect((await get(app, '/api/weather?scenario=weather-stale', WeatherSchema)).stale).toBe(
+      false,
+    );
+    const plan = await get(app, '/api/plan/today?scenario=budget-over', DayPlanSchema);
+    expect(plan.budget.status).not.toBe('over');
+  };
+
+  it('ignores ?scenario= by default', () => ignored(makeApp()));
+
+  it('ignores ?scenario= in production (memory mode on Vercel)', () =>
+    ignored(makeApp({ VERCEL: '1' })));
+
+  it('refuses SCENARIOS=1 on Vercel and with a database', () => {
+    expect(() => makeApp({ VERCEL: '1', SCENARIOS: '1' })).toThrow(/local memory mode/);
+    expect(() =>
+      makeApp({ DATA_SOURCE: 'pg', DATABASE_URL: 'unused-in-tests', SCENARIOS: '1' }),
+    ).toThrow(/local memory mode/);
   });
+
+  it('is never available in pg mode', () =>
+    ignored(makeApp({ DATA_SOURCE: 'pg', DATABASE_URL: 'unused-in-tests' })));
 });

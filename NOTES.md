@@ -6,9 +6,9 @@ Working notes for whoever (human or Claude Code) picks up the next task. Read th
 
 Search the code for `TODO(Txx)` to find each seam.
 
-| Seam                                            | Where                                                    | Filled by |
-| ----------------------------------------------- | -------------------------------------------------------- | --------- |
-| Postgres repo, Neon client, `db:migrate` driver | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07       |
+| Seam                                            | Where                                                    | Filled by                                      |
+| ----------------------------------------------- | -------------------------------------------------------- | ---------------------------------------------- |
+| Postgres repo, Neon client, `db:migrate` driver | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07 (never built; production runs memory, T23) |
 
 ## Reason params (engine → web contract)
 
@@ -49,6 +49,29 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Every timestamp leaves the API as UTC `Z`**, including schedule times (the engine works in `+04:00`). Reason params keep `HH:mm` in GST.
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
 
+## Deploy (T23)
+
+- **Live:** web <https://saqi-web.vercel.app>, API <https://saqi-api.vercel.app> (Vercel account husniramdani, scope `husniramdanis-projects`). Both projects are connected to `husniramdani/saqi`, production branch `main`, so a push deploys both. Root `.vercel/repo.json` (gitignored) links the repo for CLI deploys from `apps/api` or `apps/web`. Memory mode, no Neon (see Deviations). README "Production" has the env table and how to redeploy.
+- **Install:** Vercel runs `pnpm install` at the workspace root. `ENABLE_EXPERIMENTAL_COREPACK=1` makes it use `packageManager` (log: "Done … using pnpm v9.15.9"). Node is pinned to 22.x in both projects' settings (Vercel doesn't read `.nvmrc`; the functions report `nodejs22.x`).
+- **The default Hono build fails on this repo.** `@vercel/hono` 0.2.76 compiles file by file through `@vercel/node` and turns type errors into build errors. It reported `Property 'ok' does not exist on type 'Response'` in `services/weather.ts`, which `tsc` accepts. [INFERENCE] Its module resolution doesn't follow pnpm's isolated layout, so `@types/node` can't reach `undici-types` and `Response` comes out empty. Even with types passing, it emits per-file ESM with extensionless imports, which Node can't load. **`VERCEL_EXPERIMENTAL_BACKENDS=1`** (Vercel's newer backend build, opt-in since Jan 2026) builds it: entry `src/app.ts`, typecheck passes, and the output holds the compiled `packages/shared` and `packages/engine` plus the JSON fixtures as `.mjs` modules. The built handler, imported locally, answered `/api/health` and `/api/plan/today`. It's labelled experimental: if a Vercel change breaks it, the fallback is bundling `src/app.ts` ourselves (esbuild/rolldown) into a function entry.
+- **One function instance for every route.** The build emits a function per route (`api/tasks.func`, `api/plan/today.func`, …), all symlinks to `index.func`. Checked on production that they share memory: a PATCH to `/api/tasks/task-2` showed as done on six GETs of `/api/tasks`, then was set back to todo.
+- **Dev switches off in production:** `?scenario=` needs `SCENARIOS=1`. Config refuses `SCENARIOS=1`, `NOW` and `WEATHER_FIXTURE=1` when `VERCEL` is set (Vercel sets it in every build and function), as it already did in pg mode. `config.test.ts` and `scenario.test.ts` cover it: off by default, ignored with `VERCEL=1`, refusal at startup.
+- **`pnpm smoke`** (`scripts/smoke.ts`, 11 checks) runs on Node type stripping with `--import ./scripts/resolve-ts.ts`. `@saqi/shared` exports `.ts` source with extensionless relative imports, which Node's resolver rejects, so the hook retries a failed relative import with `.ts`. `@saqi/shared` is a root dev dependency. On top of the task's list, it checks the PATCH preflight (Field's writes need it), that the entry script is served as JavaScript, and that `og:image` resolves to a PNG.
+- **OG image:** dev-only `/og` route (`routes/dev-og.tsx`): the Today map on the demo night (the kitchen's `scenario.ts`), legend, logo, and "Saqi · irrigation cockpit" in Geist 300. `pnpm og` (`e2e/docker.sh og` → `e2e/og.ts`) starts Vite on :5179 and screenshots it at 1200 × 630, reduced motion, with the browser in `playwright:v1.64.1-noble`. Meta: `og:*` (with image size and alt) and `twitter:card=summary_large_image`, absolute production URLs. Also added `public/robots.txt`: without it `/robots.txt` was rewritten to the HTML shell and Lighthouse SEO flagged it (91 → 100).
+- **Visual baselines re-rendered** (`pnpm e2e:docker --update-snapshots`): the Field demo line changes the Field shots.
+- **Phone check (production, 375 × 812, iPhone UA, throttled to ~1.6 Mbps / 150 ms over CDP, en and ar):** Today, Block D-1 and Field load in 4–6.5 s to network idle, with `dir`/`lang` right (`rtl`/`ar`), no horizontal scroll, no console errors, and "Simulated sensors" present. Not tested on a physical phone over a real carrier.
+- **Lighthouse 13.5.0** (`npx lighthouse@13.5.0`, mobile preset with simulated throttling, headless Chrome for Testing 156 from Playwright's cache via `CHROME_PATH`), production, two runs each:
+
+  | Page     | Performance | Accessibility | Best practices | SEO |
+  | -------- | ----------- | ------------- | -------------- | --- |
+  | `/`      | 60, 65      | 100           | 100            | 100 |
+  | `/field` | 91, 92      | 100           | 100            | 100 |
+
+  Lighthouse 13 adds a fifth category, "agentic browsing" (39 on `/`, 50 on `/field`), not tracked here. Fixed: SEO 91 → 100 with `robots.txt`. **Not fixed: Today's performance (60–65).** FCP 3.3–3.7 s and LCP 4.3–4.7 s, against 2.5 s / 2.6 s on Field: the shell paints nothing until the lazy Today route resolves, and the entry chunk carries about 95 KiB of unused JS on first load (React, Router, Query, zod, i18next + ICU, GSAP core). Also **CLS 0.228**: Lighthouse names the "Tonight's plan" aside, which moves down in the one-column layout (under 1180 px). [INFERENCE] The map card above it grows from skeleton to map, legend and schedule. Fixing them means reserving the map card's final height and splitting the entry chunk, a design and bundling change, not a quick one. Tried: loading the Google Fonts CSS without blocking render (Lighthouse estimated 1.3 s). It made no difference beyond run-to-run noise (Today 56, Field 88) and added a font swap, so it was reverted.
+
+- **Out of scope, broken (seen on the phone check):** on Block D-1's chart, the in-plot labels ("68.0%" at the latest point, "65% threshold") sit on top of the lines at 375 px, in both languages. In Arabic the threshold label also renders as "65 عتبة%": the `%` is pulled to the wrong side of the bidi run. Both come from `features/moisture-chart` (T14/T18).
+- **E2E gotchas seen while re-rendering:** with `CI=true` in a local shell, plain `pnpm e2e` on macOS compares the Linux baselines and fails; unset it (`env -u CI pnpm e2e`). Under heavy machine load, `pnpm e2e:docker` hit the 5 s "map visible" wait on cold loads (Today, Field offline); the same tests passed on the next runs.
+
 ## CI (T22)
 
 - **`ci.yml`:** `verify` (install, design check, lint, typecheck, `pnpm test:ci`, build; uploads each package's Vitest JSON) then `e2e` (needs verify). `concurrency` per ref with cancel-in-progress, `permissions: contents: read`, no secrets.
@@ -75,7 +98,7 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 
 ## Unhappy states and accessibility (T20)
 
-- **Scenario switcher (dev):** `?scenario=<name>` on any page URL, or the buttons in `/dev/kitchen`. The web client keeps it in sessionStorage for the tab (in-app links drop the query) and forwards it to every API call; `?scenario=normal` clears it. Dev builds only on the web; on the API, memory mode only (`createApp` never installs it when `DATA_SOURCE=pg`, tested). Each scenario is a small override on the normal deps (`services/scenario.ts`) served by a second copy of the routes, so the normal path is untouched and each scenario memoises its own plan. `api-down` is web-only: the client points at `http://127.0.0.1:9`.
+- **Scenario switcher (dev):** `?scenario=<name>` on any page URL, or the buttons in `/dev/kitchen`. The web client keeps it in sessionStorage for the tab (in-app links drop the query) and forwards it to every API call; `?scenario=normal` clears it. Dev builds only on the web; on the API, only with `SCENARIOS=1` (T23: `pnpm dev` sets it; config refuses it on Vercel and in pg mode, tested). Each scenario is a small override on the normal deps (`services/scenario.ts`) served by a second copy of the routes, so the normal path is untouched and each scenario memoises its own plan. `api-down` is web-only: the client points at `http://127.0.0.1:9`.
 - **Spot-check list (walked 2026-10-23, 1280 px, en):**
 
   | Scenario                | Today                                                                                                                                     | Block                                                                                                | Field                                   | Making-of               |
@@ -262,7 +285,9 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Window overflow also lowers `volumeM3`** on the decision, so totals and the recommendation card show what will actually run.
 - **`gstDate()` lives in `@saqi/shared/time.ts`** so the API, engine and web share one GST date helper. The engine's `time.ts` adds GST wall-clock helpers on top.
 - **`/making-of` sits outside the app shell**, per plan/05 §0.
-- **The API has no `build` script yet.** Vercel bundles `src/vercel.ts` itself (T23). Check there that the JSON import (`with { type: 'json' }`) in `services/weather.ts` bundles cleanly.
+- **Production runs `DATA_SOURCE=memory`, not Neon** (T23 steps 1, 2 and 5 replaced: no Neon project, no migrate, no seed). The Postgres repo (`repo/pg.ts`) was never built; only the schema and migrations exist. Memory mode is the live hourly scenario every test proves (`repo/hourly.ts`), with real wall-clock times, and the pg path would also need the re-seed/shift work noted under "Live scenario". The cost: Field "Mark done" and manual irrigation logs live in a function instance's memory. They last within an instance and the same GST day, and can reset when Vercel recycles an instance or adds one. Field says so (`field.demoNote`, en/ar/ur), and so does the README.
+- **No `src/vercel.ts` (`hono/vercel` `handle`).** Vercel's current Hono support is zero-config: it serves the default export of `src/app.ts`, so `app.ts` exports the app and the separate entry is gone.
+- **The SPA rewrite skips `/assets/`** (`/((?!assets/).*)` instead of `/(.*)`). Vercel serves existing files before rewrites either way, but with the plain pattern a missing hashed chunk (an open tab after a redeploy) came back as `index.html` with 200, which fails as a module MIME error; now it's an honest 404 (checked on production).
 - **Memory mode serves `buildSeed()`** (T08): 30 days ending at the latest 21:00 GST, built once per process (about 60 ms). Restarting the API (including `tsx watch` reloads) resets it, task updates included.
 - **Allocation rule changed** (T08, plan/03 §1 and the T08 task text corrected): `round(projectedAfterFodderCut / 0.985)` instead of `round(projectedWithoutDeficit / 1.04)`. With a fixed 4 % overshoot, how much the fodder cut saved depended on the days left in the month; late in a month the engine also cut the palms, so D-1 showed Deficit instead of Irrigate. Tests cover anchors on 2, 23 and 28 October.
 - **The allocation is calibrated with the recorded past-week ET₀.** At request time the engine uses the live forecast, so the after-cut share can drift a little within (or just outside) the tight band. That's the product working, not a bug.

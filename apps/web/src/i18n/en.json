@@ -168,6 +168,7 @@
   },
   "field": {
     "title": "Field",
+    "demoNote": "Demo: your changes are kept on this server for now and may reset.",
     "worker": "Worker",
     "workers": {
       "rahim": "Rahim",

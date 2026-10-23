@@ -10,9 +10,34 @@
       content="Saqi, an irrigation decision cockpit for a fictional date palm farm near Al Ain: tonight's watering, explained, with live weather and simulated sensors."
     />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- Social cards: absolute production URLs. og.png is rendered by `pnpm og` (dev /og route). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Saqi" />
+    <meta property="og:title" content="Saqi · irrigation cockpit" />
+    <meta
+      property="og:description"
+      content="Tonight's irrigation for a fictional date palm farm near Al Ain, explained. Live weather, simulated sensors."
+    />
+    <meta property="og:url" content="https://saqi-web.vercel.app/" />
+    <meta property="og:image" content="https://saqi-web.vercel.app/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Saqi · irrigation cockpit: the Farm 07 site plan, blocks shaded by soil water, tonight's water routes in orange."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Saqi · irrigation cockpit" />
+    <meta
+      name="twitter:description"
+      content="Tonight's irrigation for a fictional date palm farm near Al Ain, explained. Live weather, simulated sensors."
+    />
+    <meta name="twitter:image" content="https://saqi-web.vercel.app/og.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Geist for words, Geist Mono for numbers, IBM Plex Sans Arabic for ar/ur (design.md). -->
+    <!-- Geist for words, Geist Mono for numbers, IBM Plex Sans Arabic for ar/ur (design.md).
+         Render-blocking on purpose: loading it async (T23) showed no gain beyond Lighthouse's
+         run-to-run noise and adds a visible font swap. -->
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap"

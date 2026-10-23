@@ -18,10 +18,13 @@
     "e2e": "pnpm --filter web e2e",
     "e2e:ui": "pnpm --filter web e2e:ui",
     "e2e:docker": "pnpm --filter web e2e:docker",
-    "stats": "node scripts/test-stats.ts"
+    "stats": "node scripts/test-stats.ts",
+    "smoke": "node --import ./scripts/resolve-ts.ts scripts/smoke.ts",
+    "og": "pnpm --filter web og"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@saqi/shared": "workspace:^",
     "@types/node": "^26.6.5",
     "eslint": "^9.39.5",
     "eslint-plugin-jsx-a11y": "^6.10.2",

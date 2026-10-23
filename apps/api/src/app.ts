@@ -43,9 +43,10 @@ export function createApp(deps: Deps) {
   app.onError(onError);
   app.notFound(onNotFound);
 
-  // Dev scenarios (T20), memory mode only: `?scenario=` hands the request to the same routes
-  // built on overridden deps. pg never sees them; an unknown name is just the normal app.
-  if (deps.config.DATA_SOURCE === 'memory') {
+  // Dev scenarios (T20), only with SCENARIOS=1 (local memory mode; config refuses it elsewhere):
+  // `?scenario=` hands the request to the same routes built on overridden deps. Without it, or
+  // for an unknown name, the query is ignored and the normal app answers.
+  if (deps.config.SCENARIOS === '1') {
     const variants = new Map<Scenario, Hono>();
     app.use('/api/*', async (c, next) => {
       const scenario = ScenarioSchema.safeParse(c.req.query('scenario'));
@@ -101,4 +102,6 @@ export function defaultDeps(): Deps {
   return { config, repo, weather, now };
 }
 
+// Vercel's zero-config Hono entry (src/app.ts, default export); `server.ts` serves it locally.
 export const app = createApp(defaultDeps());
+export default app;

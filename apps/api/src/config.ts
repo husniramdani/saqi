@@ -15,16 +15,25 @@ const EnvSchema = z
     WEATHER_FIXTURE: z.enum(['0', '1']).default('0'),
     /** E2E: freeze the API clock (ISO instant), so it agrees with the browser's frozen clock. */
     NOW: z.iso.datetime({ offset: true }).optional(),
+    /** Dev: serve the `?scenario=` overrides (T20). Off unless asked for; `pnpm dev` sets it. */
+    SCENARIOS: z.enum(['0', '1']).default('0'),
+    /** Set by Vercel on every build and function: marks a hosted deployment. */
+    VERCEL: z.string().optional(),
   })
   .refine((env) => env.DATA_SOURCE !== 'pg' || env.DATABASE_URL, {
     message: 'DATABASE_URL is required when DATA_SOURCE=pg',
     path: ['DATABASE_URL'],
   })
-  // Test switches never reach a real database deployment.
-  .refine((env) => env.DATA_SOURCE === 'memory' || (env.WEATHER_FIXTURE === '0' && !env.NOW), {
-    message: 'WEATHER_FIXTURE and NOW are for memory mode (E2E) only',
-    path: ['DATA_SOURCE'],
-  });
+  // Test and dev switches stay on a developer's machine: never with a database, never on Vercel.
+  .refine(
+    (env) =>
+      (env.DATA_SOURCE === 'memory' && !env.VERCEL) ||
+      (env.WEATHER_FIXTURE === '0' && !env.NOW && env.SCENARIOS === '0'),
+    {
+      message: 'WEATHER_FIXTURE, NOW and SCENARIOS are for local memory mode (dev, E2E) only',
+      path: ['DATA_SOURCE'],
+    },
+  );
 
 export type Config = z.infer<typeof EnvSchema>;
 

@@ -3,7 +3,7 @@ import type { z } from 'zod';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8787';
 
-/** Dev scenarios (T20); the API serves all but `api-down` in memory mode. */
+/** Dev scenarios (T20); the API serves all but `api-down` when it runs with SCENARIOS=1. */
 export const DEV_SCENARIOS = [
   'normal',
   'api-down',

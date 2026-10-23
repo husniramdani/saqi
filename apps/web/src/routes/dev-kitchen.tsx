@@ -133,7 +133,7 @@ export function Component() {
 
       <Section
         title="Scenarios"
-        note="Dev only. Reloads the app with an API scenario (memory mode) kept for this tab; Normal clears it."
+        note="Dev only. Reloads the app with an API scenario (the API needs SCENARIOS=1, which pnpm dev sets) kept for this tab; Normal clears it."
       >
         <ul className="flex flex-wrap gap-2">
           {DEV_SCENARIOS.map((s) => (

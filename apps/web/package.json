@@ -11,7 +11,8 @@
     "test": "vitest run --passWithNoTests",
     "e2e": "playwright test -c e2e/playwright.config.ts",
     "e2e:ui": "playwright test -c e2e/playwright.config.ts --ui",
-    "e2e:docker": "sh e2e/docker.sh"
+    "e2e:docker": "sh e2e/docker.sh",
+    "og": "sh e2e/docker.sh og"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

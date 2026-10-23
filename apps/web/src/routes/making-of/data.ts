@@ -105,10 +105,10 @@ export const TestStatsSchema = z.object({
 });
 export type TestStats = z.infer<typeof TestStatsSchema>;
 
-// ponytail: counted by hand on 2026-10-23 (after T21); CI replaces it via public/test-stats.json (T22).
+// ponytail: counts as of T23 (2026-10-23); CI replaces it via public/test-stats.json (T22).
 export const FALLBACK_STATS: TestStats = {
   engine: 56,
-  api: 96,
+  api: 100,
   web: 154,
   e2e: 23,
   durationSec: null,

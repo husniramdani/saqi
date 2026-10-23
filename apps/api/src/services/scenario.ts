@@ -6,7 +6,8 @@ import type { WeatherService } from './weather';
 
 /**
  * Dev scenarios for walking the unhappy paths (T20), selected per request with `?scenario=`.
- * Memory mode only: `createApp` never routes to them when DATA_SOURCE=pg. Each one is a small
+ * Opt-in: `createApp` routes to them only with SCENARIOS=1, which config allows in local memory
+ * mode only (`pnpm dev` sets it; production never). Each one is a small
  * override on the normal deps, so everything downstream (engine, routes, schemas) runs as usual.
  * `api-down` lives in the web client (it points at a dead URL); the API can't fake its absence.
  */
