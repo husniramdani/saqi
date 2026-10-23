@@ -179,20 +179,22 @@ function FarmTable() {
                 {` · ${block.name[locale]}`}
               </td>
               <td>{t(`block.crop.${block.crop}`)}</td>
-              <td className="mono">{stale ? t('landing.farm.table.freshOnly', { paw }) : paw}</td>
+              <td className="mono" data-label={t('landing.farm.table.water')}>
+                {stale ? t('landing.farm.table.freshOnly', { paw }) : paw}
+              </td>
               <td>
                 <span className={stale ? 'chip warn ember' : CHIP[decision.decision]}>
                   {stale ? t('landing.farm.table.checkSensor') : t(`decision.${decision.decision}`)}
                 </span>
               </td>
-              <td className="mono">
+              <td className="mono" data-label={t('landing.farm.table.volume')}>
                 {decision.volumeM3 > 0 ? (
                   <span dir="ltr">{`${formatNumber(decision.volumeM3, locale, 1)} m³`}</span>
                 ) : (
                   t('landing.farm.table.saves', { volume: String(decision.savedVsFixedM3) })
                 )}
               </td>
-              <td className="mono">
+              <td className="mono" data-label={t('landing.farm.table.window')}>
                 <span dir="ltr">{window || '—'}</span>
               </td>
             </tr>

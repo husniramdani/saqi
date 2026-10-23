@@ -3091,6 +3091,50 @@
   .landing .jstack {
     grid-template-rows: auto;
   }
+
+  /*
+   * Tablet portrait and phones: short groups become equal grids instead of ragged wraps.
+   * Farm: four equal metric cells above a full-width Map/List switch with equal halves.
+   */
+  .landing .farm-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .landing .badges {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .landing .badge {
+    min-width: 0;
+  }
+  .landing .seg {
+    display: flex;
+  }
+  .landing .seg button {
+    flex: 1 1 0;
+    justify-content: center;
+    min-height: 44px;
+  }
+  /* Night sizes every legend span as a swatch; let the words take their own width. */
+  .landing .scale :is(.lbl, .micro) {
+    width: auto;
+    height: auto;
+  }
+  /* Decision explorer: two by two, equal cells. */
+  .landing .dchips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .landing .dchip {
+    border-radius: 16px;
+    padding-block: 8px;
+    padding-inline: 10px 16px;
+    gap: 12px;
+    text-align: start;
+  }
 }
 @media (max-width: 640px) {
   .landing .nav .pill.sm {
@@ -3111,8 +3155,10 @@
   :where(:root:not([data-theme='night'])) .landing .span2 {
     grid-column: auto;
   }
+  /* Why band: a mono "60–70%" can't share a row with its sentence at phone width; stack them. */
   .landing .fact {
-    grid-template-columns: 84px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
   }
   .landing .fpoint {
     grid-template-columns: minmax(0, 1fr);
@@ -3133,6 +3179,7 @@
   }
   .landing .r-val {
     grid-column: 2;
+    justify-self: start;
     text-align: start;
   }
   .landing .strip-link {
@@ -3158,6 +3205,147 @@
   /* 72 px either side (144 px between sections) is a desktop rhythm; a phone reads it as empty. */
   .landing .sec {
     padding-block: 48px;
+  }
+
+  /* Hero: the primary action spans the column, its arrow at the far edge. */
+  .landing .hero-ctas .pill {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  /* Label/value rows keep each value whole and drop the second one to its own line. */
+  .landing .row-sb {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .landing .row-sb > * {
+    white-space: nowrap;
+  }
+  .landing .att .mono {
+    white-space: nowrap;
+  }
+  .landing .att a > span:nth-child(2) {
+    text-wrap: balance;
+  }
+
+  /* Farm: the four metrics pair up on a phone. */
+  .landing .badges {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .landing .farm-foot {
+    gap: 16px;
+  }
+  .landing .tonight-card {
+    max-width: none;
+  }
+  .landing .legend {
+    gap: 12px 24px;
+  }
+
+  /* Farm list: one card per block (name; crop and decision; labelled values). */
+  .landing .tbl {
+    display: block;
+    min-width: 0;
+  }
+  .landing .tbl caption {
+    display: block;
+  }
+  .landing .tbl thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .landing .tbl tbody {
+    display: block;
+  }
+  .landing .tbl tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: 4px 16px;
+    padding: 16px 18px;
+    border-top: 1px solid var(--line);
+  }
+  .landing .tbl td {
+    padding: 0;
+    border: 0;
+    font-size: 14px;
+  }
+  .landing .tbl td:nth-child(1) {
+    grid-column: 1 / -1;
+    font-size: 15px;
+  }
+  .landing .tbl td:nth-child(2) {
+    grid-area: 2 / 1;
+  }
+  .landing .tbl td:nth-child(4) {
+    grid-area: 2 / 2;
+    justify-self: end;
+    white-space: nowrap;
+  }
+  .landing .tbl td:nth-child(3) {
+    grid-area: 3 / 1;
+  }
+  .landing .tbl td:nth-child(5) {
+    grid-area: 3 / 2;
+  }
+  .landing .tbl td:nth-child(6) {
+    grid-area: 4 / 1 / 5 / -1;
+  }
+  .landing .tbl td[data-label] {
+    align-self: start;
+    margin-top: 10px;
+  }
+  .landing .tbl td[data-label]::before {
+    /* Visual only: screen readers already pair each cell with its column header. */
+    content: attr(data-label);
+    content: attr(data-label) / '';
+    display: block;
+    margin-bottom: 2px;
+  }
+  :where(:root:not([data-theme='night'])) .landing .tbl td[data-label]::before {
+    font: 500 12.5px var(--f-sans);
+    color: var(--text-3);
+  }
+  :where([data-theme='night']) .landing .tbl td[data-label]::before {
+    font: 400 11px var(--f-mono);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--mute);
+  }
+
+  /* Decision explorer: hints wrap in half-width cells, so the choices stack as full rows. */
+  .landing .dchips {
+    grid-template-columns: minmax(0, 1fr);
+    margin-bottom: 24px;
+  }
+  .landing .dchip {
+    min-height: 56px;
+  }
+
+  /* Night's instruments have no tile chrome; on a phone they read as ruled rows. */
+  :where([data-theme='night']) .landing .inst {
+    gap: 0;
+  }
+  :where([data-theme='night']) .landing .tile {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-block: 24px;
+    border-top: 1px solid var(--line2);
+  }
+
+  /* Closing CTA: the 520 px desktop stage leaves a phone-height empty band. */
+  .landing .cta {
+    min-height: 0;
+    gap: 56px;
+  }
+  /* Keeps "with reasons." on one line down to 360 px. */
+  .landing .cta-hl {
+    font-size: clamp(44px, 12.5vw, 52px);
   }
 }
 

@@ -42,13 +42,7 @@ export function SchedulePanel({
   };
 
   return (
-    <section
-      ref={scope}
-      id="schedule"
-      tabIndex={-1}
-      aria-label={t('today.schedule')}
-      className="glass sched"
-    >
+    <section ref={scope} aria-label={t('today.schedule')} className="glass sched">
       <h2 className="sr-only">{t('today.schedule')}</h2>
       {night.length === 0 ? (
         <p className="sched-empty">

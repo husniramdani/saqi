@@ -12,16 +12,10 @@ import { ThemeToggle } from './ThemeToggle';
 import { useLastUpdated } from './useLastUpdated';
 import './shell.css';
 
-/**
- * The bar's sections. Blocks, Schedule and Budget are places on Today (the rail, tonight's
- * schedule card, the Water tab), so only Today and Field can be the current page.
- */
+/** The bar's sections: the two pages a farm team works in. */
 const SECTIONS = [
-  { to: '/today', key: 'today', page: true },
-  { to: '/today#blocks', key: 'blocks', page: false },
-  { to: '/today#schedule', key: 'schedule', page: false },
-  { to: '/today#budget', key: 'budget', page: false },
-  { to: '/field', key: 'field', page: true },
+  { to: '/today', key: 'today' },
+  { to: '/field', key: 'field' },
 ] as const;
 
 /** The phone and tablet bar, where the section tabs don't fit. */
@@ -74,17 +68,11 @@ export function AppShell() {
         </Link>
 
         <nav className="tabs" aria-label={t('shell.nav.label')}>
-          {SECTIONS.map((s) =>
-            s.page ? (
-              <NavLink key={s.key} to={s.to} end>
-                {t(`shell.nav.${s.key}`)}
-              </NavLink>
-            ) : (
-              <Link key={s.key} to={s.to}>
-                {t(`shell.nav.${s.key}`)}
-              </Link>
-            ),
-          )}
+          {SECTIONS.map((s) => (
+            <NavLink key={s.key} to={s.to} end>
+              {t(`shell.nav.${s.key}`)}
+            </NavLink>
+          ))}
         </nav>
 
         <div className="top-end">

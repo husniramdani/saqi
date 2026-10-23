@@ -44,7 +44,7 @@ export function BudgetSection({
   const over = formatNumber(overPct, locale, overPct < 1 ? 1 : 0);
 
   return (
-    <section id="budget" tabIndex={-1} className="sect">
+    <section className="sect">
       <div className="sect-h">
         <h3 className="lbl">{t('today.budget', { month })}</h3>
         <span className={BUDGET_CHIP[budget.status]}>

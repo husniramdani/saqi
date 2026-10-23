@@ -745,8 +745,20 @@
 }
 
 @media (max-width: 1180px) {
+  /* One column: tonight's map first, then the plan, then the blocks (the answer before the
+     detail). reading-flow keeps Tab in that visual order where supported (Chromium 137+). */
   .ck {
     grid-template-columns: minmax(0, 1fr);
+    reading-flow: grid-order;
+  }
+  .ck > .map {
+    order: 1;
+  }
+  .ck > .rp {
+    order: 2;
+  }
+  .ck > .lp {
+    order: 3;
   }
   .ck .map {
     height: 620px;

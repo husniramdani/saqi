@@ -30,8 +30,8 @@ const TAB_ICON: Record<TodayTab, string> = {
   water: 'M8 2C5.5 5.5 4 7.6 4 9.5a4 4 0 0 0 8 0C12 7.6 10.5 5.5 8 2z',
 };
 
-/** The header's Blocks / Schedule / Budget sections are places here; `#attention` is the plan. */
-const HASH_TAB: Record<string, TodayTab> = { '#budget': 'water', '#attention': 'plan' };
+/** The header's "need attention" pill lands on the plan (`#attention`). */
+const HASH_TAB: Record<string, TodayTab> = { '#attention': 'plan' };
 
 /**
  * Today: the cockpit (design/dashboard.html). Blocks rail | map canvas with tonight's schedule
@@ -69,7 +69,7 @@ export function Component() {
   useTabSwitch(tabBody, tab, locale, reduced);
   useSelectionFade(root, selected, reduced);
 
-  // A section link (#blocks, #schedule, #budget, #attention) opens its view (on that
+  // The attention link (#attention) opens its view (on that
   // navigation, while rendering) and takes focus there once it exists: a frame later, so the
   // shell's route-change focus can't undo it.
   const [arrived, setArrived] = useState(visit);
@@ -188,7 +188,7 @@ export function Component() {
 
   return (
     <div ref={root} className="ck">
-      <aside id="blocks" tabIndex={-1} aria-label={t('today.blocks')} className="panel lp">
+      <aside aria-label={t('today.blocks')} className="panel lp">
         <div className="p-head">
           <div className="p-head-t">
             <h2 className="p-title">{t('today.blocks')}</h2>

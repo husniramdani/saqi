@@ -6,9 +6,6 @@
       "label": "Main",
       "today": "Today",
       "field": "Field",
-      "blocks": "Blocks",
-      "schedule": "Schedule",
-      "budget": "Budget",
       "about": "About"
     },
     "simulated": "Simulated sensors",
