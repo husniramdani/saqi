@@ -136,7 +136,7 @@ export function useTabSwitch(
   );
 }
 
-/** A newly selected block's outline and tag fade up (`step`); reduced motion: there at once. */
+/** A newly selected block's outline, tag and running route fade up (`step`); reduced: at once. */
 export function useSelectionFade(
   root: RefObject<HTMLElement | null>,
   selected: string | null | undefined,
@@ -150,7 +150,7 @@ export function useSelectionFade(
       shown.current = selected;
       if (reduced || !selected) return;
       gsap.fromTo(
-        el.querySelectorAll(`.layer-selected, [data-block="${selected}"] [data-tag]`),
+        el.querySelectorAll(`.layer-selected, .layer-route, [data-block="${selected}"] [data-tag]`),
         { opacity: 0 },
         { opacity: 1, duration: duration.step, ease: ease.standard },
       );

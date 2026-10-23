@@ -157,6 +157,44 @@ describe('FarmMap', () => {
     expect(hidden(network())).toBe(true);
   });
 
+  it('points the running water at the selected block, and at all of tonight’s without one', () => {
+    const draw = (selectedId?: string, layers?: MapLayers) => (
+      <FarmMap
+        farm={farm07}
+        decisions={scenarioDecisions}
+        schedule={scenarioSchedule}
+        selectedId={selectedId}
+        onSelect={vi.fn()}
+        {...(layers ? { layers } : {})}
+      />
+    );
+    const { container, rerender } = render(draw());
+    const running = () =>
+      [...container.querySelectorAll('[data-running]')].map((e) => e.getAttribute('data-flow'));
+    const route = () => container.querySelector('[data-route]');
+    expect(running()).toEqual(['D-1', 'F-1']);
+    expect(route()).toBeNull();
+
+    // G-2 is not watered tonight: its own route is drawn and is the only one running.
+    rerender(draw('G-2'));
+    expect(route()?.getAttribute('data-route')).toBe('G-2');
+    expect(running()).toEqual(['G-2']);
+    // Tonight's routes are still shown, just still.
+    expect(container.querySelectorAll('[data-scheduled]')).toHaveLength(2);
+
+    // D-1 is on tonight's schedule: its own route runs, without a second copy on top.
+    rerender(draw('D-1'));
+    expect(route()).toBeNull();
+    expect(running()).toEqual(['D-1']);
+
+    // Tonight's flow switched off: the selected route stays, running.
+    rerender(draw('D-1', without('flow')));
+    expect(route()?.getAttribute('data-route')).toBe('D-1');
+    expect(hidden(route())).toBe(false);
+    expect(running()).toEqual(['D-1']);
+    expect(hidden(container.querySelector('[data-scheduled="D-1"]'))).toBe(true);
+  });
+
   it('hides the stale hatch, textures and water sources with their switches', () => {
     const { container } = renderMap(vi.fn(), undefined, {
       layers: without('stale', 'texture', 'utilities'),
@@ -175,9 +213,10 @@ describe('FarmMap', () => {
     const d2 = screen.getByRole('button', { name: /^D-2 / });
     fireEvent.focus(d2);
     const block = farm07.blocks.find((b) => b.id === 'D-2');
+    // jsdom maps 1000 × 620 px onto the zoomed view; the card (0 px wide here) sits on the label.
     const x = Math.min(1, Math.max(0, ((block?.geometry.label.x ?? 0) - 250) / 500));
-    const tooltip = screen.getByText('Skip').closest('[aria-hidden="true"]') as HTMLElement;
-    expect(tooltip.style.left).toBe(`${x * 100}%`);
+    const tooltip = screen.getByText('Skip').closest('[data-map-tooltip]') as HTMLElement;
+    expect(tooltip.style.left).toBe(`${x * 1000}px`);
   });
 });
 

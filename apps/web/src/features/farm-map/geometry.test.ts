@@ -4,6 +4,7 @@ import {
   blockRect,
   isStale,
   nextInOrder,
+  placeTooltip,
   readingOrder,
   scheduledTonight,
   showUtilityLabels,
@@ -71,5 +72,46 @@ describe('farm map geometry', () => {
       expect(y + h / 2).toBeCloseTo(310, 1);
       expect(w / h).toBeCloseTo(1000 / 620, 2);
     }
+  });
+
+  const card = { width: 240, height: 100 };
+  const phone = { width: 328, height: 216 };
+  it.each([
+    {
+      when: 'there is room above the block',
+      block: { left: 100, top: 150, right: 220, bottom: 200, labelX: 160 },
+      bounds: { width: 600, height: 400 },
+      expected: { left: 40, top: 42, side: 'above' },
+    },
+    {
+      when: 'a top-row block on a phone has no room above',
+      block: { left: 20, top: 29, right: 100, bottom: 72, labelX: 60 },
+      bounds: phone,
+      expected: { left: 8, top: 80, side: 'below' },
+    },
+    {
+      when: 'neither side fits and below is roomier (slides up over the block)',
+      block: { left: 260, top: 78, right: 320, bottom: 124, labelX: 300 },
+      bounds: phone,
+      expected: { left: 80, top: 108, side: 'below' },
+    },
+    {
+      when: 'neither side fits and above is roomier (stops at the top edge)',
+      block: { left: 100, top: 100, right: 200, bottom: 190, labelX: 150 },
+      bounds: phone,
+      expected: { left: 30, top: 8, side: 'above' },
+    },
+  ])('places the block card inside the map when $when', ({ block, bounds, expected }) => {
+    const at = placeTooltip(block, card, bounds);
+    expect(at).toEqual(expected);
+    expect(at.left).toBeGreaterThanOrEqual(8);
+    expect(at.left + card.width).toBeLessThanOrEqual(bounds.width - 8);
+    expect(at.top).toBeGreaterThanOrEqual(8);
+    expect(at.top + card.height).toBeLessThanOrEqual(bounds.height - 8);
+  });
+
+  it('pins a card wider than the map to the start edge rather than off it', () => {
+    const block = { left: 0, top: 120, right: 100, bottom: 160, labelX: 300 };
+    expect(placeTooltip(block, { width: 400, height: 60 }, phone).left).toBe(8);
   });
 });

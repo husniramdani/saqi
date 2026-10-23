@@ -325,6 +325,11 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Web bundle:** the entry chunk is about 150 kB gzip (React, Router, Query, zod 4, i18next + ICU). NFR2 caps the field route at 250 kB. Consider `zod/mini` on the web or trimming ICU before GSAP lands.
 - **Retries:** TanStack Query `retry: 1` also retries 404/422. T20 could skip retries on 4xx.
 - **pg contract suite:** `repo/contract.test.ts` runs only when `DATABASE_URL` is set, and it expects the database to be seeded with the current hour as anchor (T07/T08).
+- **Landing micro-labels are uppercase** (`routes/landing/landing.css`: eyebrows, card kickers, table heads, footer heads at 11–12 px), as in the reference HTML. The plan's design.md reading asks for sentence case at 12.5 px or more; decide once and apply it across the landing stylesheet rather than per section.
+- **`useGSAP` with `dependencies` must say `revertOnUpdate: true`** whenever the callback hides content with `from()`/`set()` or returns a cleanup. Without it the previous run is left in place on a dependency change and the new run's `from()` tweens record the old hidden state as their end state (sections never appearing after a language change on the landing page). Cockpit hooks only use `clearProps`/`fromTo`, so they are safe as they are.
+- **ESLint lints `apps/web/playwright-report/`.** It is git-ignored but missing from `eslint.config` `ignores`, so after an E2E run that records a trace (any retry), `pnpm lint` fails on thousands of errors in the trace viewer's minified assets. Delete the folder, or add `'**/playwright-report/**'` to the ignores.
+- **Schedule bar ranges in Arabic read backwards.** The bar text is `22:00 → 00:58`; in an RTL line the arrow (not a mirrored glyph) ends up pointing at the start time (`00:58 → 22:00` on screen). Use `←` in RTL or a bidi-isolated LTR run.
+- **Map tooltips are placed in px from their own measured size** (`placeTooltip` in `farm-map/geometry.ts`) and keyed per block. Don't position them with Tailwind `translate-*` again: GSAP writes `translate: none` inline when it tweens the entrance, which cancels those classes and left the card off the map on phones.
 
 ## Languages and production copy
 

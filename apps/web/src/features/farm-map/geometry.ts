@@ -43,6 +43,44 @@ export interface Rect {
   height: number;
 }
 
+/** A box in px inside the map: a block's edges as drawn, plus its label's x. */
+export interface BlockBox {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  labelX: number;
+}
+
+export interface TooltipPlacement {
+  left: number;
+  top: number;
+  side: 'above' | 'below';
+}
+
+/**
+ * Where a block's card goes, in px inside the map (`bounds`): centred on the block's label,
+ * above the block when it fits, else below; when neither fits (a phone-sized map), on the
+ * roomier side, sliding over the block's edge. Always wholly inside the map, `margin` from
+ * its edges, so it is never clipped and never reaches the overlays around the map.
+ */
+export function placeTooltip(
+  block: BlockBox,
+  size: { width: number; height: number },
+  bounds: { width: number; height: number },
+  { gap = 8, margin = 8 }: { gap?: number; margin?: number } = {},
+): TooltipPlacement {
+  const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+  const left = clamp(block.labelX - size.width / 2, margin, bounds.width - size.width - margin);
+  const above = block.top - gap - size.height;
+  const below = block.bottom + gap;
+  const lowest = bounds.height - size.height - margin;
+  if (above >= margin) return { left, top: above, side: 'above' };
+  if (below <= lowest) return { left, top: below, side: 'below' };
+  const side = bounds.height - block.bottom > block.top ? 'below' : 'above';
+  return { left, top: clamp(side === 'above' ? above : below, margin, lowest), side };
+}
+
 /** Bounding box of an SVG `points` list. Farm 07's blocks are axis-aligned, drawn rounded. */
 export function blockRect(points: string): Rect {
   const xy = points

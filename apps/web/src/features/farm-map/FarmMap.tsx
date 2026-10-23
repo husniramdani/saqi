@@ -63,6 +63,24 @@ function useBox() {
 }
 
 /**
+ * A water route: the accent pipe with dashes (`[data-flow]`, M2). `running` dashes travel
+ * pump → block (`[data-running]`); the others hold still.
+ */
+const waterPipe = (path: string, id: string, dash: string, running: boolean) => (
+  <>
+    <path d={path} stroke="var(--color-accent)" strokeWidth={7} />
+    <path
+      d={path}
+      data-flow={id}
+      data-running={running ? '' : undefined}
+      stroke={dash}
+      strokeWidth={2.4}
+      strokeDasharray="4 12"
+    />
+  </>
+);
+
+/**
  * Farm 07 as a hand-drawn site plan (Nightfield canvas): blocks filled by plant-available water,
  * tree / rib / hatch textures, a stale hatch, pipes from the pump with tonight's routes in
  * orange, ink tags with block codes, and the utility strip. The plan itself never mirrors in RTL.
@@ -107,8 +125,24 @@ export function FarmMap({
   const tonight = scheduledTonight(schedule);
   const canvas = variant === 'canvas';
   const font = canvas ? 22 : tagFontSize(scale);
+  const dash = canvas ? 'var(--flow)' : 'var(--color-tag-text)';
+  // The water points at the selection: with a block selected, only its route runs, pump →
+  // block; tonight's other routes stay orange and still. Its own route is drawn when tonight's
+  // flow doesn't already show it, and stays with the flow layer off: like the outline, it is a
+  // selection cue. Nothing selected: all of tonight's routes run.
+  const selectedBlock = selectedId ? blocks.find(({ block }) => block.id === selectedId) : undefined;
+  const shownTonight = Boolean(selectedBlock && layers.flow && tonight.has(selectedBlock.block.id));
+  const selectedRoute = selectedBlock && !shownTonight ? selectedBlock : undefined;
+  const runs = (id: string) => (selectedBlock ? selectedBlock.block.id === id : layers.flow);
+  const runningKey = selectedRoute
+    ? `route:${selectedRoute.block.id}`
+    : selectedBlock
+      ? `tonight:${selectedBlock.block.id}`
+      : layers.flow
+        ? [...tonight].join(',')
+        : '';
   useMapReveal(scope, reveal);
-  usePipeFlow(scope, layers.flow ? [...tonight].join(',') : '');
+  usePipeFlow(scope, runningKey);
   useHoverLift(scope, active);
   useLayerFade(scope, layers);
 
@@ -189,6 +223,10 @@ export function FarmMap({
   );
   const tooltipFor = active ? blocks.find((b) => b.block.id === active) : undefined;
   const tooltipDecision = active ? byId.get(active) : undefined;
+  // Plan units → px inside the map (on the visible part of the plan when zoomed), past any
+  // letterbox around it. The plan is never mirrored, so these are physical positions.
+  const toX = (x: number) => pad.x + shareOf(x, view.x, view.width) * (box.width - 2 * pad.x);
+  const toY = (y: number) => pad.y + shareOf(y, view.y, view.height) * (box.height - 2 * pad.y);
 
   return (
     <div ref={scope} className={canvas ? 'relative h-full w-full' : 'relative'}>
@@ -359,19 +397,24 @@ export function FarmMap({
               .filter(({ block }) => tonight.has(block.id))
               .map(({ block }) => (
                 <g key={block.id} data-scheduled={block.id}>
-                  <path d={block.geometry.pipePath} stroke="var(--color-accent)" strokeWidth={7} />
-                  {/* Water flow (M2): these dashes travel pump → block; still under reduced motion. */}
-                  <path
-                    d={block.geometry.pipePath}
-                    data-flow={block.id}
-                    stroke={canvas ? 'var(--flow)' : 'var(--color-tag-text)'}
-                    strokeWidth={2.4}
-                    strokeDasharray="4 12"
-                  />
+                  {waterPipe(block.geometry.pipePath, block.id, dash, runs(block.id) && !selectedRoute)}
                 </g>
               ))}
           </g>
         </g>
+
+        {selectedRoute ? (
+          <g
+            className="layer-route"
+            data-route={selectedRoute.block.id}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            pointerEvents="none"
+          >
+            {waterPipe(selectedRoute.block.geometry.pipePath, selectedRoute.block.id, dash, true)}
+          </g>
+        ) : null}
 
         <g {...layer('utilities')}>
           <g className="layer-utilities" pointerEvents="none">
@@ -517,21 +560,18 @@ export function FarmMap({
       </svg>
       {tooltipFor && tooltipDecision ? (
         <MapTooltip
+          key={tooltipFor.block.id}
           block={tooltipFor.block}
           decision={tooltipDecision}
           schedule={schedule}
-          // The plan is never mirrored, so the anchor is a physical position on it (on the
-          // visible part of it when zoomed), past any letterbox around it.
-          at={{
-            x:
-              (pad.x +
-                shareOf(tooltipFor.block.geometry.label.x, view.x, view.width) *
-                  (box.width - 2 * pad.x)) /
-              box.width,
-            y:
-              (pad.y + shareOf(tooltipFor.rect.y, view.y, view.height) * (box.height - 2 * pad.y)) /
-              box.height,
+          anchor={{
+            left: toX(tooltipFor.rect.x),
+            top: toY(tooltipFor.rect.y),
+            right: toX(tooltipFor.rect.x + tooltipFor.rect.width),
+            bottom: toY(tooltipFor.rect.y + tooltipFor.rect.height),
+            labelX: toX(tooltipFor.block.geometry.label.x),
           }}
+          bounds={box}
         />
       ) : null}
     </div>

@@ -2,8 +2,8 @@ import { useRef, type RefObject } from 'react';
 import { duration, ease, gsap, loadMapPlugins, stagger, useGSAP, useMotion } from '@/motion';
 import { MAP_LAYER_KEYS, type MapLayers } from './layers';
 
-/** The base network and tonight's routes draw in together. */
-const PIPES = '.layer-pipes path, .layer-flow path';
+/** The base network, tonight's routes and the selected block's route draw in together. */
+const PIPES = '.layer-pipes path, .layer-flow path, .layer-route path';
 
 const REVEALED = 'saqi.mapRevealed';
 
@@ -105,10 +105,10 @@ export function useMapReveal(scope: RefObject<HTMLElement | null>, enabled: bool
 }
 
 /**
- * M2 · water flows along tonight's pipes: the dashes travel pump → block (stroke offset,
- * about 125 units/s, linear). Paused while the tab is hidden or the map is off-screen.
- * Reduced motion: the dashed route stays still. An empty `routeKey` (no routes, or the flow
- * layer off) runs no loop.
+ * M2 · water flows along the routes marked running (`[data-running]`): the dashes travel
+ * pump → block (stroke offset, about 125 units/s, linear). Paused while the tab is hidden or the
+ * map is off-screen. Reduced motion: the dashed routes stay still. `routeKey` names what runs;
+ * an empty key runs no loop.
  */
 export function usePipeFlow(scope: RefObject<HTMLElement | null>, routeKey: string) {
   const { reduced } = useMotion();
@@ -116,7 +116,7 @@ export function usePipeFlow(scope: RefObject<HTMLElement | null>, routeKey: stri
     () => {
       const root = scope.current;
       if (reduced || !root || !routeKey) return;
-      const flows = gsap.utils.toArray<SVGPathElement>('[data-flow]', root);
+      const flows = gsap.utils.toArray<SVGPathElement>('[data-running]', root);
       if (flows.length === 0) return;
       // 160 = 10 dash periods (4 + 12), so the loop is seamless.
       const tween = gsap.to(flows, {
