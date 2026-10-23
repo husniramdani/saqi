@@ -87,7 +87,6 @@ describe('simulator', () => {
     const task = buildSeed({ anchor }).tasks.find((t) => t.blockId === 'D-3');
     expect(task?.title.en).toBe(`Check 60 cm sensor, no data since ${since}`);
     expect(task?.title.ar).toContain(since);
-    expect(task?.title.ur).toContain(since);
   });
 
   it('dates the 8 tasks on the anchor day', () => {

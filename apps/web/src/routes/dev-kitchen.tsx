@@ -342,7 +342,6 @@ export function Component() {
               options={[
                 { value: 'en', label: 'EN' },
                 { value: 'ar', label: 'ع', lang: 'ar' },
-                { value: 'ur', label: 'ار', lang: 'ur' },
               ]}
             />
           </Cell>

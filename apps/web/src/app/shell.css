@@ -225,7 +225,7 @@
   color: var(--accent-t);
 }
 /* Words follow the locale's font; only Latin runs take the reference's mono. */
-.sq-app :is(:lang(ar), :lang(ur)) .tb-pill .m {
+.sq-app :lang(ar) .tb-pill .m {
   font-family: var(--font-arabic);
 }
 .sq-app .avatar {
@@ -307,9 +307,17 @@
   .sq-app .top-end .tb-pill.simb {
     padding-inline: 14px;
   }
-  /* Field and block pages on a phone: the bar wraps rather than scroll the page sideways. */
-  .sq-app:not(.is-cockpit) :is(.top, .top-end) {
+  /* Phones: the bar wraps rather than scroll the page sideways (Today included). */
+  .sq-app :is(.top, .top-end) {
     flex-wrap: wrap;
     row-gap: 8px;
+  }
+  .sq-app .top-end {
+    margin-inline-start: auto;
+    justify-content: flex-end;
+  }
+  /* The farm name is already on the page; the brand alone keeps the bar to two rows at most. */
+  .sq-app .logo .lbl {
+    display: none;
   }
 }

@@ -17,12 +17,6 @@ export { blockPaw, STALE_AFTER_HOURS } from './paw';
 export { schedule } from './schedule';
 export type { BlockPawInfo, BudgetInput, PlanDayInput, WeightedSeries } from './types';
 
-/**
- * The decision rules' version, shown beside every plan. v1 is plan/04's rule set (threshold,
- * refill to target, budget tiers, night window, greenhouse pulses); bump it when a rule changes.
- */
-export const ENGINE_VERSION = 'v1';
-
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
 /** blockPaw → decideBlock → applyBudget → schedule → totals. */

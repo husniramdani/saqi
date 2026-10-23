@@ -101,7 +101,6 @@ export function buildSeed({
         ? {
             en: t.title.en.replace('12:00', silentSince),
             ar: t.title.ar.replace('12:00', silentSince),
-            ur: t.title.ur.replace('12:00', silentSince),
           }
         : t.title,
     assignee: t.assignee,

@@ -4,7 +4,6 @@ import type { Locale } from '@saqi/shared';
 const TAGS: Record<Locale, string> = {
   en: 'en-GB',
   ar: 'ar-AE-u-nu-latn',
-  ur: 'ur-PK-u-nu-latn',
 };
 
 export const intlLocale = (locale: Locale) => TAGS[locale];

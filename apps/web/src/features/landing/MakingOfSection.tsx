@@ -1,25 +1,17 @@
-import { blockById, farm07 } from '@saqi/shared';
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { FALLBACK_STATS, fetchTestStats } from '@/features/test-stats/data';
 import { useLocale } from '@/i18n';
 import { formatNumber } from '@/i18n/format';
 import { SectionIndex } from './LandingIcons';
-import { LANDING_ET0_MM, landingScenarios } from './workedExample';
+import { landingScenarios } from './workedExample';
 
 const SWATCHES = [0, 1, 2, 3, 4, 5, 6];
+const CHECKS = ['maths', 'server', 'screens'] as const;
 
 export function MakingOfSection() {
   const { t } = useTranslation();
   const locale = useLocale();
-  const stats = useQuery({
-    queryKey: ['test-stats'],
-    queryFn: fetchTestStats,
-    staleTime: Infinity,
-  });
-  const engineTests = stats.data?.engine ?? FALLBACK_STATS.engine;
   const d1 = landingScenarios.irrigate.decision;
-  const fmt = (n: number, digits = 1) => formatNumber(n, locale, digits);
+  const fmt = (n: number) => formatNumber(n, locale, 1);
   return (
     <section className="wrap" id="making-of" style={{ paddingBottom: 'clamp(72px, 9vw, 128px)' }}>
       <div className="sec-head">
@@ -37,29 +29,18 @@ export function MakingOfSection() {
                 <span key={step} className={`sw${step}`} />
               ))}
             </div>
+            <div className="scale-ends">
+              <span>{t('landing.making.dry')}</span>
+              <span>{t('landing.making.wet')}</span>
+            </div>
+            <p className="jnote">{t('landing.making.scaleNote')}</p>
             <div className="swr sw">
               <span className="tk-bg" />
               <span className="tk-panel" />
               <span className="tk-accent" style={{ flex: 2 }} />
               <span className="tk-ink" style={{ flex: 2 }} />
             </div>
-            {/* The token sheet as each theme defines it (design.md → @saqi/tokens). */}
-            <div className="code day-only" dir="ltr">
-              <b>water-4</b>
-              {'   #5EA3A3   plant-available water, step 4\n'}
-              <b>accent</b>
-              {'    #E8762D   tonight · action · focus\n'}
-              <b>tide</b>
-              {'      1.6 s     expo.out — first reveal'}
-            </div>
-            <div className="code night-only" dir="ltr">
-              <b>water-4</b>
-              {'   #6FA87F   plant-available water, step 4\n'}
-              <b>ember</b>
-              {'     #F08A3E   tonight · action · focus\n'}
-              <b>tide</b>
-              {'      1.6 s     expo.out — first reveal'}
-            </div>
+            <p className="jnote">{t('landing.making.accentNote')}</p>
           </div>
           <div className="jbody">
             <span className="lbl micro">{t('landing.making.chapter', { number: '01' })}</span>
@@ -71,33 +52,45 @@ export function MakingOfSection() {
           <article className="jcard jrow rv">
             <div className="jviz" aria-hidden="true">
               <span className="lbl micro">{t('landing.making.d1Tomorrow')}</span>
-              <div className="mono" style={{ fontSize: 15, lineHeight: 1.7 }} dir="ltr">
-                {'ETc = '}
-                <span className="acc-t ember-t">{fmt(blockById(farm07, 'D-1').kc, 2)}</span>
-                {` × ${fmt(LANDING_ET0_MM)}`}
-                <br />
-                {`\u00a0\u00a0\u00a0\u00a0= ${fmt(d1.etcMm)} mm`}
-                <br />
-                {`${fmt(d1.pawNow ?? 0)}% → `}
-                <span className="acc-t ember-t">{`${fmt(d1.pawProjected ?? 0)}%`}</span>
+              <div className="jlines">
+                <p>{t('landing.making.d1Uses', { mm: fmt(d1.etcMm) })}</p>
+                <p>
+                  {t('landing.making.d1Soil', {
+                    now: fmt(d1.pawNow ?? 0),
+                    next: fmt(d1.pawProjected ?? 0),
+                  })}
+                </p>
+                <p className="acc-t ember-t">
+                  {t('landing.making.d1Tonight', { volume: fmt(d1.volumeM3) })}
+                </p>
               </div>
             </div>
             <div className="jbody">
               <span className="lbl micro">{t('landing.making.chapter', { number: '02' })}</span>
               <h3>{t('landing.making.chapters.water.title')}</h3>
-              <p>{t('landing.making.chapters.water.body')}</p>
+              <p>
+                {t('landing.making.chapters.water.body', {
+                  now: fmt(d1.pawNow ?? 0),
+                  volume: fmt(d1.volumeM3),
+                })}
+              </p>
             </div>
           </article>
           <article className="jcard jrow rv">
             <div className="jviz" aria-hidden="true">
-              <div className="tests">
-                {Array.from({ length: 14 }, (_, index) => (
-                  <span key={index} />
+              <ul className="checks">
+                {CHECKS.map((key) => (
+                  <li key={key}>
+                    <span className="tick">
+                      <svg width="14" height="14" viewBox="0 0 16 16">
+                        <path d="M3.5 8.5l3 3 6-7" />
+                      </svg>
+                    </span>
+                    <span>{t(`landing.making.checks.${key}`)}</span>
+                  </li>
                 ))}
-              </div>
-              <span className="lbl micro">
-                {t('landing.making.engineTests', { count: String(engineTests) })}
-              </span>
+              </ul>
+              <span className="jnote">{t('landing.making.checksNote')}</span>
             </div>
             <div className="jbody">
               <span className="lbl micro">{t('landing.making.chapter', { number: '03' })}</span>

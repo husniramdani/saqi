@@ -202,24 +202,12 @@ export function DecisionSection({ scenarioKey, onScenarioChange }: Props) {
         </div>
 
         <div className="formula">
-          <div>
-            <span className="lbl micro">{t('landing.decision.formula.taw')}</span>
-            <code>
-              <span dir="ltr">TAW = (FC − WP) × root depth</span>
-            </code>
-          </div>
-          <div>
-            <span className="lbl micro">{t('landing.decision.formula.etc')}</span>
-            <code>
-              <span dir="ltr">ETc = Kc × ET₀ × factor</span>
-            </code>
-          </div>
-          <div>
-            <span className="lbl micro">{t('landing.decision.formula.volume')}</span>
-            <code>
-              <span dir="ltr">m³ = gross mm × ha × 10 × wetted</span>
-            </code>
-          </div>
+          {(['taw', 'etc', 'volume'] as const).map((step) => (
+            <div key={step}>
+              <span className="lbl micro">{t(`landing.decision.formula.${step}`)}</span>
+              <p className="formula-t">{t(`landing.decision.formula.${step}Text`)}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

@@ -4,11 +4,10 @@ import ICU from 'i18next-icu';
 import { initReactI18next, useTranslation } from 'react-i18next';
 import ar from './ar.json';
 import en from './en.json';
-import ur from './ur.json';
 
 const STORAGE_KEY = 'saqi.locale';
 
-export const isRtl = (locale: Locale) => locale === 'ar' || locale === 'ur';
+export const isRtl = (locale: Locale) => locale === 'ar';
 
 function storedLocale(): Locale {
   try {
@@ -44,7 +43,7 @@ void i18n
   .use(ICU)
   .use(initReactI18next)
   .init({
-    resources: { en: { translation: en }, ar: { translation: ar }, ur: { translation: ur } },
+    resources: { en: { translation: en }, ar: { translation: ar } },
     lng: initial,
     fallbackLng: 'en',
     interpolation: { escapeValue: false },

@@ -2,7 +2,6 @@ import { IntlMessageFormat } from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
 import ar from './ar.json';
 import en from './en.json';
-import ur from './ur.json';
 
 type Tree = { [key: string]: string | Tree };
 
@@ -33,7 +32,7 @@ function params(message: string): string[] {
 }
 
 const english = flatten(en);
-const locales = { ar: flatten(ar), ur: flatten(ur) };
+const locales = { ar: flatten(ar) };
 
 describe.each(Object.entries(locales))('%s strings', (locale, strings) => {
   it('has every English key and nothing extra', () => {
@@ -65,7 +64,6 @@ describe.each(Object.entries(locales))('%s strings', (locale, strings) => {
       'field.context',
       'map.utility.ro',
       'mapControls.utility.ro',
-      'makingOf.scene5.links.stylebase',
     ]);
     expect(latin.map(([key]) => key).filter((k) => !allowed.has(k))).toEqual([]);
   });

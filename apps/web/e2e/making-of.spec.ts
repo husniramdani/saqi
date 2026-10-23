@@ -1,10 +1,10 @@
 import { expect, test } from './fixtures';
 
 const SCENES = [
-  'One file decides how it looks.',
+  'One look, everywhere.',
   'Water first.',
   'Every decision explains itself.',
-  'Tested like production.',
+  'Checked before every update.',
   'Built by Husni Ramdani.',
 ];
 
@@ -24,10 +24,10 @@ test.describe('with reduced motion', () => {
   });
 });
 
-test('with motion, scrolling into scene 4 counts the tests up from zero', async ({ page }) => {
+test('with motion, scrolling into scene 4 counts the checks up from zero', async ({ page }) => {
   await page.goto('/making-of');
   await expect(page.getByRole('main')).toHaveAttribute('data-story', 'pinned');
-  const tested = page.getByRole('region', { name: 'Tested like production.' });
+  const tested = page.getByRole('region', { name: 'Checked before every update.' });
   const engine = tested.getByRole('definition').first();
   await expect(engine).toHaveText('0'); // counters start from zero while pinned
   // Pinned and scrubbed: scroll to where the pin starts, then most of the way through it.

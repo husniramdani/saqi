@@ -22,7 +22,8 @@ describe('format', () => {
     expect(formatM3(155.47, 'en')).toBe('155.5 m³');
   });
 
-  it.each(['ar', 'ur'] as const)('keeps Western digits in %s', (locale) => {
+  it('keeps Western digits in Arabic', () => {
+    const locale = 'ar';
     const out = [
       formatM3(1234.5, locale),
       formatPct(57.6, locale),

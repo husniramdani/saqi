@@ -1,3 +1,4 @@
+import type { Flip } from 'gsap/Flip';
 import { duration, ease, gsap, stagger, type StoryPlugins } from '@/motion';
 
 /**
@@ -5,13 +6,17 @@ import { duration, ease, gsap, stagger, type StoryPlugins } from '@/motion';
  * scroll and scrubs its own timeline (`scrub: 0.6`); headings reveal line by line (SplitText).
  * Phones: each scene fades in once. Reduced motion: nothing runs; the page is already complete.
  * Transforms and opacity only. Returns the revert, which restores every split, pin and counter.
+ *
+ * One-off reveals play from an IntersectionObserver, not ScrollTrigger positions: on phones
+ * those positions go stale when layout shifts after measuring, leaving content hidden.
  */
 
-type FlipPlugin = (typeof import('gsap/Flip'))['Flip'];
+type FlipPlugin = typeof Flip;
 export interface StoryMotionPlugins extends StoryPlugins {
   Flip: FlipPlugin;
 }
 type Format = (value: number, digits: number) => string;
+type Reveal = (trigger: Element, play: () => void) => void;
 
 const DESKTOP = '(min-width: 768px) and (prefers-reduced-motion: no-preference)';
 const PHONE = '(max-width: 767.98px) and (prefers-reduced-motion: no-preference)';
@@ -19,11 +24,42 @@ const PHONE = '(max-width: 767.98px) and (prefers-reduced-motion: no-preference)
 export function buildStory(root: HTMLElement, plugins: StoryMotionPlugins, format: Format) {
   const mm = gsap.matchMedia(root);
   mm.add({ desktop: DESKTOP, phone: PHONE }, (context) => {
-    if (context.conditions?.['desktop']) return pinned(root, plugins, format);
-    if (context.conditions?.['phone']) revealOnce(root);
-    return undefined;
+    const enter = enterObserver();
+    const reveal = enter?.reveal ?? null;
+    let revert: (() => void) | undefined;
+    if (context.conditions?.['desktop']) revert = pinned(root, plugins, format, reveal);
+    else if (context.conditions?.['phone'] && reveal) revealOnce(root, reveal);
+    return () => {
+      enter?.disconnect();
+      revert?.();
+    };
   });
   return () => mm.revert();
+}
+
+/**
+ * Plays each registered reveal once its trigger is on screen. Null without IntersectionObserver:
+ * then nothing is hidden, because the written page is already complete.
+ */
+function enterObserver() {
+  if (typeof IntersectionObserver === 'undefined') return null;
+  const plays = new Map<Element, () => void>();
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        io.unobserve(entry.target);
+        plays.get(entry.target)?.();
+        plays.delete(entry.target);
+      }
+    },
+    { rootMargin: '0px 0px -8% 0px' },
+  );
+  const reveal: Reveal = (trigger, play) => {
+    plays.set(trigger, play);
+    io.observe(trigger);
+  };
+  return { reveal, disconnect: () => io.disconnect() };
 }
 
 const all = <T extends Element = HTMLElement>(selector: string, scope: Element) =>
@@ -51,11 +87,15 @@ function pinned(
   root: HTMLElement,
   { ScrollTrigger, SplitText, Flip }: StoryMotionPlugins,
   format: Format,
+  reveal: Reveal | null,
 ) {
   root.dataset['story'] = 'pinned';
   let built = false;
 
-  for (const heading of all('[data-split]', root)) {
+  // Headings reveal line by line once on screen (only with an observer to show them again).
+  // A heading already revealed stays revealed when SplitText re-splits it.
+  const revealed = new WeakSet<Element>();
+  for (const heading of reveal ? all('[data-split]', root) : []) {
     SplitText.create(heading, {
       type: 'lines',
       mask: 'lines',
@@ -63,13 +103,19 @@ function pinned(
       onSplit(self) {
         // A re-split (resize, font swap) changes line boxes: let the pins re-measure.
         if (built) requestAnimationFrame(() => ScrollTrigger.refresh());
-        return gsap.from(self.lines, {
+        if (revealed.has(heading)) return undefined;
+        const tween = gsap.from(self.lines, {
           yPercent: 100,
           duration: duration.settle,
           ease: ease.reveal,
           stagger: stagger.list,
-          scrollTrigger: { trigger: heading, start: 'top 85%', once: true },
+          paused: true,
         });
+        reveal?.(heading, () => {
+          revealed.add(heading);
+          tween.play();
+        });
+        return tween;
       },
     });
   }
@@ -107,39 +153,29 @@ function pinned(
     );
   };
 
-  // 1 · The water lines light up, their swatches fly into the palette, the palette becomes the map.
+  // 1 · The water scale fills in from dry to wet, then the scale becomes the map.
   const s1 = scene(1);
   if (s1) {
     const tl = timeline(s1);
-    const waterLines = all('[data-code-line]', s1).filter((l) => l.querySelector('[data-swatch]'));
-    const marks = waterLines.map((l) => l.querySelector('[data-line-mark]'));
-    const swatches = all('[data-swatch]', s1);
-    const slots = all('[data-slot]', s1);
-    const code = s1.querySelector('[data-code]');
     const palette = s1.querySelector('[data-palette]');
+    const labels = all('[data-scale-label]', s1);
     const map = s1.querySelector('[data-mini-map]');
-    tl.fromTo(marks, { opacity: 0 }, { opacity: 0.14, duration: 0.3, stagger: 0.08 });
-    swatches.forEach((swatch, i) => {
-      const slot = slots[i];
-      if (slot)
-        tl.to(
-          swatch,
-          { ...fitOnto(Flip, swatch, slot), duration: 0.6, ease: ease.emphasized },
-          0.4 + i * 0.08,
-        );
-    });
-    const landed = tl.duration();
-    tl.fromTo(all('[data-slot-fill]', s1), { opacity: 0 }, { opacity: 1, duration: 0.01 }, landed)
-      .to(swatches, { opacity: 0, duration: 0.01 }, landed)
-      .to(marks, { opacity: 0, duration: 0.2 }, landed);
-    if (code && palette && map) {
-      tl.to(code, { opacity: 0, duration: 0.5 }, landed + 0.2)
+    tl.from(all('[data-swatch]', s1), {
+      opacity: 0,
+      scaleY: 0.4,
+      transformOrigin: 'bottom center',
+      duration: 0.3,
+      stagger: 0.08,
+    }).from(labels, { opacity: 0, duration: 0.3 }, 0.2);
+    const filled = tl.duration();
+    if (palette && map) {
+      tl.to(labels, { opacity: 0, duration: 0.4 }, filled + 0.2)
         .to(
           palette,
           { ...fitOnto(Flip, palette, map), opacity: 0, duration: 0.8, ease: ease.emphasized },
-          landed + 0.2,
+          filled + 0.2,
         )
-        .fromTo(map, { opacity: 0 }, { opacity: 1, duration: 0.6 }, landed + 0.5);
+        .fromTo(map, { opacity: 0 }, { opacity: 1, duration: 0.6 }, filled + 0.5);
     }
   }
 
@@ -157,7 +193,7 @@ function pinned(
     });
   }
 
-  // 3 · Decision cards stack; the active card's reasons arrive in the engine's order.
+  // 3 · Decision cards stack; the active card's reasons arrive in the order Saqi weighed them.
   const s3 = scene(3);
   if (s3) {
     const tl = timeline(s3);
@@ -179,7 +215,7 @@ function pinned(
     });
   }
 
-  // 4 · The test counts climb.
+  // 4 · The check counts climb.
   const s4 = scene(4);
   if (s4) {
     const tl = timeline(s4);
@@ -189,37 +225,52 @@ function pinned(
 
   // 5 · The ending doesn't pin: its links simply arrive.
   const s5 = scene(5);
-  if (s5) {
-    gsap.from(all('[data-visual] li', s5), {
+  if (s5 && reveal) {
+    const links = gsap.from(all('[data-visual] li', s5), {
       opacity: 0,
       y: 8,
       duration: duration.settle,
       ease: ease.standard,
       stagger: stagger.list,
-      scrollTrigger: { trigger: s5, start: 'top 70%', once: true },
+      paused: true,
     });
+    reveal(s5, () => links.play());
   }
 
   // Hold the finished state for the last third of each pin, so the final figures are read
   // before the scene scrolls away (otherwise counters are still climbing at release).
   for (const tl of timelines) tl.to({}, { duration: tl.duration() / 2 });
 
+  // Pins follow layout changes (images, fonts, late content) instead of stale positions.
+  let frame = 0;
+  const resized =
+    typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(() => {
+          cancelAnimationFrame(frame);
+          frame = requestAnimationFrame(() => ScrollTrigger.refresh());
+        });
+  resized?.observe(root);
+
   built = true;
   return () => {
+    resized?.disconnect();
+    cancelAnimationFrame(frame);
     delete root.dataset['story'];
     for (const el of counters) el.textContent = el.dataset['final'] ?? el.textContent;
   };
 }
 
-function revealOnce(root: HTMLElement) {
+function revealOnce(root: HTMLElement, reveal: Reveal) {
   for (const scene of all('[data-scene]', root)) {
-    gsap.from(scene.children, {
+    const tween = gsap.from(scene.children, {
       opacity: 0,
       y: 16,
       duration: duration.settle,
       ease: ease.standard,
       stagger: stagger.list,
-      scrollTrigger: { trigger: scene, start: 'top 85%', once: true },
+      paused: true,
     });
+    reveal(scene, () => tween.play());
   }
 }

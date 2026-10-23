@@ -42,7 +42,7 @@ export function DecisionList({
     if (stale) {
       const sensor = farm.sensors.find((s) => s.id === stale['sensorId']);
       return t('today.row.offline', {
-        // Isolated (LRI…PDI) so "60 cm" keeps its order inside Arabic and Urdu sentences.
+        // Isolated (LRI…PDI) so "60 cm" keeps its order inside Arabic sentences.
         depth:
           sensor?.depthCm === null || !sensor
             ? t('rail.substrateSensor')

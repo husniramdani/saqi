@@ -1,4 +1,3 @@
-import { ENGINE_VERSION } from '@saqi/engine';
 import { gstDate } from '@saqi/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,7 +17,7 @@ import {
 import { SchedulePanel } from '@/features/schedule/SchedulePanel';
 import { WeatherSection } from '@/features/weather/WeatherSection';
 import { useLocale } from '@/i18n';
-import { formatDateGst, formatM3, formatNumber } from '@/i18n/format';
+import { formatDateGst, formatM3, formatNumber, formatTimeGst } from '@/i18n/format';
 import { loadMapPlugins, useMotion } from '@/motion';
 import { Skeleton } from '@/ui';
 import '@/features/cockpit/cockpit.css';
@@ -233,7 +232,9 @@ export function Component() {
           <h2 className="p-title">{t('today.plan')}</h2>
           <span className="chip ok">
             <span aria-hidden="true" className="dot live" />
-            {t('today.engine', { version: ENGINE_VERSION })}
+            {p
+              ? t('today.planned', { time: formatTimeGst(p.generatedAt, locale) })
+              : t('today.plan')}
           </span>
         </div>
         <div className="rtabs" role="group" aria-label={t('today.tabs.label')}>

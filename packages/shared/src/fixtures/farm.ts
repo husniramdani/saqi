@@ -1,6 +1,6 @@
 /**
  * Farm 07, Al Ain: a fictional farm. Every number comes from plan/03-data-model.md §1.
- * Arabic and Urdu names: translations machine-assisted, review welcome.
+ * Arabic names: translations machine-assisted, review welcome.
  */
 import type { Block, Farm, Sensor } from '../schemas/farm';
 
@@ -41,7 +41,7 @@ const blocks: Block[] = [
   {
     ...palmSoil,
     id: 'D-1',
-    name: { en: 'Khalas palms', ar: 'نخيل خلاص', ur: 'خلاص کھجور' },
+    name: { en: 'Khalas palms', ar: 'نخيل خلاص' },
     variety: 'Khalas',
     areaHa: 1.2,
     trees: 120,
@@ -59,7 +59,7 @@ const blocks: Block[] = [
   {
     ...palmSoil,
     id: 'D-2',
-    name: { en: 'Lulu palms', ar: 'نخيل لولو', ur: 'لولو کھجور' },
+    name: { en: 'Lulu palms', ar: 'نخيل لولو' },
     variety: 'Lulu',
     areaHa: 1.0,
     trees: 96,
@@ -77,7 +77,7 @@ const blocks: Block[] = [
   {
     ...palmSoil,
     id: 'D-3',
-    name: { en: 'Fard palms', ar: 'نخيل فرض', ur: 'فرض کھجور' },
+    name: { en: 'Fard palms', ar: 'نخيل فرض' },
     variety: 'Fard',
     areaHa: 0.9,
     trees: 80,
@@ -95,7 +95,7 @@ const blocks: Block[] = [
   {
     ...palmSoil,
     id: 'D-4',
-    name: { en: 'Barhi palms', ar: 'نخيل برحي', ur: 'برحی کھجور' },
+    name: { en: 'Barhi palms', ar: 'نخيل برحي' },
     variety: 'Barhi',
     areaHa: 0.7,
     trees: 64,
@@ -113,7 +113,7 @@ const blocks: Block[] = [
   {
     ...greenhouse,
     id: 'G-1',
-    name: { en: 'Tomato house', ar: 'بيت الطماطم', ur: 'ٹماٹر گرین ہاؤس' },
+    name: { en: 'Tomato house', ar: 'بيت الطماطم' },
     crop: 'tomato',
     variety: 'soilless (coco)',
     kc: 1.15,
@@ -127,7 +127,7 @@ const blocks: Block[] = [
   {
     ...greenhouse,
     id: 'G-2',
-    name: { en: 'Cucumber house', ar: 'بيت الخيار', ur: 'کھیرا گرین ہاؤس' },
+    name: { en: 'Cucumber house', ar: 'بيت الخيار' },
     crop: 'cucumber',
     variety: 'soilless (coco)',
     kc: 1.0,
@@ -140,7 +140,7 @@ const blocks: Block[] = [
   },
   {
     id: 'F-1',
-    name: { en: 'Rhodes grass', ar: 'حشيشة الرودس', ur: 'رہوڈز گھاس' },
+    name: { en: 'Rhodes grass', ar: 'حشيشة الرودس' },
     crop: 'fodder',
     variety: 'Rhodes grass',
     areaHa: 1.0,
@@ -184,7 +184,6 @@ export const farm07: Farm = {
   name: {
     en: 'Farm 07, Al Ain (fictional)',
     ar: 'مزرعة 07، العين (خيالية)',
-    ur: 'فارم 07، العین (فرضی)',
   },
   lat: 24.21,
   lon: 55.74,
@@ -199,14 +198,13 @@ export const farm07: Farm = {
       name: {
         en: 'Well W-1 (brackish, EC 4.8 dS/m)',
         ar: 'بئر W-1 (مياه قليلة الملوحة، EC 4.8 dS/m)',
-        ur: 'کنواں W-1 (کھارا پانی، EC 4.8 dS/m)',
       },
       ecDsM: 4.8,
     },
     {
       id: 'RO-1',
       kind: 'ro',
-      name: { en: 'RO unit', ar: 'وحدة التناضح العكسي', ur: 'آر او یونٹ' },
+      name: { en: 'RO unit', ar: 'وحدة التناضح العكسي' },
       ecDsM: null,
     },
     {
@@ -215,7 +213,6 @@ export const farm07: Farm = {
       name: {
         en: 'Recycled water line (TSE)',
         ar: 'خط المياه المعالجة (TSE)',
-        ur: 'ری سائیکل شدہ پانی کی لائن (TSE)',
       },
       ecDsM: null,
     },

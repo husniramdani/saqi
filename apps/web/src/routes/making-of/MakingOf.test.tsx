@@ -25,10 +25,10 @@ describe('Making-of', () => {
         .getAllByRole('region')
         .map((r) => within(r).getByRole('heading', { level: 2 }).textContent),
     ).toEqual([
-      'One file decides how it looks.',
+      'One look, everywhere.',
       'Water first.',
       'Every decision explains itself.',
-      'Tested like production.',
+      'Checked before every update.',
       'Built by Husni Ramdani.',
     ]);
   });
@@ -43,23 +43,32 @@ describe('Making-of', () => {
     expect(within(reasons).getByText('155.5 m³')).toBeTruthy();
   });
 
-  it('keeps code and arithmetic left to right, and the mini map out of the tab order', () => {
+  it('shows the water scale as a picture, not code, and keeps the mini map out of the tab order', () => {
     renderPage();
-    const design = screen.getByRole('region', { name: 'One file decides how it looks.' });
-    expect(design.querySelector('pre')?.getAttribute('dir')).toBe('ltr');
-    expect(design.querySelector('pre')?.textContent).toContain("water-6: '#225E73'");
+    const design = screen.getByRole('region', { name: 'One look, everywhere.' });
+    expect(within(design).getByRole('img', { name: 'Water scale, dry to wet' })).toBeTruthy();
+    expect(document.querySelector('pre, code')).toBeNull();
     const map = design.querySelector('[data-mini-map]');
     expect(map?.hasAttribute('inert')).toBe(true);
     expect(map?.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('lists only links that exist', () => {
+  it('speaks to visitors, not developers', () => {
+    renderPage();
+    const text = screen.getByRole('main').textContent ?? '';
+    expect(text).not.toMatch(/design\.md|pnpm|Stylebase|tokens?\b|engine|TAW|E2E|\bCI\b|tests?\b/i);
+  });
+
+  it('ends with the app and the author, nothing else', () => {
     renderPage();
     const author = screen.getByRole('region', { name: 'Built by Husni Ramdani.' });
     expect(
       within(author)
         .getAllByRole('link')
-        .map((a) => a.textContent),
-    ).toEqual(['Open the app', 'Source on GitHub', 'Stylebase']);
+        .map((a) => [a.textContent, a.getAttribute('href')]),
+    ).toEqual([
+      ['Open the app', '/today'],
+      ['Husni Ramdani', 'https://github.com/husniramdani'],
+    ]);
   });
 });

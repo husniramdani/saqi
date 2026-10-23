@@ -2,10 +2,12 @@ import { applyBudget, decideBlock } from '@saqi/engine';
 import { blockById, farm07, type BlockDecision } from '@saqi/shared';
 import { describe, expect, it } from 'vitest';
 import {
+  d1Formula,
   LANDING_ET0_MM,
   landingDecisions,
   landingScenarios,
   landingSchedule,
+  storyDecisions,
 } from './workedExample';
 
 const fresh = (paw: number) => ({ paw, confidence: 'high' as const, staleSensors: [] });
@@ -51,5 +53,23 @@ describe('landing worked example', () => {
     expect(Object.values(landingScenarios).every((scenario) => farmIds.has(scenario.blockId))).toBe(
       true,
     );
+  });
+});
+
+describe('making-of worked example', () => {
+  it('builds the D-1 sum from the engine, ending at 90.4 m³', () => {
+    const { target, projected, taw, efficiency, area, wetted, volume } = d1Formula;
+    expect(volume).toBe(90.4);
+    // The terms on screen multiply out to the engine's answer.
+    const shown = ((((target - projected) / 100) * taw) / efficiency) * area * 10 * wetted;
+    expect(Math.round(shown * 10) / 10).toBe(volume);
+  });
+
+  it('has the engine decide Irrigate D-1, Skip D-2 and Deficit F-1', () => {
+    expect(storyDecisions().map((d) => [d.blockId, d.decision, d.volumeM3])).toEqual([
+      ['D-1', 'irrigate', 90.4],
+      ['D-2', 'skip', 0],
+      ['F-1', 'deficit', 155.5],
+    ]);
   });
 });

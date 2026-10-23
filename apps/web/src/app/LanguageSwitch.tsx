@@ -8,7 +8,6 @@ import { cx } from '@/ui';
 const LANGUAGES: { value: Locale; label: string }[] = [
   { value: 'en', label: 'EN' },
   { value: 'ar', label: 'ع' },
-  { value: 'ur', label: 'ار' },
 ];
 
 export function LanguageSwitch() {

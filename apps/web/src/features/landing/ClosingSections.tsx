@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { ArrowIcon, LandingLogo } from './LandingIcons';
 
-const GITHUB = 'https://github.com/husniramdani';
+const AUTHOR = 'https://github.com/husniramdani';
 
 export function LandingCta() {
   const { t } = useTranslation();
@@ -28,9 +28,6 @@ export function LandingCta() {
               <ArrowIcon />
             </span>
           </Link>
-          <a className="tlink" href={GITHUB}>
-            {t('landing.cta.source')}
-          </a>
         </div>
       </div>
     </section>
@@ -79,27 +76,15 @@ export function LandingFooter() {
             </li>
           </ul>
         </div>
-        <div>
-          <h4>{t('landing.footer.builtBy')}</h4>
-          <ul>
-            <li>
-              <a href={GITHUB}>{t('landing.footer.github')}</a>
-            </li>
-            <li>
-              <a href="https://linkedin.com/in/husniramdani">LinkedIn</a>
-            </li>
-            <li>
-              <a href="https://stylebase.dev">Stylebase</a>
-            </li>
-          </ul>
-        </div>
       </div>
       <div className="foot-b">
         <span className="micro" dir="ltr">
           {`${farm07.lat.toFixed(2)} N · ${farm07.lon.toFixed(2)} E`}
         </span>
         <span className="micro">{t('landing.footer.gst')}</span>
-        <span className="micro">© 2026 Saqi</span>
+        <span className="micro">
+          © 2026 Saqi · <a href={AUTHOR}>{t('landing.footer.credit')}</a>
+        </span>
       </div>
     </footer>
   );

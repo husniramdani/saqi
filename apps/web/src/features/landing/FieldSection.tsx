@@ -56,9 +56,7 @@ export function FieldSection() {
           <div className="fpoints">
             {POINTS.map((point) => (
               <div key={point} className="fpoint rv">
-                <b>
-                  {point === 'languages' ? 'EN · ع · ار' : t(`landing.field.points.${point}.label`)}
-                </b>
+                <b>{point === 'languages' ? 'EN · ع' : t(`landing.field.points.${point}.label`)}</b>
                 <p>{t(`landing.field.points.${point}.body`)}</p>
               </div>
             ))}
@@ -77,7 +75,7 @@ export function FieldSection() {
                 <div className="ph-top">
                   <span className="ph-brand">{phone.brand}</span>
                   <span className="ph-lang">
-                    {['EN', 'ع', 'ار'].map((label, index) => (
+                    {['EN', 'ع'].map((label, index) => (
                       <span
                         key={label}
                         className={[index > 0 ? 'ar' : '', index === phone.on ? 'on' : '']

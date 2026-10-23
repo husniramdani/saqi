@@ -9,12 +9,11 @@ import { ReasonText } from '@/i18n/ReasonText';
 import { Chip, DECISION_CHIP, textLinkClasses } from '@/ui';
 import { d1Formula, miniMapDecisions, storyDecisions } from '@/features/landing/workedExample';
 import type { TestStats } from '@/features/test-stats/data';
-import { colourExcerpt } from './data';
 
 /**
  * The five scenes as plain, readable sections. Motion (storyMotion.ts) only adds to them: with
  * no JS, reduced motion or a phone, every word, number and picture is already on the page.
- * Pinned-only layout (stacked cards, the map over the code) waits for `data-story="pinned"`.
+ * Pinned-only layout (stacked cards, the map over the water scale) waits for `data-story="pinned"`.
  */
 
 function Scene({
@@ -50,40 +49,39 @@ function Scene({
   );
 }
 
-const lines = colourExcerpt();
-const tokenName = (text: string) => /^ {2}([\w-]+):/.exec(text)?.[1];
+/** The seven water-scale steps, dry (0) to wet (6), as the map paints them. */
+const WATER_STEPS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 export function DesignScene() {
   const { t } = useTranslation();
-  const water = lines.filter((l) => l.water);
   return (
     <Scene n={1} title={t('makingOf.scene1.title')} body={t('makingOf.scene1.body')}>
-      <div className="grid gap-6 group-data-[story=pinned]:[&>*]:[grid-area:1/1]">
-        <figure data-code className="flex flex-col gap-2">
-          <pre
-            dir="ltr"
-            className="num overflow-x-auto rounded-lg bg-inverse-surface p-5 text-[13px] leading-6 text-inverse-text"
+      <div className="grid gap-8 group-data-[story=pinned]:[&>*]:[grid-area:1/1]">
+        <figure className="flex flex-col gap-3 self-center">
+          <div
+            data-palette
+            className="flex gap-2"
+            role="img"
+            aria-label={t('makingOf.scene1.palette')}
           >
-            {lines.map((line) => (
-              <span key={line.text} data-code-line className="relative block px-1">
-                <span
-                  data-line-mark
-                  aria-hidden="true"
-                  className="absolute inset-0 rounded-sm bg-inverse-text opacity-0"
-                />
-                <span className="relative">{line.text}</span>
-                {line.water ? (
-                  <span
-                    data-swatch
-                    aria-hidden="true"
-                    className="relative ms-3 inline-block size-3 rounded-[3px] align-[-1px]"
-                    style={{ backgroundColor: `var(--color-${tokenName(line.text) ?? ''})` }}
-                  />
-                ) : null}
-              </span>
+            {WATER_STEPS.map((step) => (
+              <span
+                key={step}
+                data-swatch
+                className="h-16 flex-1 rounded-md border border-border-strong"
+                style={{ backgroundColor: `var(--color-water-${step})` }}
+              />
             ))}
-          </pre>
-          <figcaption className="text-sm text-text-muted">
+          </div>
+          <div
+            data-scale-label
+            aria-hidden="true"
+            className="flex justify-between gap-4 text-sm text-text-muted"
+          >
+            <span>{t('makingOf.scene1.dry')}</span>
+            <span>{t('makingOf.scene1.wet')}</span>
+          </div>
+          <figcaption data-scale-label className="text-sm text-text-secondary">
             {t('makingOf.scene1.caption')}
           </figcaption>
         </figure>
@@ -101,29 +99,6 @@ export function DesignScene() {
           />
         </div>
       </div>
-      <div className="mt-6 flex flex-col gap-2">
-        <div
-          data-palette
-          className="flex gap-2"
-          role="img"
-          aria-label={t('makingOf.scene1.palette')}
-        >
-          {water.map((line) => (
-            <span
-              key={line.text}
-              data-slot
-              className="relative size-8 rounded-md border border-border-strong"
-            >
-              <span
-                data-slot-fill
-                className="absolute inset-0 rounded-[5px]"
-                style={{ backgroundColor: `var(--color-${tokenName(line.text) ?? ''})` }}
-              />
-            </span>
-          ))}
-        </div>
-        <span className="text-sm text-text-muted">{t('makingOf.scene1.palette')}</span>
-      </div>
     </Scene>
   );
 }
@@ -135,7 +110,7 @@ function Term({ label, value, digits }: { label: string; value: number; digits: 
   return (
     <span data-term className="inline-flex flex-col items-center gap-1">
       {/* The label follows its own script; the arithmetic around it stays left to right. */}
-      <span dir="auto" className="text-sm text-text-muted">
+      <span dir="auto" className="max-w-[16ch] text-center text-sm text-text-muted">
         {label}
       </span>
       <span
@@ -173,7 +148,7 @@ export function WaterScene() {
       }
     >
       <figure className="flex flex-col gap-6 rounded-lg border border-border bg-surface p-6 shadow-raised">
-        {/* Arithmetic reads left to right in every locale, like the code panel. */}
+        {/* Arithmetic reads left to right in every locale. */}
         <div dir="ltr" className="flex flex-wrap items-end gap-x-3 gap-y-5">
           <Op>(</Op>
           <Term label={term('target')} value={f.target} digits={0} />
@@ -242,63 +217,44 @@ export function ReasonsScene() {
 export function TestsScene({ stats }: { stats: TestStats }) {
   const { t } = useTranslation();
   const locale = useLocale();
-  const minutes = stats.durationSec === null ? null : stats.durationSec / 60;
-  const items: { key: string; value: number | null; digits: number }[] = [
-    { key: 'engine', value: stats.engine, digits: 0 },
-    { key: 'api', value: stats.api, digits: 0 },
-    { key: 'web', value: stats.web, digits: 0 },
-    { key: 'e2e', value: stats.e2e || null, digits: 0 },
-    { key: 'ci', value: minutes, digits: 1 },
+  const items: { key: string; value: number | null }[] = [
+    { key: 'engine', value: stats.engine },
+    { key: 'api', value: stats.api },
+    { key: 'web', value: stats.web },
+    { key: 'e2e', value: stats.e2e || null },
   ];
   return (
     <Scene n={4} title={t('makingOf.scene4.title')} body={t('makingOf.scene4.body')}>
-      <div className="flex flex-col gap-6">
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
-          {items.map(({ key, value, digits }) => {
-            const shown = value === null ? '—' : formatNumber(value, locale, digits);
-            return (
-              <div key={key} data-stat className="flex flex-col gap-1 border-t border-border pt-3">
-                <dt className="text-sm text-text-muted">{t(`makingOf.scene4.stats.${key}`)}</dt>
-                <dd className="num text-[40px] leading-none font-light">
-                  <span
-                    {...(value === null
-                      ? {}
-                      : { 'data-count': value, 'data-digits': digits, 'data-final': shown })}
-                  >
-                    {shown}
-                  </span>
-                </dd>
-                {value === null ? (
-                  <dd className="text-xs text-text-secondary">{t('makingOf.scene4.pending')}</dd>
-                ) : null}
-              </div>
-            );
-          })}
-        </dl>
-        {/* Terminal output stays as a terminal prints it: left to right, untranslated. */}
-        <pre
-          dir="ltr"
-          aria-hidden="true"
-          className="num overflow-x-auto rounded-lg bg-inverse-surface p-5 text-[13px] leading-6 text-inverse-text-secondary"
-        >
-          <span className="text-inverse-accent">$</span> pnpm test{'\n'}
-          <span className="text-inverse-text">✓</span> packages/engine{'  '}
-          {stats.engine} passed{'\n'}
-          <span className="text-inverse-text">✓</span> apps/api{'         '}
-          {stats.api} passed{'\n'}
-          <span className="text-inverse-text">✓</span> apps/web{'         '}
-          {stats.web} passed
-        </pre>
-      </div>
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-5">
+        {items.map(({ key, value }) => {
+          const shown = value === null ? '—' : formatNumber(value, locale, 0);
+          return (
+            <div key={key} data-stat className="flex flex-col gap-1 border-t border-border pt-3">
+              <dt className="text-sm text-text-muted">{t(`makingOf.scene4.stats.${key}`)}</dt>
+              <dd className="num text-[40px] leading-none font-light">
+                <span
+                  {...(value === null
+                    ? {}
+                    : { 'data-count': value, 'data-digits': 0, 'data-final': shown })}
+                >
+                  {shown}
+                </span>
+              </dd>
+              {value === null ? (
+                <dd className="text-xs text-text-secondary">{t('makingOf.scene4.pending')}</dd>
+              ) : null}
+            </div>
+          );
+        })}
+      </dl>
     </Scene>
   );
 }
 
-/** Author links. ponytail: only links that exist are listed; T24 fills LinkedIn and email. */
+/** The ending: the app itself, and the one person behind it. */
 const LINKS: { key: string; href: string; external: boolean }[] = [
   { key: 'app', href: '/today', external: false },
-  { key: 'repo', href: 'https://github.com/husniramdani/saqi', external: true },
-  { key: 'stylebase', href: 'https://stylebase.dev', external: true },
+  { key: 'author', href: 'https://github.com/husniramdani', external: true },
 ];
 
 export function AuthorScene() {

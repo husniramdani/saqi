@@ -12,9 +12,8 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Arabic and Urdu lead with IBM Plex Sans Arabic; a touch more line height for the script. */
-  :lang(ar),
-  :lang(ur) {
+  /* Arabic leads with IBM Plex Sans Arabic; a touch more line height for the script. */
+  :lang(ar) {
     font-family: var(--font-arabic);
     line-height: calc(var(--text-base--line-height) + 2px);
   }
@@ -34,9 +33,9 @@
 }
 
 /*
- * Letter-spacing breaks Arabic letter joins, so `ar` and `ur` never track. Unlayered on purpose:
+ * Letter-spacing breaks Arabic letter joins, so `ar` never tracks. Unlayered on purpose:
  * it outranks the `tracking-*` utilities (which live in a cascade layer) without !important.
  */
-:where(:lang(ar), :lang(ur)) {
+:where(:lang(ar)) {
   letter-spacing: 0;
 }

@@ -96,8 +96,8 @@ describe('AppShell', () => {
     root.id = 'root';
     document.body.append(root);
     renderShell();
-    fireEvent.click(screen.getByRole('button', { name: 'ار, Urdu' }));
-    await vi.waitFor(() => expect(document.documentElement.lang).toBe('ur'));
+    fireEvent.click(screen.getByRole('button', { name: 'ع, Arabic' }));
+    await vi.waitFor(() => expect(document.documentElement.lang).toBe('ar'));
     expect(document.documentElement.dir).toBe('rtl');
     await vi.waitFor(() => expect(root.style.opacity).toBe('1'));
     root.remove();

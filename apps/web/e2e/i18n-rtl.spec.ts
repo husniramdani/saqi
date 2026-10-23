@@ -1,6 +1,6 @@
 import { expect, switchLocale, test } from './fixtures';
 
-test('Arabic mirrors the app and time runs right to left; Urdu survives a reload', async ({
+test('Arabic mirrors the app, time runs right to left, and the choice survives a reload', async ({
   page,
   todayPage,
 }) => {
@@ -23,15 +23,14 @@ test('Arabic mirrors the app and time runs right to left; Urdu survives a reload
   expect(Math.abs((trackRight ?? 0) - (barRight ?? 0))).toBeLessThan(2);
   expect((barLeft ?? 0) - (trackLeft ?? 0)).toBeGreaterThan(10);
 
-  await switchLocale(page, 'ur');
   await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'ur');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(page.getByRole('heading', { level: 1 })).toHaveCSS(
     'font-family',
     /IBM Plex Sans Arabic/,
   );
   expect(
-    await page.evaluate(() => document.fonts.check('16px "IBM Plex Sans Arabic"', 'اردو')),
+    await page.evaluate(() => document.fonts.check('16px "IBM Plex Sans Arabic"', 'العربية')),
   ).toBe(true);
 });

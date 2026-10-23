@@ -1,7 +1,7 @@
 ---
 version: '1.0'
 name: 'Saqi Nightfield'
-description: "Warm paper and ink for a UAE farm irrigation cockpit, with one orange for tonight's action and a sand-to-teal water scale where darker always means wetter. Geist and Geist Mono, IBM Plex Sans Arabic for Arabic and Urdu (RTL). Day theme by default, graphite Night theme."
+description: "Warm paper and ink for a UAE farm irrigation cockpit, with one orange for tonight's action and a sand-to-teal water scale where darker always means wetter. Geist and Geist Mono, IBM Plex Sans Arabic for Arabic (RTL). Day theme by default, graphite Night theme."
 
 # Day theme. Night overrides every colour below under x-stylebase.themes.night (same names).
 colors:
@@ -206,7 +206,7 @@ x-stylebase:
       - 'Put labels on water fills on ink map tags, never directly on the fill'
       - 'Pair every status colour with a word or a pattern: Stale plus hatching, Skip plus a green chip'
       - 'Separate panels by lightness and the raised shadow; borders are hairlines'
-      - 'Use CSS logical properties and IBM Plex Sans Arabic for Arabic and Urdu; Western digits in every locale'
+      - 'Use CSS logical properties and IBM Plex Sans Arabic for Arabic; Western digits in every locale'
       - 'Design loading, empty, stale-sensor and error states for every data panel'
       - 'Run all motion through GSAP with x-stylebase.motion tokens inside gsap.matchMedia(); reduced motion jumps to the end state'
       - 'Give every interactive element a visible 2px focus ring in the focus colour, offset 2px; targets at least 44px (56px on Field)'
@@ -250,10 +250,10 @@ Added for the code (not drawn on the canvas): `error`/`error-soft`, Night `inver
 
 ## Typography
 
-- **Geist** for words, **Geist Mono** for numbers only (`font-variant-numeric: tabular-nums`). **IBM Plex Sans Arabic** is first in the stack for `:lang(ar)` and `:lang(ur)`.
+- **Geist** for words, **Geist Mono** for numbers only (`font-variant-numeric: tabular-nums`). **IBM Plex Sans Arabic** is first in the stack for `:lang(ar)`.
 - Display 300, tracking −0.05em; section headlines 300 at −0.03em; panel titles 600 at 15.5 px; labels 500 at 12.5–13 px, sentence case; app body 14.5 px, landing body 17 px / 1.55.
 - Figures: value in mono `text-primary`, unit at 0.42em in `text-muted`, lifted to the cap line.
-- Western digits in all locales (`ar-AE-u-nu-latn`, `ur-PK-u-nu-latn`).
+- Western digits in all locales (`ar-AE-u-nu-latn`).
 
 ## Space, shape, depth
 

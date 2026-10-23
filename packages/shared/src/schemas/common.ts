@@ -1,12 +1,11 @@
 import { z } from 'zod';
 
-export const LocaleSchema = z.enum(['en', 'ar', 'ur']);
+export const LocaleSchema = z.enum(['en', 'ar']);
 export type Locale = z.infer<typeof LocaleSchema>;
 
 export const I18nTextSchema = z.object({
   en: z.string().min(1),
   ar: z.string().min(1),
-  ur: z.string().min(1),
 });
 export type I18nText = z.infer<typeof I18nTextSchema>;
 

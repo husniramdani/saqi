@@ -11,9 +11,9 @@ import { FROZEN_NOW } from './playwright.config';
  * finding that thing broke too.
  */
 
-export type Locale = 'en' | 'ar' | 'ur';
+export type Locale = 'en' | 'ar';
 /** The language switch shows each language in its own script. */
-const LANGUAGE_GLYPH: Record<Locale, string> = { en: 'EN', ar: 'ع', ur: 'ار' };
+const LANGUAGE_GLYPH: Record<Locale, string> = { en: 'EN', ar: 'ع' };
 
 export class TodayPage {
   constructor(readonly page: Page) {}

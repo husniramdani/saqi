@@ -39,7 +39,7 @@ saqi/
 │   │       ├── app/         router, providers, AppShell, QueryState
 │   │       ├── routes/      landing, today, block, field, making-of, not-found (lazy-loaded)
 │   │       ├── api/         typed fetch client, query keys, hooks, outbox interface
-│   │       ├── i18n/        en/ar/ur strings, setLocale (lang + dir), formatters
+│   │       ├── i18n/        en/ar strings, setLocale (lang + dir), formatters
 │   │       ├── features/    landing, farm-map, moisture-chart, recommendation, schedule, budget, weather, tasks, attention
 │   │       ├── ui/          Nightfield design primitives
 │   │       └── motion/      GSAP setup, tokens, presets (reduced motion jumps to the end)
@@ -80,7 +80,7 @@ Two Vercel projects build from this repo's `main`: **saqi-web** (root `apps/web`
 
 **The API runs in memory mode, with no database.** Each function instance builds Farm 07's scenario for the current hour (`repo/hourly.ts`, 60–180 ms) and rebuilds it when the hour turns, so every time on screen is real wall-clock time. There is no seed to run and nothing to migrate. The Postgres repo was never built (`repo/pg.ts`); its schema and migrations stay for later.
 
-What that costs: a Field "Mark done" or a manual irrigation log lives in the memory of the function instance that took it. It lasts for that instance and that GST day, and can reset when Vercel recycles an instance or starts another. Field says so under its heading.
+What that costs: a Field "Mark done" or a manual irrigation log lives in the memory of the function instance that took it. It lasts for that instance and that GST day, and can reset when Vercel recycles an instance or starts another. The UI doesn't announce this (it would be developer talk to a farm crew); a database-backed deploy removes the limit.
 
 **API build:** the zero-config Hono entry is the default export of `src/app.ts`. The project sets `VERCEL_EXPERIMENTAL_BACKENDS=1`, Vercel's newer backend build. It compiles the workspace packages, which export TypeScript source with extensionless imports, and the JSON fixtures. The default build fails on them.
 

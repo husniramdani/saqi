@@ -26,7 +26,7 @@ for (const locale of ['en', 'ar'] as Locale[]) {
   });
 }
 
-for (const locale of ['en', 'ar', 'ur'] as Locale[]) {
+for (const locale of ['en', 'ar'] as Locale[]) {
   // Imran's list: the offline journey changes Rahim's tasks on the shared API.
   test(`Field, ${locale} @mobile`, async ({ page }) => {
     await page.addInitScript((l) => {

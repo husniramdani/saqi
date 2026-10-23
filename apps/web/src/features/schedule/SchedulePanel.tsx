@@ -101,7 +101,11 @@ export function SchedulePanel({
                       inlineSize: `${(to - from) * 100}%`,
                     }}
                   >
-                    {deficit ? t('today.barDeficit', { window: range }) : range}
+                    {range}
+                    {/* The note drops on a phone, where the bar is too short to hold it. */}
+                    {deficit ? (
+                      <span className="bar-note"> {t('today.barDeficitNote')}</span>
+                    ) : null}
                   </span>
                 </span>
                 <span aria-hidden="true" className="m vol">

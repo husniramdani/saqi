@@ -9,7 +9,7 @@ const task: Task = {
   id: 't1',
   blockId: 'D-1',
   kind: 'maintenance',
-  title: { en: 'Clear bubblers, row 4', ar: 'Clear bubblers, row 4', ur: 'Clear bubblers, row 4' },
+  title: { en: 'Clear bubblers, row 4', ar: 'Clear bubblers, row 4' },
   dueDate: '2026-10-23',
   assignee: 'rahim',
   status: 'todo',

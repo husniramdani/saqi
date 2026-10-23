@@ -20,13 +20,7 @@ export function ProductSection() {
       </div>
       <div className="cards4">
         <SurfaceCard index="01" card="today" to="/today" visual={<MiniMap />} />
-        <SurfaceCard
-          index="02"
-          card="block"
-          to="/blocks/D-1"
-          route="/blocks/:id"
-          visual={<MiniChart />}
-        />
+        <SurfaceCard index="02" card="block" to="/blocks/D-1" visual={<MiniChart />} />
         <SurfaceCard
           index="03"
           card="field"
@@ -66,12 +60,10 @@ interface CardProps {
   index: string;
   card: 'today' | 'block' | 'field' | 'making';
   to: string;
-  /** The route pattern shown on the card, when it isn't the link itself. */
-  route?: string;
   visual: ReactNode;
 }
 
-function SurfaceCard({ index, card, to, route = to, visual }: CardProps) {
+function SurfaceCard({ index, card, to, visual }: CardProps) {
   const { t } = useTranslation();
   return (
     <article className="scard rv">
@@ -85,9 +77,6 @@ function SurfaceCard({ index, card, to, route = to, visual }: CardProps) {
         <h3>{t(`landing.product.cards.${card}.title`)}</h3>
         <p>{t(`landing.product.cards.${card}.body`)}</p>
         <div className="scard-f">
-          <span className="lbl mono micro" dir="ltr">
-            {route}
-          </span>
           <Link className="rbtn" to={to} aria-label={t(`landing.product.cards.${card}.open`)}>
             <ArrowIcon />
           </Link>

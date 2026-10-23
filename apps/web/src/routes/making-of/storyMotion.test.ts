@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getFlip, loadMapPlugins, loadStoryPlugins } from '@/motion';
+import { getFlip, gsap, loadMapPlugins, loadStoryPlugins } from '@/motion';
 import { buildStory } from './storyMotion';
 
 // A one-scene page: a heading GSAP would split and a figure it would count.
@@ -41,6 +41,7 @@ async function plugins() {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   document.body.innerHTML = '';
 });
 
@@ -67,5 +68,37 @@ describe('buildStory', () => {
     expect(root.querySelector('[data-count]')?.textContent).toBe('90.4');
     expect(root.querySelector('h2')?.textContent).toBe('Water first.');
     expect(root.querySelector('.pin-spacer')).toBeNull();
+  });
+
+  it('on phones, hides a scene only for an observer, and plays it when it comes on screen', async () => {
+    prefer('max-width: 767.98px', 'no-preference');
+    const observed: Element[] = [];
+    const disconnect = vi.fn();
+    let enter: (target: Element) => void = () => undefined;
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(callback: (entries: Partial<IntersectionObserverEntry>[]) => void) {
+          enter = (target) => callback([{ isIntersecting: true, target }]);
+        }
+        observe = (el: Element) => observed.push(el);
+        unobserve = () => undefined;
+        disconnect = disconnect;
+      },
+    );
+    const root = page();
+    const revert = buildStory(root, await plugins(), (v, d) => v.toFixed(d));
+    const heading = root.querySelector('h2');
+    const scene = root.querySelector('section');
+    if (!heading || !scene) throw new Error('page missing');
+    expect(observed).toEqual([scene]);
+    expect(heading.style.opacity).toBe('0');
+    const reveal = gsap.getTweensOf(heading)[0];
+    expect(reveal?.paused()).toBe(true);
+    enter(scene);
+    expect(reveal?.paused()).toBe(false);
+    revert();
+    expect(disconnect).toHaveBeenCalled();
+    expect(heading.style.opacity).toBe('');
   });
 });

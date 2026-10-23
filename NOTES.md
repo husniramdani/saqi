@@ -325,3 +325,8 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Web bundle:** the entry chunk is about 150 kB gzip (React, Router, Query, zod 4, i18next + ICU). NFR2 caps the field route at 250 kB. Consider `zod/mini` on the web or trimming ICU before GSAP lands.
 - **Retries:** TanStack Query `retry: 1` also retries 404/422. T20 could skip retries on 4xx.
 - **pg contract suite:** `repo/contract.test.ts` runs only when `DATABASE_URL` is set, and it expects the database to be seeded with the current hour as anchor (T07/T08).
+
+## Languages and production copy
+
+- **English and Arabic only.** Urdu was removed on request (Abu Dhabi uses Arabic): `LocaleSchema` and `I18nTextSchema` in `@saqi/shared` are `en | ar`, so the farm and task fixtures, the API seed, `ur.json`, the switch button, `:lang(ur)` rules and the Urdu tests and screenshot went with it. A stored `saqi.locale = 'ur'` falls back to English through `LocaleSchema.catch('en')`. Older sections above still mention Urdu as history.
+- **No developer content on user pages.** Route paths, engine/test/CI talk, code-font formulas, token names, internal sensor IDs and the Field demo note are gone; the Making-of page tells its story in plain words. Prose has no em dashes or semicolons (both languages).

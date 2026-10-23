@@ -122,11 +122,7 @@ export function Component() {
   return (
     <div className="mx-auto flex max-w-[480px] flex-col gap-6 pt-6 pb-[env(safe-area-inset-bottom)]">
       <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-light tracking-[-0.035em]">{t('field.title')}</h1>
-          {/* Memory mode on Vercel: writes live in one function instance (README, Production). */}
-          <p className="text-sm text-text-secondary">{t('field.demoNote')}</p>
-        </div>
+        <h1 className="text-3xl font-light tracking-[-0.035em]">{t('field.title')}</h1>
         <SegmentedControl
           label={t('field.worker')}
           size="field"

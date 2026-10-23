@@ -103,7 +103,10 @@ export function AppShell() {
               <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
                 <path d="M4 11V7a4 4 0 0 1 8 0v4l1.2 1.5H2.8zM6.5 14h3" className="ic" />
               </svg>
-              <b>{attention}</b> {t('shell.needAttention', { count: attention })}
+              <b>{attention}</b>{' '}
+              <span className="max-[640px]:sr-only">
+                {t('shell.needAttention', { count: attention })}
+              </span>
             </Link>
           ) : null}
           <LanguageSwitch />

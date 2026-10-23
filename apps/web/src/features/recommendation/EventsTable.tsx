@@ -4,8 +4,10 @@ import { useLocale } from '@/i18n';
 import { formatDateGst, formatTimeGst } from '@/i18n/format';
 import { EmptyState, Figure } from '@/ui';
 
-const th = 'border-b border-border py-2 pe-4 text-start text-xs font-medium text-text-muted';
-const td = 'border-b border-border py-2.5 pe-4 align-middle';
+// One line per cell: on a phone the box scrolls sideways instead of doubling every row.
+const th =
+  'border-b border-border py-2 pe-4 text-start text-xs font-medium whitespace-nowrap text-text-muted';
+const td = 'border-b border-border py-2.5 pe-4 align-middle whitespace-nowrap';
 
 /** Past irrigation, newest first (the API sorts). Manual logs are marked as such. */
 export function EventsTable({ events }: { events: IrrigationEvent[] }) {

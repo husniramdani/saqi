@@ -1,18 +1,8 @@
 import { useRef, type RefObject } from 'react';
-import {
-  duration,
-  ease,
-  gsap,
-  loadStoryPlugins,
-  stagger,
-  useGSAP,
-  useMotion,
-  type StoryPlugins,
-} from '@/motion';
+import { duration, ease, gsap, loadStoryPlugins, stagger, useGSAP, useMotion } from '@/motion';
 import type { LandingDecisionKey } from './workedExample';
 
 const NO_MOTION = '(prefers-reduced-motion: no-preference)';
-type ScrollTriggerClass = StoryPlugins['ScrollTrigger'];
 
 const all = <T extends Element = HTMLElement>(selector: string, root: ParentNode) =>
   gsap.utils.toArray<T>(root.querySelectorAll(selector));
@@ -34,20 +24,58 @@ function drawIn(
   }
 }
 
+/**
+ * Plays reveals when their element is actually on screen. IntersectionObserver reads live
+ * geometry, so layout that shifts after load (fonts, live weather, sizing) can't leave a reveal
+ * stuck hidden, as stale ScrollTrigger start positions did on phones. Content is only hidden
+ * once an observer exists to show it again.
+ */
+function createRevealer() {
+  const plays = new Map<Element, gsap.core.Animation[]>();
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        for (const animation of plays.get(entry.target) ?? []) void animation.play();
+        plays.delete(entry.target);
+        observer.unobserve(entry.target);
+      }
+    },
+    { rootMargin: '0px 0px -8% 0px' },
+  );
+  return {
+    /** Play `animation` (created paused) the first time `trigger` comes on screen. */
+    onVisible(trigger: Element | null, animation: gsap.core.Animation) {
+      if (!trigger) {
+        animation.progress(1);
+        return;
+      }
+      const queued = plays.get(trigger);
+      if (queued) queued.push(animation);
+      else {
+        plays.set(trigger, [animation]);
+        observer.observe(trigger);
+      }
+    },
+    disconnect: () => observer.disconnect(),
+  };
+}
+type Revealer = ReturnType<typeof createRevealer>;
+
 /** Count a figure up from zero, then hand back the exact rendered text. */
-function countUp(el: HTMLElement, delay: number, trigger?: Element) {
+function countUp(el: HTMLElement, delay: number, revealer?: Revealer) {
   const to = Number(el.dataset['to']);
   const digits = Number(el.dataset['dec'] ?? 0);
   const final = el.textContent;
   const value = { v: 0 };
   const format = (v: number) =>
     v.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  gsap.to(value, {
+  const tween = gsap.to(value, {
     v: to,
     duration: duration.tide,
     ease: ease.reveal,
     delay,
-    ...(trigger ? { scrollTrigger: { trigger, start: 'top 90%', once: true } } : {}),
+    paused: Boolean(revealer),
     onStart: () => {
       el.textContent = format(0);
     },
@@ -58,10 +86,11 @@ function countUp(el: HTMLElement, delay: number, trigger?: Element) {
       el.textContent = final;
     },
   });
+  revealer?.onVisible(el, tween);
 }
 
 /** Water keeps moving along tonight's pipes, only while the map is on screen. */
-function flowLoop(svg: Element, ScrollTrigger: ScrollTriggerClass) {
+function flowLoop(svg: Element) {
   const tween = gsap.to(all('.flow', svg), {
     strokeDashoffset: -32,
     duration: 1.1,
@@ -69,21 +98,18 @@ function flowLoop(svg: Element, ScrollTrigger: ScrollTriggerClass) {
     repeat: -1,
     paused: true,
   });
-  ScrollTrigger.create({
-    trigger: svg,
-    start: 'top bottom',
-    end: 'bottom top',
-    onToggle: (self) => (self.isActive ? tween.play() : tween.pause()),
-  });
+  const observer = new IntersectionObserver(([entry]) =>
+    entry?.isIntersecting ? tween.play() : tween.pause(),
+  );
+  observer.observe(svg);
+  return () => observer.disconnect();
 }
 
 /** Farm plan: blocks settle, pipes draw, tags arrive, then water flows. */
-function farmMotion(root: HTMLElement, withScroll: boolean) {
+function farmMotion(root: HTMLElement, revealer?: Revealer) {
   const svg = root.querySelector('.farm-map');
   if (!svg) return;
-  const timeline = gsap.timeline(
-    withScroll ? { scrollTrigger: { trigger: svg, start: 'top 80%', once: true } } : {},
-  );
+  const timeline = gsap.timeline({ paused: Boolean(revealer) });
   timeline.from(
     all('.fblk', svg),
     { opacity: 0, duration: duration.drift, ease: ease.standard, stagger: 0.07 },
@@ -96,6 +122,7 @@ function farmMotion(root: HTMLElement, withScroll: boolean) {
     1.1,
   );
   timeline.from(all('.flow', svg), { opacity: 0, duration: duration.settle }, 1.6);
+  revealer?.onVisible(svg, timeline);
 }
 
 /**
@@ -147,95 +174,138 @@ export function useLandingMotion(
           all<SVGGeometryElement>('.topo', root).forEach((path, index) =>
             drawIn([path], { duration: 2.4 }, hero, 0.2 + index * 0.06),
           );
-          const heroMap = root.querySelector('.hero-map-in');
-          if (heroMap) flowLoop(heroMap, ScrollTrigger);
           for (const el of q('.hero-card .cnt')) countUp(el, 1.2);
 
-          const reveal = q('.rv');
-          gsap.set(reveal, { opacity: 0, y: 28 });
-          ScrollTrigger.batch(reveal, {
-            start: 'top 90%',
-            once: true,
-            onEnter: (batch) =>
-              gsap.to(batch, {
-                opacity: 1,
-                y: 0,
-                duration: duration.drift,
-                ease: ease.reveal,
-                stagger: 0.08,
-                overwrite: true,
-                clearProps: 'transform,opacity',
-              }),
-          });
-          for (const head of q('.sec-head')) {
-            gsap.from(head.children, {
-              opacity: 0,
-              y: 24,
-              duration: duration.drift,
-              ease: ease.reveal,
-              stagger: 0.1,
-              scrollTrigger: { trigger: head, start: 'top 88%', once: true },
-            });
-          }
-          for (const bar of q('.bar-x').filter((el) => !el.closest('.hero-card'))) {
-            gsap.from(bar, {
-              scaleX: 0,
-              transformOrigin: origin,
-              duration: duration.drift,
-              ease: ease.reveal,
-              delay: 0.2,
-              scrollTrigger: { trigger: bar, start: 'top 92%', once: true },
-            });
-          }
-          for (const bar of q('.bar-y')) {
-            gsap.from(bar, {
-              scaleY: 0,
-              transformOrigin: '50% 100%',
-              duration: duration.drift,
-              ease: ease.reveal,
-              delay: 0.3,
-              scrollTrigger: { trigger: bar, start: 'top 92%', once: true },
-            });
-          }
-          for (const ring of q('.ring-draw')) {
-            const length = Number(ring.dataset['len']);
-            gsap.fromTo(
-              ring,
-              { strokeDashoffset: length },
-              {
-                strokeDashoffset: 0,
-                duration: duration.tide,
-                ease: ease.emphasized,
-                scrollTrigger: { trigger: ring, start: 'top 92%', once: true },
+          // Without IntersectionObserver nothing is hidden: the page simply stays as rendered.
+          const cleanups: (() => void)[] = [];
+          if (typeof IntersectionObserver !== 'undefined') {
+            const heroMap = root.querySelector('.hero-map-in');
+            if (heroMap) cleanups.push(flowLoop(heroMap));
+            const revealer = createRevealer();
+            cleanups.push(revealer.disconnect);
+
+            // Cards and tiles rise in together, as many as come on screen at once.
+            const reveal = q('.rv');
+            gsap.set(reveal, { opacity: 0, y: 28 });
+            const batch = new IntersectionObserver(
+              (entries) => {
+                const shown = entries.filter((e) => e.isIntersecting).map((e) => e.target);
+                if (shown.length === 0) return;
+                for (const el of shown) batch.unobserve(el);
+                gsap.to(shown, {
+                  opacity: 1,
+                  y: 0,
+                  duration: duration.drift,
+                  ease: ease.reveal,
+                  stagger: 0.08,
+                  overwrite: true,
+                  clearProps: 'transform,opacity',
+                });
               },
+              { rootMargin: '0px 0px -8% 0px' },
+            );
+            for (const el of reveal) batch.observe(el);
+            cleanups.push(() => batch.disconnect());
+
+            for (const head of q('.sec-head')) {
+              revealer.onVisible(
+                head,
+                gsap.from(head.children, {
+                  opacity: 0,
+                  y: 24,
+                  duration: duration.drift,
+                  ease: ease.reveal,
+                  stagger: 0.1,
+                  paused: true,
+                }),
+              );
+            }
+            // Bars are watched through their track: a bar scaled to zero has no area to see.
+            for (const bar of q('.bar-x').filter((el) => !el.closest('.hero-card'))) {
+              revealer.onVisible(
+                bar.parentElement,
+                gsap.from(bar, {
+                  scaleX: 0,
+                  transformOrigin: origin,
+                  duration: duration.drift,
+                  ease: ease.reveal,
+                  delay: 0.2,
+                  paused: true,
+                }),
+              );
+            }
+            for (const bar of q('.bar-y')) {
+              revealer.onVisible(
+                bar.parentElement,
+                gsap.from(bar, {
+                  scaleY: 0,
+                  transformOrigin: '50% 100%',
+                  duration: duration.drift,
+                  ease: ease.reveal,
+                  delay: 0.3,
+                  paused: true,
+                }),
+              );
+            }
+            for (const ring of q('.ring-draw')) {
+              const length = Number(ring.dataset['len']);
+              revealer.onVisible(
+                ring,
+                gsap.fromTo(
+                  ring,
+                  { strokeDashoffset: length },
+                  {
+                    strokeDashoffset: 0,
+                    duration: duration.tide,
+                    ease: ease.emphasized,
+                    paused: true,
+                  },
+                ),
+              );
+            }
+            for (const svg of q('svg')) {
+              if (svg.closest('.hero-map-in') || svg.classList.contains('farm-map')) continue;
+              const draws = all<SVGGeometryElement>('.draw', svg);
+              const pops = all('.pop', svg);
+              if (draws.length === 0 && pops.length === 0) continue;
+              const timeline = gsap.timeline({ paused: true });
+              draws.forEach((path, index) =>
+                drawIn([path], {}, timeline, 0.2 + index * stagger.list),
+              );
+              if (pops.length) {
+                timeline.from(
+                  pops,
+                  {
+                    opacity: 0,
+                    scale: 0,
+                    transformOrigin: '50% 50%',
+                    duration: duration.settle,
+                    ease: 'back.out(2)',
+                    stagger: 0.05,
+                  },
+                  0.7,
+                );
+              }
+              revealer.onVisible(svg, timeline);
+            }
+            for (const el of q('.cnt').filter((cnt) => !cnt.closest('.hero-card')))
+              countUp(el, 0.2, revealer);
+
+            farmMotion(root, revealer);
+            const farm = root.querySelector('.farm-map');
+            if (farm) cleanups.push(flowLoop(farm));
+
+            revealer.onVisible(
+              root.querySelector('.cta'),
+              gsap.from(q('.cta-hl'), {
+                opacity: 0,
+                y: 40,
+                duration: duration.tide,
+                ease: ease.reveal,
+                paused: true,
+              }),
             );
           }
-          for (const svg of q('svg')) {
-            if (svg.closest('.hero-map-in') || svg.classList.contains('farm-map')) continue;
-            const trigger = { trigger: svg, start: 'top 92%', once: true };
-            const draws = all<SVGGeometryElement>('.draw', svg);
-            if (draws.length)
-              drawIn(draws, { delay: 0.2, stagger: stagger.list, scrollTrigger: trigger });
-            const pops = all('.pop', svg);
-            if (pops.length) {
-              gsap.from(pops, {
-                opacity: 0,
-                scale: 0,
-                transformOrigin: '50% 50%',
-                duration: duration.settle,
-                ease: 'back.out(2)',
-                stagger: 0.05,
-                delay: 0.7,
-                scrollTrigger: trigger,
-              });
-            }
-          }
-          for (const el of q('.cnt').filter((cnt) => !cnt.closest('.hero-card')))
-            countUp(el, 0.2, el);
-
-          farmMotion(root, true);
-          const farm = root.querySelector('.farm-map');
-          if (farm) flowLoop(farm, ScrollTrigger);
 
           gsap.to(q('.hero-stage'), {
             yPercent: 10,
@@ -275,15 +345,19 @@ export function useLandingMotion(
               },
             },
           );
-          gsap.from(q('.cta-hl'), {
-            opacity: 0,
-            y: 40,
-            duration: duration.tide,
-            ease: ease.reveal,
-            scrollTrigger: { trigger: root.querySelector('.cta'), start: 'top 80%', once: true },
+          // The scrubbed parallax keeps ScrollTrigger; its positions follow every layout change
+          // after load (fonts, live weather), not just the first one.
+          let frame = 0;
+          const resize = new ResizeObserver(() => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(() => ScrollTrigger.refresh());
           });
-
-          void document.fonts.ready.then(() => ScrollTrigger.refresh());
+          resize.observe(root);
+          return () => {
+            resize.disconnect();
+            cancelAnimationFrame(frame);
+            for (const cleanup of cleanups) cleanup();
+          };
         });
       });
       return () => {
@@ -357,13 +431,11 @@ export function useLandingMotion(
             clearProps: 'transform,opacity',
           },
         );
-        if (farmView === 'map') {
-          farmMotion(root, false);
-          void loadStoryPlugins().then(({ ScrollTrigger }) => {
-            const farm = root.querySelector('.farm-map');
-            if (farm) flowLoop(farm, ScrollTrigger);
-          });
-        }
+        if (farmView !== 'map') return undefined;
+        // The user just asked for the map, so it is on screen: draw it now.
+        farmMotion(root);
+        const farm = root.querySelector('.farm-map');
+        return farm && typeof IntersectionObserver !== 'undefined' ? flowLoop(farm) : undefined;
       });
       return () => mm.revert();
     },

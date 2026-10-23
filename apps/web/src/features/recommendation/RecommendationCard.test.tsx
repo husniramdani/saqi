@@ -46,7 +46,7 @@ describe('RecommendationCard', () => {
       d1.reasons.map((r) => r.code),
     );
     expect(reasons[3]?.textContent).toBe('Falls below the 65% threshold');
-    expect(reasons[2]?.textContent).toBe('PAW 68% → 60.3% by tomorrow (crop use 5.5 mm)');
+    expect(reasons[2]?.textContent).toBe('Soil water 68% → 60.3% by tomorrow (crop use 5.5 mm)');
   });
 
   it('flags low confidence', () => {

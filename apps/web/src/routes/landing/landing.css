@@ -1519,7 +1519,7 @@
 }
 .landing .scard-f {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-top: auto;
   padding-top: 14px;
@@ -2302,14 +2302,16 @@
 :where([data-theme='night']) .landing .formula .micro {
   color: var(--ink2);
 }
-.landing .formula code {
-  font-family: var(--f-mono);
-  font-size: 14px;
+.landing .formula-t {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  text-wrap: pretty;
 }
-:where(:root:not([data-theme='night'])) .landing .formula code {
+:where(:root:not([data-theme='night'])) .landing .formula-t {
   color: var(--text);
 }
-:where([data-theme='night']) .landing .formula code {
+:where([data-theme='night']) .landing .formula-t {
   color: var(--ink);
 }
 .landing .inst {
@@ -2816,44 +2818,66 @@
   height: 44px;
   border-radius: 6px;
 }
-.landing .code {
-  font-family: var(--f-mono);
+.landing .scale-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: -6px;
+}
+.landing .scale-ends,
+.landing .jnote {
+  font-size: 13px;
+  line-height: 1.45;
+}
+:where(:root:not([data-theme='night'])) .landing :is(.scale-ends, .jnote) {
+  color: var(--text-3);
+}
+:where([data-theme='night']) .landing :is(.scale-ends, .jnote) {
+  color: var(--mute);
+}
+.landing .jlines {
+  font-size: 15px;
   line-height: 1.7;
-  white-space: pre;
-  overflow: hidden;
+  font-feature-settings: 'tnum' 1;
 }
-:where(:root:not([data-theme='night'])) .landing .code {
-  font-size: 12.5px;
-  color: var(--text-2);
+.landing .checks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 15px;
 }
-:where([data-theme='night']) .landing .code {
-  font-size: 12px;
-  color: var(--sage);
+.landing .checks li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-:where(:root:not([data-theme='night'])) .landing .code b {
-  font-weight: 500;
-  color: var(--accent-t);
-}
-:where([data-theme='night']) .landing .code b {
-  font-weight: 400;
-  color: var(--ember);
-}
-.landing .tests {
+.landing .tick {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 5px;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
 }
-.landing .tests span {
-  aspect-ratio: 1;
-  border-radius: 4px;
+.landing .tick path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-:where(:root:not([data-theme='night'])) .landing .tests span {
+:where(:root:not([data-theme='night'])) .landing .tick {
   border: 1px solid var(--w4);
   background: var(--ok-soft);
+  color: var(--ok);
 }
-:where([data-theme='night']) .landing .tests span {
+:where([data-theme='night']) .landing .tick {
   border: 1px solid rgba(152, 198, 161, 0.45);
   background: rgba(152, 198, 161, 0.08);
+  color: rgb(152, 198, 161);
 }
 .landing .cta {
   position: relative;
@@ -2910,7 +2934,7 @@
 }
 .landing .foot {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
   gap: 32px;
   padding-block: 64px 32px;
 }
@@ -3120,6 +3144,21 @@
   :where(:root:not([data-theme='night'])) .landing .hero-credit {
     display: none;
   }
+  /*
+   * Phones: the reference keeps 160 px above the headline for the map, but its map sits
+   * 22% down a tall hero (behind the body text), so the top read as an empty band. Pull the
+   * map up into the opening and close most of the gap.
+   */
+  .landing .hero-main {
+    padding-top: 56px;
+  }
+  .landing .hero-stage {
+    top: 4%;
+  }
+  /* 72 px either side (144 px between sections) is a desktop rhythm; a phone reads it as empty. */
+  .landing .sec {
+    padding-block: 48px;
+  }
 }
 
 /*
@@ -3138,12 +3177,12 @@
   direction: ltr;
 }
 
-/* Arabic and Urdu: keep the landing line heights (the base layer sets a fixed one per element)
-   and never track Arabic script. */
-.landing :where(:lang(ar), :lang(ur)) {
+/* Arabic: keep the landing line heights (the base layer sets a fixed one per element) and
+   never track Arabic script. */
+.landing :where(:lang(ar)) {
   line-height: inherit;
 }
-:root:is(:lang(ar), :lang(ur)) .landing * {
+:root:lang(ar) .landing * {
   letter-spacing: 0;
 }
 

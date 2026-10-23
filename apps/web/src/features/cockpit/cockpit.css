@@ -739,8 +739,8 @@
   color: var(--text-2);
 }
 
-/* Mono runs that carry words: Arabic and Urdu need their own font to join. */
-:is(:lang(ar), :lang(ur)) .ck :is(.drow small, .bar, .coord, .chart .ruler) {
+/* Mono runs that carry words: Arabic needs its own font to join. */
+:lang(ar) .ck :is(.drow small, .bar, .coord, .chart .ruler) {
   font-family: var(--font-arabic);
 }
 
@@ -756,8 +756,10 @@
   }
 }
 @media (max-width: 640px) {
+  /* Sized to the plan itself (1000 : 620 at 100vw − 42 px wide) plus the crumb and schedule
+     insets, so no empty band sits above and below the map on a phone. */
   .ck .map {
-    height: 520px;
+    height: calc((100vw - 42px) * 0.62 + 218px);
   }
   .ck .map-svg {
     inset: 68px 10px 150px;
@@ -772,6 +774,9 @@
     grid-template-columns: 40px minmax(0, 1fr);
   }
   .ck .sched .vol {
+    display: none;
+  }
+  .ck .bar-note {
     display: none;
   }
 }

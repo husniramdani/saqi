@@ -22,7 +22,7 @@ afterEach(() => {
 describe('OutboxStatus', () => {
   it('shows the forecast point when nothing is queued', () => {
     render(<OutboxStatus />);
-    expect(status()).toBe('24.21 N · 55.74 E · Open-Meteo point');
+    expect(status()).toBe('Weather for 24.21 N, 55.74 E');
   });
 
   it('counts the queued Field updates and when the oldest was queued, in GST', () => {
@@ -46,7 +46,7 @@ describe('OutboxStatus', () => {
       send('sent');
       await flushed;
     });
-    expect(status()).toBe('24.21 N · 55.74 E · Open-Meteo point');
+    expect(status()).toBe('Weather for 24.21 N, 55.74 E');
   });
 
   it('stays dismissed for the same queue and comes back when the queue changes', () => {
@@ -54,7 +54,7 @@ describe('OutboxStatus', () => {
     outbox.enqueue(action('b', '2026-10-23T06:00:00.000Z'));
     const { rerender } = render(<OutboxStatus />);
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
-    expect(status()).toBe('24.21 N · 55.74 E · Open-Meteo point');
+    expect(status()).toBe('Weather for 24.21 N, 55.74 E');
     rerender(<OutboxStatus />);
     expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
 
