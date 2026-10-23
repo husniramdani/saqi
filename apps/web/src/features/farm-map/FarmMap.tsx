@@ -2,7 +2,7 @@ import type { BlockDecision, Farm, ScheduleItem } from '@saqi/shared';
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isRtl, useLocale } from '@/i18n';
-import { moistureToken } from '@/ui';
+import { cx, moistureToken } from '@/ui';
 import {
   blockRect,
   clampZoom,
@@ -35,26 +35,31 @@ interface FarmMapProps {
   layers?: MapLayers;
   /** 1 (whole farm) to 2, centred on the farm; see `zoomViewBox`. */
   zoom?: number;
+  /**
+   * `canvas`: Today's map surface (design/dashboard.html): no ground of its own (the canvas grid
+   * shows through), reference-size tags and the utility labels at every size.
+   */
+  variant?: 'default' | 'canvas';
 }
 
 /** Share of the visible plan at a plan coordinate, kept on the map. */
 const shareOf = (value: number, start: number, size: number) =>
   Math.min(1, Math.max(0, (value - start) / size));
 
-/** Rendered px per SVG unit, kept current with the map's width (1 where unmeasurable). */
-function useScale() {
+/** The svg's rendered box in px, kept current (the plan's own size where unmeasurable). */
+function useBox() {
   const ref = useRef<SVGSVGElement>(null);
-  const [scale, setScale] = useState(1);
+  const [box, setBox] = useState<{ width: number; height: number }>(VIEW);
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(([entry]) => {
-      if (entry) setScale(entry.contentRect.width / VIEW.width);
+      if (entry) setBox({ width: entry.contentRect.width, height: entry.contentRect.height });
     });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-  return { ref, scale };
+  return { ref, box };
 }
 
 /**
@@ -73,12 +78,20 @@ export function FarmMap({
   reveal = false,
   layers = DEFAULT_MAP_LAYERS,
   zoom = 1,
+  variant = 'default',
 }: FarmMapProps) {
   const { t } = useTranslation();
   const locale = useLocale();
   const uid = useId().replace(/:/g, '');
-  const { ref, scale: fitScale } = useScale();
+  const { ref, box } = useBox();
   const view = zoomRect(zoom);
+  // `meet`: the plan fits the box and centres in it (the canvas letterboxes; elsewhere the box
+  // has the plan's own aspect, so the offsets are 0).
+  const fitScale = Math.min(box.width / VIEW.width, box.height / VIEW.height) || 1;
+  const pad = {
+    x: (box.width - VIEW.width * fitScale) / 2,
+    y: (box.height - VIEW.height * fitScale) / 2,
+  };
   // Rendered px per plan unit: the zoom magnifies the plan inside the same box.
   const scale = fitScale * clampZoom(zoom);
   const [active, setActive] = useState<string | null>(null);
@@ -92,7 +105,8 @@ export function FarmMap({
   );
   const byId = new Map(decisions.map((d) => [d.blockId, d]));
   const tonight = scheduledTonight(schedule);
-  const font = tagFontSize(scale);
+  const canvas = variant === 'canvas';
+  const font = canvas ? 22 : tagFontSize(scale);
   useMapReveal(scope, reveal);
   usePipeFlow(scope, layers.flow ? [...tonight].join(',') : '');
   useHoverLift(scope, active);
@@ -118,12 +132,17 @@ export function FarmMap({
       .join(', ');
   };
   const staleIds = decisions.filter(isStale).map((d) => d.blockId);
-  const summary = t('map.summary', {
-    farm: farm.name[locale],
-    count: farm.blocks.length,
-    tonight: [...tonight].join(', ') || t('map.none'),
-    stale: staleIds.join(', ') || t('map.none'),
-  });
+  const summary = [
+    t('map.summary', {
+      farm: farm.name[locale],
+      count: farm.blocks.length,
+      tonight: [...tonight].join(', ') || t('map.none'),
+      stale: staleIds.join(', ') || t('map.none'),
+    }),
+    canvas ? t('mapControls.railAlternative') : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   const onKeyDown = (e: KeyboardEvent<SVGGElement>, id: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -172,14 +191,14 @@ export function FarmMap({
   const tooltipDecision = active ? byId.get(active) : undefined;
 
   return (
-    <div ref={scope} className="relative">
+    <div ref={scope} className={canvas ? 'relative h-full w-full' : 'relative'}>
       <svg
         ref={ref}
         viewBox={zoomViewBox(zoom)}
         preserveAspectRatio="xMidYMid meet"
         role="group"
         aria-label={summary}
-        className="block h-auto w-full select-none"
+        className={cx('block w-full select-none', canvas ? 'h-full' : 'h-auto')}
       >
         <defs>
           {blocks
@@ -240,12 +259,14 @@ export function FarmMap({
           </pattern>
         </defs>
 
-        <rect
-          className="layer-ground"
-          width={VIEW.width}
-          height={VIEW.height}
-          fill="var(--color-map)"
-        />
+        {canvas ? null : (
+          <rect
+            className="layer-ground"
+            width={VIEW.width}
+            height={VIEW.height}
+            fill="var(--color-map)"
+          />
+        )}
 
         <g className="layer-blocks">
           {blocks.map(({ block, rect }) => {
@@ -343,7 +364,7 @@ export function FarmMap({
                   <path
                     d={block.geometry.pipePath}
                     data-flow={block.id}
-                    stroke="var(--color-tag-text)"
+                    stroke={canvas ? 'var(--flow)' : 'var(--color-tag-text)'}
                     strokeWidth={2.4}
                     strokeDasharray="4 12"
                   />
@@ -379,15 +400,16 @@ export function FarmMap({
                 />
               ),
             )}
-            {showUtilityLabels(scale)
+            {canvas || showUtilityLabels(scale)
               ? farm.utilities.map((u) => {
                   const cx = u.shape === 'circle' ? u.x : u.x + u.width / 2;
                   return (
-                    // One baseline for the whole strip (y 470–600), as on the canvas.
+                    // One baseline for the strip (y 470–600), as on the canvas; the canvas sets
+                    // the TSE inlet's label under its own, lower pipe.
                     <text
                       key={u.id}
                       x={cx}
-                      y={594}
+                      y={canvas ? (u.kind === 'tse' ? 598 : 592) : 594}
                       textAnchor="middle"
                       fontSize={17}
                       // Mono for Latin codes; Arabic-script words need their own font to join.
@@ -398,7 +420,7 @@ export function FarmMap({
                           : 'var(--color-text-secondary)'
                       }
                     >
-                      {t(`map.utility.${u.kind}`, {
+                      {t(canvas ? `mapControls.utility.${u.kind}` : `map.utility.${u.kind}`, {
                         label: u.label,
                         capacity: farm.pumpCapacityM3h,
                       })}
@@ -413,7 +435,7 @@ export function FarmMap({
           {blocks.map(({ block, rect }) => {
             const id = block.id;
             const selected = id === selectedId;
-            const tagW = font * 4.4;
+            const tagW = (font * 48) / 11;
             const tagH = font * 2;
             const { x, y } = block.geometry.label;
             return (
@@ -475,7 +497,8 @@ export function FarmMap({
                     <text
                       x={x}
                       y={y}
-                      dy="0.35em"
+                      // The canvas sets its 22-unit codes 8 units under the tag's middle.
+                      dy={canvas ? 8 : '0.35em'}
                       textAnchor="middle"
                       fontSize={font}
                       fontWeight={500}
@@ -498,10 +521,16 @@ export function FarmMap({
           decision={tooltipDecision}
           schedule={schedule}
           // The plan is never mirrored, so the anchor is a physical position on it (on the
-          // visible part of it when zoomed).
+          // visible part of it when zoomed), past any letterbox around it.
           at={{
-            x: shareOf(tooltipFor.block.geometry.label.x, view.x, view.width),
-            y: shareOf(tooltipFor.rect.y, view.y, view.height),
+            x:
+              (pad.x +
+                shareOf(tooltipFor.block.geometry.label.x, view.x, view.width) *
+                  (box.width - 2 * pad.x)) /
+              box.width,
+            y:
+              (pad.y + shareOf(tooltipFor.rect.y, view.y, view.height) * (box.height - 2 * pad.y)) /
+              box.height,
           }}
         />
       ) : null}

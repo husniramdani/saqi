@@ -73,7 +73,7 @@ describe('AppShell', () => {
   it('counts the blocks that need attention: irrigate, deficit or low confidence', () => {
     renderShell();
     const link = screen.getByRole('link', { name: /need attention/ });
-    expect(link.textContent).toBe('3need attention');
+    expect(link.textContent).toBe('3 need attention');
   });
 
   it('switches language and direction from the header', async () => {
@@ -87,7 +87,8 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'ع, العربية' }).getAttribute('aria-pressed')).toBe(
       'true',
     );
-    expect(screen.getByRole('link', { name: 'Saqi، الرئيسية' })).toBeTruthy();
+    // The home link is named by what it shows: the brand and the farm, now in Arabic.
+    expect(screen.getByRole('link', { name: /^Saqi\s*مزرعة 07 · العين$/ })).toBeTruthy();
   });
 
   it('crossfades the app around the switch (M12) and still lands it', async () => {

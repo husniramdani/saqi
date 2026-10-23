@@ -38,11 +38,11 @@ describe('SchedulePanel', () => {
     expect(parseFloat(bars[0]?.style.inlineSize ?? '')).toBeCloseTo(43.1, 1);
   });
 
-  it('lists tomorrow’s greenhouse pulses', () => {
+  it('marks a budget-cut run as deficit on its bar', () => {
     const { container } = render(<SchedulePanel plan={plan()} farm={farm07} onSelect={vi.fn()} />);
-    expect(container.querySelector('[data-pulse-block="G-1"]')?.textContent).toBe(
-      'G-107:0011:0015:00',
-    );
+    const bars = container.querySelectorAll<HTMLElement>('[data-schedule-bar]');
+    expect(bars[0]?.textContent).toBe('22:00 → 01:01');
+    expect(bars[1]?.textContent).toBe('01:01 → 04:28 · deficit');
   });
 
   it('says what a dry night saves when nothing is scheduled', () => {

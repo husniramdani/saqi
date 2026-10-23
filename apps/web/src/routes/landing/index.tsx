@@ -5,12 +5,13 @@ import { LandingCta, LandingFooter } from '@/features/landing/ClosingSections';
 import { DecisionSection } from '@/features/landing/DecisionSection';
 import { FarmSection } from '@/features/landing/FarmSection';
 import { FieldSection } from '@/features/landing/FieldSection';
+import { HeroSection } from '@/features/landing/HeroSection';
 import { InstrumentsSection } from '@/features/landing/InstrumentsSection';
 import { LandingHeader } from '@/features/landing/LandingHeader';
 import { useLandingMotion } from '@/features/landing/landingMotion';
 import { MakingOfSection } from '@/features/landing/MakingOfSection';
 import { ProductSection } from '@/features/landing/ProductSection';
-import { AboutSection, HeroSection, StatusStrip, WhySection } from '@/features/landing/TopSections';
+import { AboutSection, StatusStrip, WhySection } from '@/features/landing/TopSections';
 import type { LandingDecisionKey } from '@/features/landing/workedExample';
 import './landing.css';
 
@@ -37,7 +38,7 @@ export function Component() {
         <ProductSection />
         <FarmSection view={farmView} onViewChange={setFarmView} />
         <DecisionSection scenarioKey={scenarioKey} onScenarioChange={setScenarioKey} />
-        <InstrumentsSection />
+        <InstrumentsSection onScenarioChange={setScenarioKey} />
         <FieldSection />
         <MakingOfSection />
         <LandingCta />

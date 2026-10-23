@@ -1,11 +1,14 @@
+import { ENGINE_VERSION } from '@saqi/engine';
 import { gstDate } from '@saqi/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router';
 import { useFarm, usePlanToday, useWeather } from '@/api/queries';
 import { QueryError, QueryState } from '@/app/QueryState';
 import { usePageTitle } from '@/app/usePageTitle';
 import { BlockRail, byRisk, DecisionList } from '@/features/attention';
 import { BudgetSection } from '@/features/budget/BudgetSection';
+import { useCockpitIntro, useSelectionFade, useTabSwitch } from '@/features/cockpit/cockpitMotion';
 import {
   DEFAULT_MAP_LAYERS,
   FarmMapPanel,
@@ -15,30 +18,25 @@ import {
 import { SchedulePanel } from '@/features/schedule/SchedulePanel';
 import { WeatherSection } from '@/features/weather/WeatherSection';
 import { useLocale } from '@/i18n';
-import { formatDateGst, formatM3, formatTimeGst } from '@/i18n/format';
-import {
-  duration,
-  ease,
-  fadeUpStagger,
-  gsap,
-  loadMapPlugins,
-  stagger,
-  useGSAP,
-  useMotion,
-  withMotion,
-} from '@/motion';
-import { Chip, cx, Figure, SegmentedControl, Skeleton } from '@/ui';
+import { formatDateGst, formatM3, formatNumber } from '@/i18n/format';
+import { loadMapPlugins, useMotion } from '@/motion';
+import { Skeleton } from '@/ui';
+import '@/features/cockpit/cockpit.css';
 
 type TodayTab = 'plan' | 'layers' | 'water';
 
-const panel =
-  'flex flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-raised min-[1180px]:min-h-0';
-/** Side panels scroll inside themselves on desktop; the page itself never scrolls there. */
-const scrollBody = 'min-[1180px]:min-h-0 min-[1180px]:flex-1 min-[1180px]:overflow-y-auto';
+const TAB_ICON: Record<TodayTab, string> = {
+  plan: 'M3 4h10M3 8h10M3 12h6',
+  layers: 'M8 2l6 3-6 3-6-3zM2 8l6 3 6-3M2 11l6 3 6-3',
+  water: 'M8 2C5.5 5.5 4 7.6 4 9.5a4 4 0 0 0 8 0C12 7.6 10.5 5.5 8 2z',
+};
+
+/** The header's Blocks / Schedule / Budget sections are places here; `#attention` is the plan. */
+const HASH_TAB: Record<string, TodayTab> = { '#budget': 'water', '#attention': 'plan' };
 
 /**
- * Today: the Nightfield cockpit. Blocks rail | map canvas with tonight's schedule | tonight's
- * plan, filling the viewport on desktop. One column under 1180 px: map, then plan, then rail.
+ * Today: the cockpit (design/dashboard.html). Blocks rail | map canvas with tonight's schedule
+ * | tonight's plan, filling the viewport on desktop. One column at 1180 px and under.
  */
 export function Component() {
   const { t } = useTranslation();
@@ -47,12 +45,14 @@ export function Component() {
   const plan = usePlanToday();
   const weather = useWeather();
   usePageTitle(t('block.tonight'));
-  const [picked, setSelected] = useState<string | undefined>();
-  const [tab, setTab] = useState<TodayTab>('plan');
+  const { hash, key: visit } = useLocation();
+  // undefined: nobody picked yet (open the riskiest); null: the open row was closed.
+  const [picked, setSelected] = useState<string | null | undefined>();
+  const [tab, setTab] = useState<TodayTab>(HASH_TAB[hash] ?? 'plan');
   const [layers, setLayers] = useState<MapLayers>({ ...DEFAULT_MAP_LAYERS });
   const [zoom, setZoom] = useState(1);
   const root = useRef<HTMLDivElement>(null);
-  const tabPanel = useRef<HTMLDivElement>(null);
+  const tabBody = useRef<HTMLDivElement>(null);
   const { reduced, forceReduced } = useMotion();
 
   // The map plugins (DrawSVG, Flip) load with Today, so the block Flip is ready by the first click.
@@ -62,67 +62,62 @@ export function Component() {
   const p = plan.data;
   const f = farm.data;
   const ready = Boolean(p && f);
-  // Until someone picks, open on the riskiest block, as the canvas does.
-  const selected = picked ?? (p ? byRisk(p.decisions)[0]?.blockId : undefined);
+  const selected = picked === undefined && p ? byRisk(p.decisions)[0]?.blockId : picked;
   // Today's GST date even when the plan fails, so the heading never reads "Tonight ·".
   const date = formatDateGst(p?.date ?? gstDate(new Date()), locale);
 
-  // Entrance: the three panels settle in once the plan arrives. The map's own draw-in,
-  // the schedule bars and the counters keep their own motion.
-  useGSAP(
-    () => {
-      const el = root.current;
-      if (!el || !ready) return;
-      return withMotion(
-        () => {
-          gsap.from(el.querySelectorAll('[data-cockpit-panel]'), {
-            opacity: 0,
-            y: 10,
-            duration: duration.settle,
-            ease: ease.reveal,
-            stagger: stagger.list,
-            clearProps: 'transform,opacity',
-          });
-        },
-        () => undefined,
-        forceReduced,
-      );
-    },
-    { scope: root, dependencies: [ready, forceReduced] },
-  );
+  useCockpitIntro(root, ready, locale, forceReduced);
+  useTabSwitch(tabBody, tab, locale, reduced);
+  useSelectionFade(root, selected, reduced);
 
-  // Switching the right panel's view: its content rises in, row by row.
-  useGSAP(
-    () => {
-      const el = tabPanel.current;
-      if (!el) return;
-      fadeUpStagger(el.children, { reduced });
-    },
-    { scope: tabPanel, dependencies: [tab], revertOnUpdate: true },
-  );
+  // A section link (#blocks, #schedule, #budget, #attention) opens its view (on that
+  // navigation, while rendering) and takes focus there once it exists: a frame later, so the
+  // shell's route-change focus can't undo it.
+  const [arrived, setArrived] = useState(visit);
+  if (arrived !== visit) {
+    setArrived(visit);
+    const tabFor = HASH_TAB[hash];
+    if (tabFor) setTab(tabFor);
+  }
+  const reached = useRef('');
+  useEffect(() => {
+    if (!hash || reached.current === visit) return;
+    const frame = requestAnimationFrame(() => {
+      const target = document.getElementById(hash.slice(1));
+      if (!target) return;
+      reached.current = visit;
+      if (!target.hasAttribute('tabindex')) target.tabIndex = -1;
+      target.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [hash, visit, tab, ready]);
 
-  const crumb = (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-      <h1 className="text-md font-semibold">{t('today.heading', { date })}</h1>
-      {p ? (
-        <>
-          <Figure value={p.totals.tonightM3} unit="m³" size="sm" accent />
-          <span className="text-xs text-text-secondary">
-            {t('today.saved', { volume: formatM3(p.totals.savedVsFixedM3, locale) })}
-          </span>
-        </>
-      ) : null}
-    </div>
-  );
-
-  const loading = <Skeleton block={320} className="m-4" />;
   const failed = (
-    <div className="p-4">
+    <div className="p-pad">
       <QueryError error={plan.error} onRetry={() => void plan.refetch()} />
     </div>
   );
+  const loading = (
+    <div className="p-pad">
+      <Skeleton block={320} />
+    </div>
+  );
 
-  const tabBody = () => {
+  const crumb = (
+    <>
+      <h1>{t('today.heading', { date })}</h1>
+      {p ? (
+        <>
+          <span className="m vol">{formatM3(p.totals.tonightM3, locale)}</span>
+          <span className="lbl">
+            {t('today.saved', { volume: formatM3(p.totals.savedVsFixedM3, locale, 0) })}
+          </span>
+        </>
+      ) : null}
+    </>
+  );
+
+  const tabContent = () => {
     if (tab === 'layers') {
       return (
         <MapLayersPanel
@@ -137,17 +132,20 @@ export function Component() {
           {plan.isError ? (
             failed
           ) : p ? (
-            <div className="p-4">
-              <BudgetSection budget={p.budget} decisions={p.decisions} />
-            </div>
+            <BudgetSection budget={p.budget} decisions={p.decisions} />
           ) : (
             loading
           )}
-          <div className="p-4">
-            <QueryState query={weather} skeleton={<Skeleton block={220} />}>
-              {(w) => <WeatherSection weather={w} />}
-            </QueryState>
-          </div>
+          <QueryState
+            query={weather}
+            skeleton={
+              <div className="p-pad">
+                <Skeleton block={220} />
+              </div>
+            }
+          >
+            {(w) => <WeatherSection weather={w} />}
+          </QueryState>
         </>
       );
     }
@@ -155,73 +153,59 @@ export function Component() {
     if (!p || !f) return loading;
     return (
       <>
-        <div className="mx-4 mt-3 grid grid-cols-2 gap-3 rounded-md border border-border bg-surface-raised p-4">
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-text-muted">{t('today.plannedTonight')}</span>
-            <Figure value={p.totals.tonightM3} unit="m³" size="md" accent />
+        <div className="rp-sum">
+          <div>
+            <span className="lbl">{t('today.plannedTonight')}</span>
+            <span className="num">
+              <span data-count={p.totals.tonightM3} data-digits="1">
+                {formatNumber(p.totals.tonightM3, locale)}
+              </span>
+              <i>m³</i>
+            </span>
           </div>
-          <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-text-muted">{t('today.savedVsFixed')}</span>
-            <Figure
-              value={p.totals.savedVsFixedM3}
-              unit="m³"
-              precision={0}
-              size="md"
-              className="text-success"
-            />
+          <div>
+            <span className="lbl">{t('today.savedVsFixed')}</span>
+            <span className="num ok">
+              <span data-count={p.totals.savedVsFixedM3} data-digits="0">
+                {formatNumber(p.totals.savedVsFixedM3, locale, 0)}
+              </span>
+              <i>m³</i>
+            </span>
           </div>
         </div>
-        <h3
-          id="attention"
-          className="scroll-mt-4 px-4 pt-4 pb-2 text-xs font-medium text-text-muted"
-        >
+        <h3 id="attention" tabIndex={-1} className="lbl sec-lbl">
           {t('today.decisionsCount', { count: p.decisions.length })}
         </h3>
-        <div className="px-2">
-          <DecisionList
-            farm={f}
-            decisions={p.decisions}
-            schedule={p.schedule}
-            selectedId={selected}
-            onSelect={setSelected}
-          />
-        </div>
+        <DecisionList
+          farm={f}
+          decisions={p.decisions}
+          schedule={p.schedule}
+          selectedId={selected}
+          onSelect={setSelected}
+        />
       </>
     );
   };
 
-  // Explicit minmax(0,1fr): an implicit grid column would grow to its widest content (tables).
-  // reading-flow: under 1180 px the panels are reordered with `order` (map, plan, rail); this
-  // makes Tab follow that visual order too (Chromium 137+; elsewhere Tab keeps DOM order).
   return (
-    <div
-      ref={root}
-      className="grid grid-cols-[minmax(0,1fr)] gap-3 [reading-flow:grid-order] min-[1180px]:h-full min-[1180px]:grid-cols-[330px_minmax(0,1fr)_340px] min-[1180px]:gap-2.5"
-    >
-      <aside
-        data-cockpit-panel
-        aria-label={t('today.blocks')}
-        className={cx(panel, 'order-3 min-[1180px]:order-none')}
-      >
-        <div className="flex shrink-0 items-end justify-between gap-3 border-b border-border px-4 pt-4 pb-3">
-          <div className="flex flex-col gap-0.5">
-            <h2 className="text-md font-semibold">{t('today.blocks')}</h2>
+    <div ref={root} className="ck">
+      <aside id="blocks" tabIndex={-1} aria-label={t('today.blocks')} className="panel lp">
+        <div className="p-head">
+          <div className="p-head-t">
+            <h2 className="p-title">{t('today.blocks')}</h2>
             {p ? (
-              <span className="text-xs text-text-muted">
-                {t('today.blocksSub', { count: p.decisions.length })}
-              </span>
+              <span className="lbl">{t('today.blocksSub', { count: p.decisions.length })}</span>
             ) : null}
           </div>
-          <span className="text-xs text-text-muted">{t('today.waterNow')}</span>
+          <span className="chip">{t('today.waterNow')}</span>
         </div>
-        <div className={scrollBody}>
+        <div className="scroll">
           {plan.isError ? (
             failed
           ) : p && f ? (
             <BlockRail
               farm={f}
               decisions={p.decisions}
-              schedule={p.schedule}
               selectedId={selected}
               onSelect={setSelected}
             />
@@ -231,54 +215,51 @@ export function Component() {
         </div>
       </aside>
 
-      <div data-cockpit-panel className="order-1 flex min-[1180px]:order-none min-[1180px]:min-h-0">
-        <FarmMapPanel
-          className="w-full"
-          farm={farm}
-          plan={plan}
-          selectedId={selected}
-          onSelect={setSelected}
-          reveal
-          crumb={crumb}
-          schedule={p && f ? <SchedulePanel plan={p} farm={f} onSelect={setSelected} /> : null}
-          layers={layers}
-          zoom={zoom}
-          onZoomChange={setZoom}
-        />
-      </div>
+      <FarmMapPanel
+        farm={farm}
+        plan={plan}
+        selectedId={selected ?? undefined}
+        onSelect={setSelected}
+        reveal
+        crumb={crumb}
+        schedule={p && f ? <SchedulePanel plan={p} farm={f} onSelect={setSelected} /> : null}
+        layers={layers}
+        zoom={zoom}
+        onZoomChange={setZoom}
+      />
 
-      <aside
-        data-cockpit-panel
-        aria-label={t('today.plan')}
-        className={cx(panel, 'order-2 min-[1180px]:order-none')}
-      >
-        <div className="flex shrink-0 flex-col gap-3 px-4 pt-4 pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-md font-semibold">{t('today.plan')}</h2>
-            {p ? (
-              <Chip variant="ok">
-                {t('today.plannedAt', { time: formatTimeGst(p.generatedAt, locale) })}
-              </Chip>
-            ) : null}
-          </div>
-          <SegmentedControl
-            label={t('today.tabs.label')}
-            value={tab}
-            onChange={setTab}
-            options={[
-              { value: 'plan', label: t('today.tabs.plan') },
-              { value: 'layers', label: t('today.tabs.layers') },
-              { value: 'water', label: t('today.tabs.water') },
-            ]}
-          />
+      <aside aria-label={t('today.plan')} className="panel rp">
+        <div className="p-head rp-head">
+          <h2 className="p-title">{t('today.plan')}</h2>
+          <span className="chip ok">
+            <span aria-hidden="true" className="dot live" />
+            {t('today.engine', { version: ENGINE_VERSION })}
+          </span>
+        </div>
+        <div className="rtabs" role="group" aria-label={t('today.tabs.label')}>
+          {(['plan', 'layers', 'water'] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={tab === key}
+              aria-controls="today-panel"
+              onClick={() => setTab(key)}
+            >
+              <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+                <path d={TAB_ICON[key]} className="ic" />
+              </svg>
+              {t(`today.tabs.${key}`)}
+            </button>
+          ))}
         </div>
         <div
-          ref={tabPanel}
-          role="tabpanel"
+          ref={tabBody}
+          id="today-panel"
+          role="region"
           aria-label={t(`today.tabs.${tab}`)}
-          className={cx('border-t border-border pb-4', scrollBody)}
+          className="scroll rp-body"
         >
-          {tabBody()}
+          {tabContent()}
         </div>
       </aside>
     </div>

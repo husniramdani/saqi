@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation } from 'react-router';
-import { useFarm, usePlanToday } from '@/api/queries';
+import { usePlanToday } from '@/api/queries';
 import { needsAttention } from '@/features/attention/risk';
 import { useLocale } from '@/i18n';
 import { formatTimeGst } from '@/i18n/format';
@@ -10,23 +10,31 @@ import { LanguageSwitch } from './LanguageSwitch';
 import { LogoMark } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
 import { useLastUpdated } from './useLastUpdated';
+import './shell.css';
 
-const NAV = [
-  { to: '/today', key: 'today', end: true },
-  { to: '/field', key: 'field', end: false },
-  { to: '/making-of', key: 'makingOf', end: false },
+/**
+ * The bar's sections. Blocks, Schedule and Budget are places on Today (the rail, tonight's
+ * schedule card, the Water tab), so only Today and Field can be the current page.
+ */
+const SECTIONS = [
+  { to: '/today', key: 'today', page: true },
+  { to: '/today#blocks', key: 'blocks', page: false },
+  { to: '/today#schedule', key: 'schedule', page: false },
+  { to: '/today#budget', key: 'budget', page: false },
+  { to: '/field', key: 'field', page: true },
 ] as const;
 
-const pill =
-  // No display value here: each pill sets its own, so `hidden sm:inline-flex` can't lose to it.
-  'min-h-11 items-center gap-2 whitespace-nowrap rounded-full border border-border bg-surface px-3 text-sm font-medium text-text-secondary no-underline';
-const dot = 'inline-block shrink-0 rounded-full';
+/** The phone and tablet bar, where the section tabs don't fit. */
+const BOTTOM_NAV = [
+  { to: '/today', key: 'today' },
+  { to: '/field', key: 'field' },
+  { to: '/making-of', key: 'about' },
+] as const;
 
 /** Header (logo, sections, honest data badges, language, theme) and a phone bottom bar. */
 export function AppShell() {
   const { t } = useTranslation();
   const locale = useLocale();
-  const farm = useFarm();
   const plan = usePlanToday();
   const lastUpdated = useLastUpdated();
   const main = useRef<HTMLElement>(null);
@@ -48,12 +56,7 @@ export function AppShell() {
   const attention = plan.data?.decisions.filter(needsAttention).length;
 
   return (
-    <div
-      className={cx(
-        'flex min-h-dvh flex-col',
-        isToday && 'min-[1180px]:h-dvh min-[1180px]:overflow-hidden',
-      )}
-    >
+    <div className={cx('sq-app', isToday && 'is-cockpit')}>
       <ScrollRestoration />
       <a
         href="#main"
@@ -62,76 +65,52 @@ export function AppShell() {
         {t('shell.skipToContent')}
       </a>
 
-      <header className="shrink-0 border-b border-border bg-background">
-        <div className="mx-auto flex min-h-16 max-w-[1440px] items-center justify-between gap-3 px-4 py-2 sm:px-6">
-          <div className="flex shrink-0 items-center gap-3">
-            <Link
-              to="/"
-              aria-label={t('shell.home')}
-              className="inline-flex min-h-11 items-center gap-2.5 text-text-primary no-underline"
-            >
-              <LogoMark />
-              <span className="text-lg font-semibold tracking-[-0.02em]">{t('shell.brand')}</span>
-            </Link>
-            <span className="hidden border-s border-border ps-3 text-sm font-medium whitespace-nowrap text-text-muted xl:inline">
-              {farm.data?.name[locale] ?? t('shell.farm')}
-            </span>
-          </div>
+      <header className="top" data-shell-top>
+        {/* Named by its visible text (brand + farm), so the label matches what's shown. */}
+        <Link to="/" className="logo">
+          <LogoMark />
+          <span className="logo-name">{t('shell.brand')}</span>
+          <span className="lbl">{t('shell.farm')}</span>
+        </Link>
 
-          <nav aria-label={t('shell.nav.label')} className="hidden md:block">
-            <ul className="flex gap-0.5 rounded-full bg-surface-well p-[3px]">
-              {NAV.map((item) => (
-                <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    end={item.end}
-                    className={({ isActive }) =>
-                      cx(
-                        'inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium whitespace-nowrap no-underline',
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-text-secondary hover:bg-surface hover:text-text-primary',
-                      )
-                    }
-                  >
-                    {t(`shell.nav.${item.key}`)}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <span
-              className={cx(pill, 'inline-flex max-sm:border-0 max-sm:bg-transparent max-sm:px-1')}
-            >
-              <span
-                aria-hidden="true"
-                className={cx(dot, 'size-[9px] border-[1.5px] border-dashed border-accent-text')}
-              />
-              <span className="max-sm:sr-only">{t('shell.simulated')}</span>
-            </span>
-            {lastUpdated > 0 ? (
-              <span className={cx(pill, 'hidden lg:inline-flex')}>
-                <span aria-hidden="true" className={cx(dot, 'size-2 bg-success')} />
-                <UpdatedLabel time={formatTimeGst(new Date(lastUpdated).toISOString(), locale)} />
-              </span>
-            ) : null}
-            {attention ? (
-              <Link to="/today#attention" className={cx(pill, 'hidden min-[1320px]:inline-flex')}>
-                <b className="num font-semibold text-accent-text">{attention}</b>
-                {t('shell.needAttention', { count: attention })}
+        <nav className="tabs" aria-label={t('shell.nav.label')}>
+          {SECTIONS.map((s) =>
+            s.page ? (
+              <NavLink key={s.key} to={s.to} end>
+                {t(`shell.nav.${s.key}`)}
+              </NavLink>
+            ) : (
+              <Link key={s.key} to={s.to}>
+                {t(`shell.nav.${s.key}`)}
               </Link>
-            ) : null}
-            <LanguageSwitch />
-            <ThemeToggle />
-            <span
-              aria-label={t('shell.farmManager')}
-              className="num hidden size-11 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground sm:inline-flex"
-            >
-              FM
+            ),
+          )}
+        </nav>
+
+        <div className="top-end">
+          <span className="tb-pill simb">
+            <span aria-hidden="true" className="dot sim" />
+            <span className="max-[640px]:sr-only">{t('shell.simulated')}</span>
+          </span>
+          {lastUpdated > 0 ? (
+            <span className="tb-pill fresh">
+              <span aria-hidden="true" className="dot live" />
+              <UpdatedLabel time={formatTimeGst(new Date(lastUpdated).toISOString(), locale)} />
             </span>
-          </div>
+          ) : null}
+          {attention ? (
+            <Link to="/today#attention" className="tb-pill">
+              <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M4 11V7a4 4 0 0 1 8 0v4l1.2 1.5H2.8zM6.5 14h3" className="ic" />
+              </svg>
+              <b>{attention}</b> {t('shell.needAttention', { count: attention })}
+            </Link>
+          ) : null}
+          <LanguageSwitch />
+          <ThemeToggle />
+          <span role="img" aria-label={t('shell.farmManager')} className="avatar">
+            FM
+          </span>
         </div>
       </header>
 
@@ -142,8 +121,8 @@ export function AppShell() {
         className={cx(
           'focus:outline-none',
           isToday
-            ? 'min-h-0 flex-1 p-3 pb-28 md:pb-3 min-[1180px]:max-w-none'
-            : 'mx-auto w-full max-w-[1440px] px-4 pt-4 pb-28 sm:px-6 md:pb-16',
+            ? 'flex min-h-0 flex-1 flex-col'
+            : 'mx-auto w-full max-w-[1440px] px-2 pt-2 pb-6 sm:px-4 md:pb-16',
         )}
       >
         <Outlet />
@@ -151,14 +130,14 @@ export function AppShell() {
 
       <nav
         aria-label={t('shell.nav.label')}
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-overlay pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="sq-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-border bg-overlay pb-[env(safe-area-inset-bottom)]"
       >
         <ul className="grid grid-cols-3">
-          {NAV.map((item) => (
+          {BOTTOM_NAV.map((item) => (
             <li key={item.to}>
               <NavLink
                 to={item.to}
-                end={item.end}
+                end
                 className={({ isActive }) =>
                   cx(
                     'flex min-h-14 items-center justify-center border-t-2 text-sm font-medium no-underline',
@@ -168,7 +147,7 @@ export function AppShell() {
                   )
                 }
               >
-                {t(item.key === 'makingOf' ? 'shell.nav.about' : `shell.nav.${item.key}`)}
+                {t(`shell.nav.${item.key}`)}
               </NavLink>
             </li>
           ))}
@@ -178,14 +157,14 @@ export function AppShell() {
   );
 }
 
-/** "Updated 21:04 GST": only the time is a mono figure; the words follow the locale's font. */
+/** "Updated 21:04 GST" in the reference's mono; the time stays a figure in every locale. */
 function UpdatedLabel({ time }: { time: string }) {
   const { t } = useTranslation();
   const [before = '', after = ''] = t('shell.updated', { time: '\u0000' }).split('\u0000');
   return (
-    <span>
+    <span className="m">
       {before}
-      <span className="num">{time}</span>
+      <bdi>{time}</bdi>
       {after}
     </span>
   );

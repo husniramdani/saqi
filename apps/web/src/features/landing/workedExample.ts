@@ -76,40 +76,93 @@ function requiredDecision(blockId: LandingScenario['blockId']): BlockDecision {
   return decision;
 }
 
+const clock = (iso: string) => iso.slice(11, 16);
+const runsOf = (blockId: string) => landingSchedule.filter((item) => item.blockId === blockId);
+
+/** Wall-clock window in GST, as scheduled by the engine; empty when the block is not watered. */
+function windowOf(blockId: LandingScenario['blockId']): string {
+  const runs = runsOf(blockId);
+  const first = runs[0];
+  if (!first) return '';
+  if (first.kind === 'pulse') return runs.map((run) => clock(run.start)).join(' · ');
+  return `${clock(first.start)} → ${clock(first.end)}`;
+}
+
+const scenario = (
+  key: LandingDecisionKey,
+  blockId: LandingScenario['blockId'],
+  when: LandingScenario['when'],
+): LandingScenario => ({
+  key,
+  blockId,
+  when,
+  decision: requiredDecision(blockId),
+  window: windowOf(blockId),
+  summaryKey: `landing.decision.scenarios.${key}.sub`,
+});
+
 export const landingScenarios: Record<LandingDecisionKey, LandingScenario> = {
-  irrigate: {
-    key: 'irrigate',
-    blockId: 'D-1',
-    when: 'tonight',
-    decision: requiredDecision('D-1'),
-    window: '22:00–01:01 GST',
-    summaryKey: 'landing.decision.scenarios.irrigate.summary',
-  },
-  skip: {
-    key: 'skip',
-    blockId: 'D-2',
-    when: 'tonight',
-    decision: requiredDecision('D-2'),
-    window: 'No irrigation',
-    summaryKey: 'landing.decision.scenarios.skip.summary',
-  },
-  deficit: {
-    key: 'deficit',
-    blockId: 'F-1',
-    when: 'tonight',
-    decision: requiredDecision('F-1'),
-    window: '01:01–04:28 GST',
-    summaryKey: 'landing.decision.scenarios.deficit.summary',
-  },
-  pulse: {
-    key: 'pulse',
-    blockId: 'G-1',
-    when: 'tomorrow',
-    decision: requiredDecision('G-1'),
-    window: '07:00 · 11:00 · 15:00 GST',
-    summaryKey: 'landing.decision.scenarios.pulse.summary',
-  },
+  irrigate: scenario('irrigate', 'D-1', 'tonight'),
+  skip: scenario('skip', 'D-2', 'tonight'),
+  deficit: scenario('deficit', 'F-1', 'tonight'),
+  pulse: scenario('pulse', 'G-1', 'tomorrow'),
 };
+
+/** Minutes after midnight of an `HH:MM` wall-clock time. */
+const minuteOfDay = (time: string) => {
+  const [h = 0, m = 0] = time.split(':').map(Number);
+  return h * 60 + m;
+};
+const minutes = (iso: string) => minuteOfDay(clock(iso));
+const windowStart = minuteOfDay(farm07.nightWindow.start);
+const windowLength = (minuteOfDay(farm07.nightWindow.end) - windowStart + 1440) % 1440;
+
+export interface LandingNightBar {
+  blockId: string;
+  start: string;
+  end: string;
+  volumeM3: number;
+  /** Offset and width as a share of the night window, in percent. */
+  offsetPct: number;
+  widthPct: number;
+}
+
+/** Tonight's runs on the 22:00 → 05:00 window, for the schedule tracks. */
+export const landingNightBars: LandingNightBar[] = landingSchedule
+  .filter((item) => item.kind === 'night')
+  .map((item) => {
+    const offset = (minutes(item.start) - windowStart + 1440) % 1440;
+    const length = (minutes(item.end) - minutes(item.start) + 1440) % 1440;
+    return {
+      blockId: item.blockId,
+      start: clock(item.start),
+      end: clock(item.end),
+      volumeM3: item.volumeM3,
+      offsetPct: Math.round((offset / windowLength) * 1000) / 10,
+      widthPct: Math.round((length / windowLength) * 1000) / 10,
+    };
+  });
+
+/** Night irrigation only (the greenhouse pulses run tomorrow, in daylight). */
+export const landingTonightM3 =
+  Math.round(landingNightBars.reduce((total, bar) => total + bar.volumeM3, 0) * 10) / 10;
+export const landingSavedM3 = landingDecisions.reduce(
+  (total, decision) => total + decision.savedVsFixedM3,
+  0,
+);
+
+/** Greenhouse pulses tomorrow: start times and the minutes each pulse runs. */
+export const landingPulses = (() => {
+  const runs = runsOf('G-1');
+  const first = runs[0];
+  return {
+    times: runs.map((run) => clock(run.start)),
+    minutes: first ? (minutes(first.end) - minutes(first.start) + 1440) % 1440 : 0,
+  };
+})();
+
+/** The month's water budget in the worked example (allocation and projection, m³). */
+export const LANDING_BUDGET = { projectedM3: 6912, allocationM3: 7050, okPct: 97 } as const;
 
 /** Every block decided by the engine, retained for the Making-of token-to-map scene. */
 export const miniMapDecisions = (): BlockDecision[] => landingDecisions;

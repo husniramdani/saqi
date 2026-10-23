@@ -23,11 +23,13 @@ export class TodayPage {
   readonly schedule = () => this.page.getByRole('region', { name: 'Tonight’s schedule' });
   /** One row per night run, named "D-1, 22:00 → 01:01 GST, 90.4 m³". */
   readonly nightRuns = () => this.schedule().getByRole('button', { name: /m³$/ });
-  readonly pulses = () => this.schedule().getByRole('time');
   readonly planPanel = () => this.page.getByRole('complementary', { name: 'Tonight’s plan' });
   readonly rail = () => this.page.getByRole('complementary', { name: 'Blocks' });
-  /** The rail's link to a block's detail page (shown for the selected block). */
+  /** The selected block's chart card in the rail opens its page ("Open D-1"). */
   readonly openBlock = (code: string) => this.rail().getByRole('link', { name: `Open ${code}` });
+  /** A decision row in the plan, named from its code onward ("G-1 Tomato house …"). */
+  readonly decision = (code: string) =>
+    this.planPanel().getByRole('button', { name: new RegExp(`^${code} `) });
 
   async goto() {
     await this.page.goto('/today');
@@ -35,7 +37,7 @@ export class TodayPage {
   }
 
   async openWaterTab() {
-    await this.planPanel().getByRole('tab', { name: 'Water' }).click();
+    await this.planPanel().getByRole('button', { name: 'Water', exact: true }).click();
   }
 }
 

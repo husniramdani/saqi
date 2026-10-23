@@ -4,16 +4,16 @@ import { useTranslation } from 'react-i18next';
 import { isRtl, useLocale } from '@/i18n';
 import { formatPct, formatTimeGst } from '@/i18n/format';
 import { duration, ease, gsap, loadMapPlugins, useGSAP, useMotion } from '@/motion';
-import { blockSeries, HOUR_MS, linePath } from './chart';
+import { blockSeries, HOUR_MS, linePath, type Pt } from './chart';
 
 const W = 290;
-const DAYS = 14;
-/** Plot area: 100 % sits on the top grid line, 0 % on the bottom one; "now" ends 20 units early. */
-const TOP = 10;
-const BOTTOM = 90;
-const START = 4;
+const DAY_MS = 24 * HOUR_MS;
+/** One point a day: thirteen days back to now. */
+const SPAN_DAYS = 13;
+/** design/dashboard.html: day i of 0–13 at x = 10 + 20i, PAW at y = 90 − 0.8 × PAW. */
+const START = 10;
 const END = 270;
-const GRID = [TOP, (TOP + BOTTOM) / 2, BOTTOM];
+const GRID = [10, 50, 90];
 
 interface RailMoistureChartProps {
   blockId: string;
@@ -24,10 +24,24 @@ interface RailMoistureChartProps {
   events: IrrigationEvent[];
 }
 
+/** The newest reading at or before each daily mark, from `now` back `SPAN_DAYS` days. */
+function daily(pts: Pt[], now: number): Pt[] {
+  const out: Pt[] = [];
+  let i = 0;
+  for (let day = SPAN_DAYS; day >= 0; day--) {
+    const at = now - day * DAY_MS;
+    while (i + 1 < pts.length && (pts[i + 1]?.t ?? Infinity) <= at) i++;
+    const p = pts[i];
+    // A day with no reading in the hours before its mark is a gap, not a guess.
+    if (p && p.t <= at && at - p.t < 3 * HOUR_MS) out.push({ t: at, paw: p.paw });
+  }
+  return out;
+}
+
 /**
- * The rail's 14-day water line (Nightfield canvas "Water now · last 14 days"): the weighted block
- * line over the target band, the threshold, past irrigations on the baseline and "now". A compact
- * companion to the block page's `MoistureChart`, built from the same series helpers.
+ * The rail's 14-day water line (design/dashboard.html "Water now · last 14 days"): one weighted
+ * block reading a day over the target band, the threshold, past irrigations on the baseline and
+ * "now". A compact companion to the block page's `MoistureChart`, built from the same helpers.
  */
 export function RailMoistureChart({
   blockId,
@@ -46,17 +60,18 @@ export function RailMoistureChart({
   const weights = Object.fromEntries(sensors.map((s) => [s.id, s.weight]));
   const block = blockSeries(series, weights);
   const last = block.at(-1);
-  const times = series.flatMap((s) => s.points.map((p) => Date.parse(p.t)));
   // The window ends at the newest reading (the API's "now").
-  const to = times.length > 0 ? Math.max(...times) : 0;
-  const from = to - DAYS * 24 * HOUR_MS;
+  const to = last?.t ?? 0;
+  const from = to - SPAN_DAYS * DAY_MS;
+  const points = daily(block, to);
 
+  // Time runs with the reading direction.
   const x = (time: number) => {
     const px = START + ((time - from) / (to - from)) * (END - START);
     return rtl ? W - px : px;
   };
-  const y = (paw: number) => TOP + (1 - Math.min(100, Math.max(0, paw)) / 100) * (BOTTOM - TOP);
-  const line = linePath(block, x, y);
+  const y = (paw: number) => 90 - Math.min(100, Math.max(0, paw)) * 0.8;
+  const line = linePath(points, x, y, 1.5 * DAY_MS);
   const shownEvents = events.filter((e) => Date.parse(e.startedAt) >= from);
 
   const summary = last
@@ -79,7 +94,7 @@ export function RailMoistureChart({
       ].join(' ')
     : t('rail.chart.empty', { code: blockId, threshold, target });
 
-  // The block line draws itself from the oldest reading (`drift`); reduced motion: already drawn.
+  // The block line draws itself from the oldest day (`drift`, emphasized); reduced: drawn.
   useGSAP(
     () => {
       const path = svg.current?.querySelector('[data-block-line]');
@@ -93,7 +108,7 @@ export function RailMoistureChart({
           tween = gsap.fromTo(
             path,
             { opacity: 1, drawSVG: '0%' },
-            { drawSVG: '100%', duration: duration.drift, ease: ease.reveal },
+            { drawSVG: '100%', duration: duration.drift, ease: ease.emphasized },
           );
         })
         .catch(() => gsap.set(path, { opacity: 1 }));
@@ -106,75 +121,39 @@ export function RailMoistureChart({
   );
 
   return (
-    <div className="flex flex-col gap-1">
-      <svg
-        ref={svg}
-        viewBox={`0 0 ${W} 104`}
-        width="100%"
-        role="img"
-        aria-label={summary}
-        className="mt-2 block h-auto w-full"
-      >
+    <>
+      <svg ref={svg} viewBox={`0 0 ${W} 104`} width="100%" role="img" aria-label={summary}>
         {GRID.map((gy) => (
-          <line key={gy} x1={0} x2={W} y1={gy} y2={gy} stroke="var(--color-border)" />
+          <line key={gy} x1={0} x2={W} y1={gy} y2={gy} className="ch-grid" />
         ))}
         <rect
           x={0}
           width={W}
           y={y(target)}
           height={y(threshold) - y(target)}
-          fill="var(--color-water-1)"
-          opacity={0.7}
+          className="ch-band"
           data-band
         />
-        <line
-          x1={0}
-          x2={W}
-          y1={y(threshold)}
-          y2={y(threshold)}
-          stroke="var(--color-text-secondary)"
-          strokeWidth={1.5}
-          strokeDasharray="4 3"
-          data-threshold
-        />
-        {line ? (
-          <path
-            d={line}
-            fill="none"
-            stroke="var(--color-water-5)"
-            strokeWidth={2.2}
-            strokeLinejoin="round"
-            data-block-line
-          />
-        ) : null}
+        <line x1={0} x2={W} y1={y(threshold)} y2={y(threshold)} className="ch-thr" data-threshold />
+        {line ? <path d={line} className="ch-line" data-block-line /> : null}
         {shownEvents.map((e) => {
           const ex = x(Date.parse(e.startedAt));
           return (
             <path
               key={e.id}
-              d={`M${ex.toFixed(1)} ${BOTTOM - 7} L${(ex - 4).toFixed(1)} ${BOTTOM} L${(ex + 4).toFixed(1)} ${BOTTOM} Z`}
-              fill="var(--color-text-primary)"
+              d={`M${(ex - 5).toFixed(1)} 102 L${ex.toFixed(1)} 94 L${(ex + 5).toFixed(1)} 102 Z`}
+              className="ch-ev"
               data-event
             />
           );
         })}
-        {last ? (
-          <circle
-            cx={x(last.t)}
-            cy={y(last.paw)}
-            r={4.5}
-            fill="var(--color-text-primary)"
-            stroke="var(--color-surface)"
-            strokeWidth={2}
-            data-now
-          />
-        ) : null}
+        {last ? <circle cx={x(to)} cy={y(last.paw)} r={4.5} className="ch-now" data-now /> : null}
       </svg>
-      <div aria-hidden="true" className="flex justify-between font-mono text-xs text-text-muted">
-        <span>{t('rail.chart.daysAgo', { days: DAYS })}</span>
-        <span>{t('rail.chart.daysAgo', { days: DAYS / 2 })}</span>
-        <span className="font-sans">{t('rail.chart.now')}</span>
+      <div aria-hidden="true" className="ruler">
+        <span>{t('rail.chart.daysAgo', { days: SPAN_DAYS })}</span>
+        <span>{t('rail.chart.daysAgo', { days: 7 })}</span>
+        <span>{t('rail.chart.now')}</span>
       </div>
-    </div>
+    </>
   );
 }

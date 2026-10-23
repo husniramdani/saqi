@@ -1,0 +1,777 @@
+/*
+ * Today's cockpit, ported from design/dashboard.html (`.body` and everything inside it).
+ * Scoped under `.ck`; the variables come from the shell (`.sq-app`, app/shell.css).
+ */
+
+/* Body grid */
+.ck {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr) 340px;
+  gap: 10px;
+}
+[dir='rtl'] .ck .flip {
+  transform: scaleX(-1);
+}
+.ck .panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.ck .scroll {
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-s) transparent;
+}
+.ck .p-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.ck .p-head-t {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ck .p-title {
+  font-weight: 600;
+  font-size: 15.5px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+.ck .p-pad {
+  padding: 16px;
+}
+
+/* Left: blocks */
+.ck .blk {
+  border-bottom: 1px solid var(--line);
+}
+.ck .blk-h {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto 16px;
+  gap: 12px;
+  align-items: center;
+  min-height: 64px;
+  padding: 10px 16px;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+}
+.ck .blk-h:hover {
+  background: var(--raised);
+}
+.ck .blk.open .blk-h {
+  background: var(--raised);
+}
+.ck .crop {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--raised2);
+  color: var(--text-2);
+}
+.ck .blk.open .crop {
+  background: var(--text);
+  color: var(--bg);
+}
+.ck .blk-n {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+.ck .blk-n b {
+  font-weight: 500;
+  font-size: 14.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ck .blk-n span {
+  font-size: 12.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ck .blk-v {
+  font-size: 20px;
+}
+.ck .num.blk-v.low {
+  color: var(--accent-t);
+}
+.ck .chev {
+  color: var(--text-3);
+}
+.ck .blk.open .chev {
+  transform: rotate(180deg);
+}
+.ck .blk-d {
+  background: var(--raised);
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.ck .mrow {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.ck .mrow .ic {
+  color: var(--text-3);
+}
+.ck .mrow b {
+  font-weight: 500;
+  font-size: 14px;
+  display: block;
+}
+.ck .mrow small {
+  font-size: 12.5px;
+  color: var(--text-3);
+}
+.ck .mrow .num {
+  font-size: 18px;
+}
+.ck .mrow .off {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent-t);
+}
+.ck .mini {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ck .mt {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ck .mt .num {
+  font-size: 20px;
+}
+.ck .mt .num.acc {
+  color: var(--accent-t);
+}
+.ck .chart {
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+.ck .chart-link {
+  position: absolute;
+  inset: -1px;
+  z-index: 1;
+  border-radius: 12px;
+}
+.ck .chart:has(.chart-link:hover) {
+  border-color: var(--line-s);
+}
+/* A failed load's retry stays reachable above the card's link. */
+.ck .chart [role='alert'] {
+  position: relative;
+  z-index: 2;
+}
+.ck .chart-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ck .chart svg {
+  /* Inline, as in the reference (Tailwind's preflight makes SVG a block). */
+  display: inline;
+  vertical-align: baseline;
+  margin-top: 8px;
+}
+.ck .chart .ruler {
+  margin-top: 4px;
+}
+.ck .ch-band {
+  fill: var(--w3);
+  fill-opacity: 0.25;
+}
+.ck .ch-thr {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.ck .ch-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.ck .ch-line {
+  fill: none;
+  stroke: var(--w5);
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+}
+.ck .ch-ev {
+  fill: var(--accent);
+}
+.ck .ch-now {
+  fill: var(--text);
+}
+
+/* Centre: map */
+.ck .map {
+  position: relative;
+  background-color: var(--map);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  min-height: 0;
+  isolation: isolate;
+  box-shadow: var(--shadow);
+}
+.ck .map::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 25% 25%;
+  z-index: -1;
+  pointer-events: none;
+}
+.ck .map-svg {
+  position: absolute;
+  inset: 68px 44px 150px;
+  width: calc(100% - 88px);
+  height: calc(100% - 218px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+}
+/* The drawing's own box (what `preserveAspectRatio: meet` would show), so overlays anchor to it. */
+.ck .map-fit {
+  width: min(100cqw, calc(100cqh * 1000 / 620));
+}
+.ck .map-state {
+  width: min(100%, 420px);
+  border-radius: 14px;
+  background: var(--panel);
+  padding: 16px;
+}
+.ck .map-top {
+  position: absolute;
+  top: 14px;
+  inset-inline: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+.ck .glass {
+  background-color: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.ck .crumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  min-height: 42px;
+}
+.ck .crumb h1 {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.ck .crumb .vol {
+  font-size: 14px;
+  color: var(--accent-t);
+  font-weight: 500;
+}
+.ck .zoom {
+  position: absolute;
+  inset-inline-end: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ck .zoom button {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--glass);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.ck .zoom button:disabled {
+  color: var(--text-3);
+  cursor: default;
+}
+.ck .legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  min-height: 42px;
+}
+.ck .legend .lbl:first-child {
+  margin-inline-end: 4px;
+}
+.ck .legend .lbl:last-child {
+  margin-inline-start: 4px;
+}
+.ck .legend span.s {
+  display: block;
+  width: 18px;
+  height: 10px;
+  border-radius: 3px;
+}
+.ck .sched {
+  position: absolute;
+  inset-inline: 14px;
+  bottom: 14px;
+  padding: 12px 16px;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 84px;
+  gap: 8px 12px;
+  align-items: center;
+}
+.ck .sched-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+}
+.ck .sched-row .code {
+  font-size: 13px;
+  font-weight: 500;
+}
+.ck .sched .vol {
+  text-align: end;
+}
+.ck .sched-row .vol {
+  font-size: 13px;
+}
+.ck .sched-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ck .ruler {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-2);
+}
+.ck .trk {
+  position: relative;
+  height: 28px;
+  border-radius: 7px;
+  background-color: var(--track);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--line-s) 0 1px,
+    transparent 1px calc(100% / 7)
+  );
+}
+.ck .bar {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 5px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  padding-inline: 9px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--on-accent);
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ck .sched-row:hover .trk {
+  box-shadow: inset 0 0 0 1px var(--line-s);
+}
+.ck .toast {
+  position: absolute;
+  inset-inline-start: 14px;
+  bottom: 138px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-block: 10px;
+  padding-inline: 12px 8px;
+  max-width: 350px;
+}
+.ck .toast button {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-3);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.ck .toast-ic {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  display: grid;
+  place-items: center;
+  color: var(--accent-t);
+  flex: none;
+}
+.ck .toast-t {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ck .toast-t b {
+  font-weight: 600;
+  font-size: 14px;
+}
+.ck .toast-t span {
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.ck .coord {
+  position: absolute;
+  inset-inline-start: 22px;
+  bottom: 140px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* Right: plan / layers / water */
+.ck .rp-head {
+  border-bottom: 0;
+  padding-bottom: 10px;
+}
+.ck .rtabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 4px 16px 0;
+  padding: 3px;
+  background: var(--raised2);
+  border-radius: 12px;
+  gap: 2px;
+}
+.ck .rtabs button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  cursor: pointer;
+}
+.ck .rtabs button[aria-pressed='true'] {
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.ck .rp-sum {
+  margin: 14px 16px 6px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--raised);
+  border: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.ck .rp-sum > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ck .rp-sum .num {
+  font-size: 28px;
+}
+.ck .rp-sum .num.ok {
+  color: var(--ok);
+}
+.ck .sec-lbl {
+  padding: 14px 16px 8px;
+}
+.ck .drow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 64px;
+  padding: 10px 16px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+}
+.ck .drow:hover {
+  background: var(--raised);
+}
+.ck .drow[aria-pressed='true'] {
+  background: var(--raised);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+[dir='rtl'] .ck .drow[aria-pressed='true'] {
+  box-shadow: inset -3px 0 0 var(--accent);
+}
+.ck .drow .code {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 14px;
+}
+.ck .drow-n {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+.ck .drow-n > span {
+  font-size: 14.5px;
+  font-weight: 500;
+}
+.ck .drow .r {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.ck .drow small {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-3);
+}
+.ck .lrows {
+  padding-top: 8px;
+}
+.ck .lrow {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 10px;
+  align-items: center;
+  min-height: 60px;
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+}
+.ck .lrow:hover {
+  background: var(--raised);
+}
+.ck .lrow-name {
+  font-size: 14.5px;
+  font-weight: 500;
+}
+.ck .lrow small {
+  display: block;
+  font-size: 12.5px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.ck .sw {
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--raised2);
+  border: 1px solid var(--line-s);
+  position: relative;
+}
+.ck .sw-knob {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+.ck .lrow[aria-pressed='true'] .sw {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.ck .lrow[aria-pressed='true'] .sw-knob {
+  background: var(--on-accent);
+  transform: translateX(16px);
+}
+[dir='rtl'] .ck .lrow[aria-pressed='true'] .sw-knob {
+  transform: translateX(-16px);
+}
+.ck .sect {
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ck .sect:last-child {
+  border-bottom: 0;
+}
+.ck .sect-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ck .sect p {
+  font-size: 13px;
+  color: var(--text-2);
+}
+.ck .sect-row {
+  display: flex;
+  justify-content: space-between;
+}
+.ck .budget-pct {
+  font-size: 34px;
+}
+.ck .budget-used {
+  font-size: 13px;
+}
+.ck .meter {
+  position: relative;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--track);
+  overflow: hidden;
+}
+.ck .meter-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: 5px;
+  background: var(--accent);
+}
+.ck .meter-tick {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--text);
+}
+.ck .et-dot {
+  fill: var(--w4);
+}
+.ck .et-dot.em {
+  fill: var(--accent);
+}
+.ck .et-stem {
+  stroke: var(--line-s);
+  stroke-width: 2;
+}
+.ck .wx {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.ck .wx > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ck .wx .num {
+  font-size: 22px;
+}
+.ck .src {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+/* Mono runs that carry words: Arabic and Urdu need their own font to join. */
+:is(:lang(ar), :lang(ur)) .ck :is(.drow small, .bar, .coord, .chart .ruler) {
+  font-family: var(--font-arabic);
+}
+
+@media (max-width: 1180px) {
+  .ck {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ck .map {
+    height: 620px;
+  }
+  .ck .scroll {
+    overflow: visible;
+  }
+}
+@media (max-width: 640px) {
+  .ck .map {
+    height: 520px;
+  }
+  .ck .map-svg {
+    inset: 68px 10px 150px;
+    width: calc(100% - 20px);
+  }
+  .ck .toast,
+  .ck .coord,
+  .ck .legend {
+    display: none;
+  }
+  .ck .sched {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .ck .sched .vol {
+    display: none;
+  }
+}

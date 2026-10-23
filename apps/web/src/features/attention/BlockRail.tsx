@@ -1,86 +1,95 @@
-import type { BlockDecision, Farm, ScheduleItem } from '@saqi/shared';
+import type { Block, BlockDecision, Farm } from '@saqi/shared';
 import { useTranslation } from 'react-i18next';
 import { useLocale } from '@/i18n';
-import { cx, Figure, MoistureSwatch } from '@/ui';
+import { formatNumber, intlLocale } from '@/i18n/format';
+import { cx } from '@/ui';
 import { byRisk } from './risk';
 import { SelectedBlockRailDetail } from './SelectedBlockRailDetail';
 
+/** Crop marks from design/dashboard.html: palm, greenhouse tunnel, fodder grass. */
+const CROP_ICON = {
+  palm: 'M8 15V7M8 7Q5 3.5 1.5 5M8 7Q11 3.5 14.5 5M8 7Q8 3.5 10.5 1.5M8 7Q6.5 4 4.5 2',
+  house: 'M2 13V9a6 6 0 0 1 12 0v4M2 13h12M6 13V8.5M10 13V8.5',
+  grass: 'M4 14C4 10 3 7 2 5M8 14V3M12 14c0-4 1-7 2-9M6 14c0-3-.5-5-1.5-6.5M10 14c0-3 .5-5 1.5-6.5',
+} as const;
+
+const cropIcon = (block: Block | undefined) =>
+  block?.crop === 'date_palm'
+    ? CROP_ICON.palm
+    : block?.mode === 'pulse'
+      ? CROP_ICON.house
+      : CROP_ICON.grass;
+
 /**
- * Left rail (Nightfield canvas "Blocks"): every block, riskiest first, with its crop, area,
- * method and water now. The selected block opens to show why: projected PAW, each simulated
- * sensor, tonight's figures and the last 14 days.
+ * Left rail (design/dashboard.html "Blocks"): every block, riskiest first, with its crop, area,
+ * method and water now. The selected block opens to show why: projected water, each simulated
+ * sensor, tonight's figures and the last 14 days. Opening the open row again closes it.
  */
 export function BlockRail({
   farm,
   decisions,
-  schedule,
   selectedId,
   onSelect,
 }: {
   farm: Farm;
   decisions: BlockDecision[];
-  schedule: ScheduleItem[];
-  selectedId?: string | undefined;
-  onSelect: (blockId: string) => void;
+  selectedId?: string | null | undefined;
+  onSelect: (blockId: string | null) => void;
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
+  const hectares = new Intl.NumberFormat(intlLocale(locale), {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 2,
+  });
 
   return (
-    <ul className="flex flex-col">
+    <ul>
       {byRisk(decisions).map((d) => {
         const open = d.blockId === selectedId;
         const panelId = `rail-${d.blockId}`;
         const block = farm.blocks.find((b) => b.id === d.blockId);
         return (
-          <li key={d.blockId} className="border-b border-border last:border-b-0">
+          <li key={d.blockId} className={cx('blk', open && 'open')}>
             <button
               type="button"
+              className="blk-h"
               aria-expanded={open}
-              aria-controls={panelId}
-              onClick={() => onSelect(d.blockId)}
-              className={cx(
-                'grid min-h-16 w-full grid-cols-[auto_minmax(0,1fr)_auto_14px] items-center gap-3 px-4 py-2.5 text-start hover:bg-surface-raised',
-                open
-                  ? 'bg-surface-raised shadow-[inset_3px_0_0_var(--color-accent)] rtl:shadow-[inset_-3px_0_0_var(--color-accent)]'
-                  : '',
-              )}
+              aria-controls={open ? panelId : undefined}
+              onClick={() => onSelect(open ? null : d.blockId)}
             >
-              <MoistureSwatch paw={d.pawNow} size={18} />
-              <span className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate font-medium">
-                  <span className="num">{d.blockId}</span> · {block?.name[locale] ?? d.blockId}
-                </span>
+              <span className="crop" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 16 16">
+                  <path d={cropIcon(block)} className="ic" />
+                </svg>
+              </span>
+              <span className="blk-n">
+                <b>
+                  {d.blockId} · {block?.name[locale] ?? d.blockId}
+                </b>
                 {block ? (
-                  <span className="truncate text-xs text-text-muted">
+                  <span>
                     {[
                       t(`block.crop.${block.crop}`),
-                      t('block.area', { ha: block.areaHa }),
+                      /\bcoco\b/.test(block.variety) ? t('rail.coco') : null,
+                      t('block.area', { ha: hectares.format(block.areaHa) }),
                       t(`block.method.${block.method}`),
-                    ].join(' · ')}
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
                   </span>
                 ) : null}
               </span>
               {d.pawNow === null ? (
-                <span className="text-xs text-text-secondary">{t('state.noData')}</span>
+                <span className="lbl">{t('state.noData')}</span>
               ) : (
-                <Figure value={d.pawNow} unit="%" size="sm" accent={d.pawNow < d.threshold} />
+                <span className={cx('num blk-v', d.pawNow < d.threshold && 'low')}>
+                  {formatNumber(d.pawNow, locale)}
+                  <i>%</i>
+                </span>
               )}
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 16 16"
-                aria-hidden="true"
-                className={cx('text-text-muted', open ? 'rotate-180' : '')}
-              >
-                <path
-                  d="M3.5 6L8 10.5 12.5 6"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+              <svg className="chev" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M3.5 6L8 10.5 12.5 6" className="ic" />
               </svg>
             </button>
             {open ? (
@@ -88,7 +97,6 @@ export function BlockRail({
                 id={panelId}
                 decision={d}
                 sensors={farm.sensors.filter((s) => s.blockId === d.blockId)}
-                schedule={schedule}
               />
             ) : null}
           </li>

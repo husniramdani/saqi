@@ -1,50 +1,39 @@
-import type { BlockDecision, Confidence, ScheduleItem, Sensor, SensorSeries } from '@saqi/shared';
+import type { BlockDecision, Confidence, Sensor, SensorSeries } from '@saqi/shared';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { useEvents, useReadings } from '@/api/queries';
 import { QueryState } from '@/app/QueryState';
-import { windowLabel } from '@/features/farm-map/window';
 import { RailMoistureChart } from '@/features/moisture-chart/RailMoistureChart';
-import { StaleBanner } from '@/features/moisture-chart/StaleBanner';
+import { HOUR_MS } from '@/features/moisture-chart/chart';
 import { useLocale } from '@/i18n';
-import { formatNumber, formatPct, formatTimeGst } from '@/i18n/format';
+import { formatNumber, formatPct } from '@/i18n/format';
 import { captureBlock, duration, ease, gsap, stagger, useGSAP, useMotion } from '@/motion';
-import {
-  buttonClasses,
-  Chip,
-  type ChipVariant,
-  DECISION_CHIP,
-  Figure,
-  PillArrow,
-  Skeleton,
-} from '@/ui';
+import { Skeleton } from '@/ui';
 
-const CONFIDENCE_CHIP: Record<Confidence, ChipVariant> = {
-  high: 'ok',
-  medium: 'outline',
-  low: 'warn',
+const CONFIDENCE_CHIP: Record<Confidence, string> = {
+  high: 'chip ok',
+  medium: 'chip',
+  low: 'chip warn',
 };
 
-const MROW = 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border py-2.5';
-const TILE = 'flex flex-col gap-1.5 rounded-md border border-border bg-surface px-3 py-2.5';
+const DROP = 'M8 2C5.5 5.5 4 7.6 4 9.5a4 4 0 0 0 8 0C12 7.6 10.5 5.5 8 2z';
+const PROBE = 'M2 5h12M8 5v9M5.5 14h5';
 
 /**
- * The selected rail row, opened (Nightfield canvas `blk-d`): projected water, each simulated
- * sensor with its weight, tonight's figures, the 14-day line and the decision. Mounted for the
- * selected block only, so only that block's readings and events are requested.
+ * The selected rail row, opened (design/dashboard.html `.blk-d`): projected water and each
+ * simulated sensor, tonight's figures, the 14-day line, and the way into the block's page.
+ * Mounted for the selected block only, so only that block's readings and events are requested.
  */
 export function SelectedBlockRailDetail({
   id,
   decision: d,
   sensors,
-  schedule,
 }: {
   id: string;
   decision: BlockDecision;
   /** This block's sensors from the farm (depth and weight). */
   sensors: Sensor[];
-  schedule: ScheduleItem[];
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
@@ -52,151 +41,172 @@ export function SelectedBlockRailDetail({
   const events = useEvents(d.blockId, 30);
   const root = useRef<HTMLDivElement>(null);
   const { reduced } = useMotion();
-  const runs = windowLabel(d.blockId, schedule, locale);
 
-  // The row opens downward: its parts settle in, top first. Reduced motion: already open.
+  // The row opens downward: the panel settles, then its rows and tiles. Reduced: already open.
   useGSAP(
     () => {
-      if (reduced || !root.current) return;
-      gsap.from(root.current.children, {
+      const el = root.current;
+      if (reduced || !el) return;
+      gsap.from(el, {
+        opacity: 0,
+        y: -8,
+        duration: duration.settle,
+        ease: ease.reveal,
+        clearProps: 'transform,opacity',
+      });
+      gsap.from(el.querySelectorAll('.mrow, .mt'), {
         opacity: 0,
         y: 6,
         duration: duration.settle,
         ease: ease.reveal,
         stagger: stagger.list,
-        clearProps: 'opacity,transform',
+        clearProps: 'transform,opacity',
       });
     },
     { scope: root, dependencies: [d.blockId] },
   );
 
   const tiles = [
-    [t('today.et0Tomorrow'), d.et0Mm, 'mm'],
-    [t('today.cropUse'), d.etcMm, 'mm'],
-    [t('today.threshold'), d.threshold, '%'],
-    [t('today.target'), d.target, '%'],
-  ] as const;
+    { label: t('today.et0Tomorrow'), value: formatNumber(d.et0Mm, locale), unit: 'mm' },
+    { label: t('today.cropUse'), value: formatNumber(d.etcMm, locale), unit: 'mm' },
+    {
+      label: t('today.threshold'),
+      value: formatNumber(d.threshold, locale, 0),
+      unit: '%',
+      accent: true,
+    },
+    { label: t('today.target'), value: formatNumber(d.target, locale, 0), unit: '%' },
+  ];
+  const series = readings.data;
+  const newest = Math.max(
+    0,
+    ...(series ?? []).flatMap((s) => s.points.map((p) => Date.parse(p.t))),
+  );
 
   return (
-    <div id={id} ref={root} className="flex flex-col gap-3.5 bg-surface-raised px-4 pb-4">
-      <div className={MROW}>
-        <span className="flex min-w-0 flex-col">
-          <span className="text-sm font-medium">{t('today.projected')}</span>
-          <span className="text-xs text-text-muted">{t('today.projectedSub')}</span>
-        </span>
-        {d.pawProjected === null ? (
-          <span className="text-sm text-text-secondary">{t('state.noData')}</span>
-        ) : (
-          <Figure value={d.pawProjected} unit="%" size="sm" accent={d.pawProjected < d.threshold} />
-        )}
-      </div>
+    <div id={id} ref={root} className="blk-d">
+      <ul aria-label={t('rail.sensors')}>
+        <li className="mrow">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+            <path d={DROP} className="ic" />
+          </svg>
+          <span>
+            <b>{t('today.projected')}</b>
+            <small>{t('today.projectedSub')}</small>
+          </span>
+          {d.pawProjected === null ? (
+            <span className="lbl">{t('state.noData')}</span>
+          ) : (
+            <span className="num">
+              {formatNumber(d.pawProjected, locale)}
+              <i>%</i>
+            </span>
+          )}
+        </li>
+        {sensors.map((sensor) => (
+          <SensorRow
+            key={sensor.id}
+            sensor={sensor}
+            series={series?.find((s) => s.sensorId === sensor.id)}
+            loading={readings.isPending}
+            newest={newest}
+          />
+        ))}
+      </ul>
 
-      <dl className="grid grid-cols-2 gap-2">
-        {tiles.map(([label, value, unit]) => (
-          <div key={label} className={TILE}>
-            <dt className="text-xs font-medium text-text-muted">{label}</dt>
-            <dd>
-              <Figure value={value} unit={unit} size="sm" />
+      <dl className="mini">
+        {tiles.map((tile) => (
+          <div key={tile.label} className="mt">
+            <dt className="lbl">{tile.label}</dt>
+            <dd className={tile.accent ? 'num acc' : 'num'}>
+              {tile.value}
+              <i>{tile.unit}</i>
             </dd>
           </div>
         ))}
       </dl>
 
-      <QueryState
-        query={readings}
-        isEmpty={(list) => list.every((s) => s.points.length === 0)}
-        emptyText={t('block.noReadings')}
-        skeleton={<Skeleton block={260} />}
-      >
-        {(series) => (
-          <div className="flex flex-col gap-3.5">
-            <StaleBanner series={series} />
-            <ul aria-label={t('rail.sensors')}>
-              {sensors.map((sensor) => (
-                <SensorRow
-                  key={sensor.id}
-                  sensor={sensor}
-                  series={series.find((s) => s.sensorId === sensor.id)}
-                />
-              ))}
-            </ul>
-            <section
-              aria-label={t('block.chartPanel')}
-              className="rounded-md border border-border bg-surface p-3"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-xs font-medium text-text-muted">{t('block.chartPanel')}</h3>
-                <Chip variant={CONFIDENCE_CHIP[d.confidence]}>
-                  {t('rail.confidence', { level: t(`confidence.${d.confidence}`) })}
-                </Chip>
-              </div>
-              <RailMoistureChart
-                blockId={d.blockId}
-                series={series}
-                sensors={sensors}
-                threshold={d.threshold}
-                target={d.target}
-                events={events.data ?? []}
-              />
-            </section>
-          </div>
-        )}
-      </QueryState>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="flex items-center gap-2">
-            <Chip variant={DECISION_CHIP[d.decision]}>{t(`decision.${d.decision}`)}</Chip>
-            {d.volumeM3 > 0 ? <Figure value={d.volumeM3} unit="m³" size="sm" accent /> : null}
-          </span>
-          <span className="text-xs text-text-muted">
-            {runs ? (
-              <span className="num">{runs}</span>
-            ) : (
-              t('today.noIrrigationSaves', {
-                m3: formatNumber(d.savedVsFixedM3, locale),
-              })
-            )}
-          </span>
-        </div>
+      {/* The whole card opens the block's page (its full chart, reasons and history): a
+          stretched link over the card, so the visual stays the reference's. */}
+      <section aria-label={t('block.chartPanel')} className="chart">
         <Link
           to={`/blocks/${d.blockId}`}
           onClick={() => captureBlock(d.blockId)}
-          className={buttonClasses({ variant: 'ink', arrow: true })}
+          className="chart-link"
+          aria-label={t('today.openBlock', { code: d.blockId })}
+        />
+        <div className="chart-h">
+          <h3 className="lbl">{t('block.chartPanel')}</h3>
+          <span className={CONFIDENCE_CHIP[d.confidence]}>
+            {t('rail.confidence', { level: t(`confidence.${d.confidence}`) })}
+          </span>
+        </div>
+        <QueryState
+          query={readings}
+          isEmpty={(list) => list.every((s) => s.points.length === 0)}
+          emptyText={t('block.noReadings')}
+          skeleton={<Skeleton block={128} className="mt-2" />}
         >
-          {t('today.openBlock', { code: d.blockId })} <PillArrow variant="ink" />
-        </Link>
-      </div>
+          {(list) => (
+            <RailMoistureChart
+              blockId={d.blockId}
+              series={list}
+              sensors={sensors}
+              threshold={d.threshold}
+              target={d.target}
+              events={events.data ?? []}
+            />
+          )}
+        </QueryState>
+      </section>
     </div>
   );
 }
 
-/** "Sensor · 30 cm — weight 0.6 · simulated — 70.4%", or when it went quiet if it is stale. */
-function SensorRow({ sensor, series }: { sensor: Sensor; series: SensorSeries | undefined }) {
+/** "Sensor · 30 cm — weight 0.6 · simulated — 70.4%", or how long it has been silent. */
+function SensorRow({
+  sensor,
+  series,
+  loading,
+  newest,
+}: {
+  sensor: Sensor;
+  series: SensorSeries | undefined;
+  loading: boolean;
+  /** The newest reading of any of this block's sensors (the API's "now"). */
+  newest: number;
+}) {
   const { t } = useTranslation();
   const locale = useLocale();
   const latest = series?.points.at(-1);
   const stale = series?.stale ?? false;
+  const silentHours =
+    series && stale ? Math.round((newest - Date.parse(series.lastAt)) / HOUR_MS) : 0;
   return (
-    <li className={MROW}>
-      <span className="flex min-w-0 flex-col">
-        <span className="text-sm font-medium">
+    <li className="mrow">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+        <path d={PROBE} className="ic" />
+      </svg>
+      <span>
+        <b>
           {sensor.depthCm === null
             ? t('rail.substrateSensor')
-            : t('rail.sensor', { depth: `${sensor.depthCm} cm` })}
-        </span>
-        <span className="text-xs text-text-muted">
-          {stale && series
-            ? t('rail.sensorStale', { since: formatTimeGst(series.lastAt, locale) })
+            : t('rail.sensor', { depth: `\u2066${sensor.depthCm} cm\u2069` })}
+        </b>
+        <small>
+          {stale
+            ? t('rail.sensorStale', { hours: silentHours })
             : t('rail.sensorWeight', { weight: formatNumber(sensor.weight, locale) })}
-        </span>
+        </small>
       </span>
-      {stale ? (
-        <span className="text-sm font-medium text-warning">{t('rail.offline')}</span>
+      {loading ? (
+        <Skeleton inline={56} block={18} />
+      ) : stale ? (
+        <span className="num">{t('rail.offline')}</span>
       ) : latest ? (
-        <span className="num text-md text-text-primary">{formatPct(latest.paw, locale)}</span>
+        <span className="num">{formatPct(latest.paw, locale)}</span>
       ) : (
-        <span className="text-sm text-text-secondary">{t('state.noData')}</span>
+        <span className="lbl">{t('state.noData')}</span>
       )}
     </li>
   );

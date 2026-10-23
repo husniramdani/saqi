@@ -1,123 +1,63 @@
+import { blockById, farm07, gstDate, type Weather } from '@saqi/shared';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
 import { useWeather } from '@/api/queries';
-import { QueryState } from '@/app/QueryState';
 import { useLocale } from '@/i18n';
 import { formatNumber, formatTimeGst } from '@/i18n/format';
-import { buttonClasses, Chip, Figure, PillArrow, Skeleton, SourceDot, TimeTrack } from '@/ui';
-import { LandingMapArtwork } from './LandingMapArtwork';
-import { LANDING_ET0_WEEK } from './workedExample';
+import { SectionIndex } from './LandingIcons';
+import { LANDING_ET0_WEEK, landingScenarios } from './workedExample';
 
-const nightBarD1 = { from: 0, to: 181 / 420, label: 'D-1, 22:00–01:01 GST, 90.4 m³' };
-const nightBarF1 = {
-  from: 181 / 420,
-  to: 388 / 420,
-  label: 'F-1, 01:01–04:28 GST, 155.5 m³',
-};
-
-export function HeroSection() {
-  const { t } = useTranslation();
-  return (
-    <section id="top" className="landing-wrap">
-      <div className="landing-hero">
-        <div className="landing-hero__map" aria-hidden="true">
-          <LandingMapArtwork variant="hero" />
-        </div>
-        <div className="landing-hero__kicker">
-          <span>{t('landing.hero.read')}</span>
-          <span>{t('landing.hero.then')}</span>
-        </div>
-        <p className="landing-hero__disclosure">{t('landing.hero.disclosure')}</p>
-        <div className="landing-hero__main">
-          <div>
-            <h1>{t('landing.hero.title')}</h1>
-            <p className="landing-hero__thesis">{t('landing.hero.thesis')}</p>
-            <p className="landing-hero__body">{t('landing.hero.body')}</p>
-            <div className="landing-hero__actions">
-              <Link to="/today" className={buttonClasses({ variant: 'accent', arrow: true })}>
-                {t('landing.hero.primary')} <PillArrow variant="accent" />
-              </Link>
-              <a className="landing-text-link" href="#decide">
-                {t('landing.hero.secondary')}
-              </a>
-            </div>
-          </div>
-          <aside
-            className="landing-inverse landing-hero__summary"
-            aria-label={t('landing.hero.summaryLabel')}
-          >
-            <div className="landing-row">
-              <span className="landing-label">{t('landing.hero.summaryTitle')}</span>
-              <span className="num landing-label">22:00–05:00 GST</span>
-            </div>
-            <Figure value={245.9} unit="m³" precision={1} size="xl" accent />
-            <p>{t('landing.hero.saved', { volume: '62 m³' })}</p>
-            <div className="landing-schedule-mini">
-              <span />
-              <div className="landing-ruler">
-                <span>22</span>
-                <span>23</span>
-                <span>00</span>
-                <span>01</span>
-                <span>02</span>
-                <span>03</span>
-                <span>04</span>
-                <span>05</span>
-              </div>
-              <span className="num">D-1</span>
-              <TimeTrack hours={7} bars={[nightBarD1]} />
-              <span className="num">F-1</span>
-              <TimeTrack hours={7} bars={[nightBarF1]} />
-            </div>
-            <div className="landing-row">
-              <Chip variant="warn">
-                <SourceDot source="sim">{t('shell.simulated')}</SourceDot>
-              </Chip>
-              <span className="landing-label">{t('landing.hero.pump')}</span>
-            </div>
-          </aside>
-        </div>
-        <p className="landing-hero__foot">{t('landing.hero.foot')}</p>
-      </div>
-    </section>
-  );
+/** The forecast day after the one Open-Meteo was fetched on (GST). */
+export function tomorrowOf(weather: Weather) {
+  const today = gstDate(weather.fetchedAt);
+  return weather.daily.find((day) => day.date > today);
 }
 
 export function StatusStrip() {
   const { t } = useTranslation();
   const locale = useLocale();
   const weather = useWeather();
+  const data = weather.data;
+  const tomorrow = data ? tomorrowOf(data) : undefined;
   return (
-    <section className="landing-wrap" aria-label={t('landing.status.label')}>
-      <div className="landing-status">
-        <span className="landing-status__tag">{t('landing.status.tag')}</span>
-        <QueryState
-          query={weather}
-          isEmpty={(data) => data.daily.length === 0}
-          emptyText={t('landing.status.empty')}
-          skeleton={<Skeleton block={44} className="min-w-64" />}
-        >
-          {(data) => {
-            const tomorrow = data.daily[1] ?? data.daily[0];
-            return (
-              <>
-                <SourceDot source={data.stale ? 'off' : 'live'}>
-                  {data.stale ? t('landing.status.stale') : t('landing.status.live')}
-                </SourceDot>
-                <SourceDot source="sim">{t('landing.status.simulated')}</SourceDot>
-                {tomorrow ? (
-                  <span className="num landing-status__item">
-                    {t('landing.status.tomorrow')} {formatNumber(tomorrow.et0Mm, locale, 1)} mm
-                  </span>
-                ) : null}
-                <span className="num landing-status__item">
-                  {formatTimeGst(data.fetchedAt, locale)}
-                </span>
-              </>
-            );
-          }}
-        </QueryState>
-        <a href="#making-of" className="landing-status__link">
+    <section className="wrap" aria-label={t('landing.status.label')}>
+      <div className="strip" aria-busy={weather.isPending}>
+        <span className="strip-tag">{t('landing.status.tag')}</span>
+        {weather.isPending ? (
+          <span className="strip-item">
+            <span className="strip-skel" />
+            <span className="sr-only">{t('landing.status.loading')}</span>
+          </span>
+        ) : weather.isError ? (
+          <span className="strip-item" role="alert">
+            <span className="dot off" />
+            {t('landing.status.error')}
+            <button type="button" className="strip-retry" onClick={() => void weather.refetch()}>
+              {t('landing.status.retry')}
+            </button>
+          </span>
+        ) : (
+          <span className="strip-item">
+            <span className={data?.stale ? 'dot off' : 'dot live'} />
+            {data?.stale ? t('landing.status.stale') : t('landing.status.live')}
+          </span>
+        )}
+        <span className="strip-item">
+          <span className="dot sim" />
+          {t('landing.status.simulated')}
+        </span>
+        {data ? (
+          <>
+            <span className="strip-item mono">
+              {tomorrow
+                ? t('landing.status.tomorrow', { mm: formatNumber(tomorrow.et0Mm, locale, 1) })
+                : t('landing.status.empty')}
+            </span>
+            <span className="strip-item mono">
+              {t('landing.status.updated', { time: formatTimeGst(data.fetchedAt, locale) })}
+            </span>
+          </>
+        ) : null}
+        <a className="strip-link" href="#making-of">
           {t('landing.status.sourceLink')}
         </a>
       </div>
@@ -125,152 +65,200 @@ export function StatusStrip() {
   );
 }
 
+const RING = 2 * Math.PI * 44;
+
 export function AboutSection() {
   const { t } = useTranslation();
+  const locale = useLocale();
+  const d1 = landingScenarios.irrigate.decision;
+  const paw = d1.pawNow ?? 0;
+  const arc = Math.round((RING * paw) / 100);
+  const max = Math.max(...LANDING_ET0_WEEK);
+  const min = Math.min(...LANDING_ET0_WEEK);
+  const [tomorrow] = LANDING_ET0_WEEK;
   return (
-    <section className="landing-wrap landing-section" id="about">
-      <div className="landing-about">
-        <article className="landing-tile">
-          <div className="landing-row">
-            <span className="landing-label">D-1 · {t('today.waterNow')}</span>
-            <Chip variant="ok">{t('confidence.high')}</Chip>
+    <section className="wrap sec" id="about">
+      <div className="about">
+        <div className="tile rv">
+          <div className="tile-h">
+            <span className="lbl micro">{t('landing.about.waterNow')}</span>
+            <span className="chip ok mint">{t(`confidence.${d1.confidence}`)}</span>
           </div>
-          <svg viewBox="0 0 140 140" role="img" aria-label={t('landing.about.ringLabel')}>
-            <circle cx="70" cy="70" r="48" className="landing-ring-track" />
+          <svg
+            viewBox="0 0 120 120"
+            width="100%"
+            style={{ maxWidth: 168, alignSelf: 'center' }}
+            role="img"
+            aria-label={t('landing.about.ringLabel', {
+              paw: formatNumber(paw, locale, 1),
+              threshold: String(d1.threshold),
+              target: String(d1.target),
+            })}
+          >
+            <circle cx="60" cy="60" r="44" className="rg-trk" />
             <circle
-              cx="70"
-              cy="70"
-              r="48"
-              className="landing-ring-value"
-              pathLength="100"
-              strokeDasharray="68 100"
-              transform="rotate(-90 70 70)"
+              cx="60"
+              cy="60"
+              r="44"
+              className="rg-v ring-draw"
+              strokeDasharray={`${arc} ${Math.round(RING)}`}
+              data-len={arc}
+              transform="rotate(-90 60 60)"
             />
             <line
-              x1="70"
-              y1="13"
-              x2="70"
-              y2="25"
-              className="landing-ring-threshold"
-              transform="rotate(234 70 70)"
+              x1="60"
+              y1="10"
+              x2="60"
+              y2="22"
+              className="rg-tick"
+              transform={`rotate(${d1.threshold * 3.6} 60 60)`}
             />
             <line
-              x1="70"
-              y1="13"
-              x2="70"
-              y2="25"
-              className="landing-ring-target"
-              transform="rotate(324 70 70)"
+              x1="60"
+              y1="10"
+              x2="60"
+              y2="22"
+              className="rg-tick t"
+              transform={`rotate(${d1.target * 3.6} 60 60)`}
             />
-            <text x="70" y="72" textAnchor="middle" className="landing-svg-value">
-              68.0
+            <text x="60" y="62" className="svg-t hi" textAnchor="middle" style={{ fontSize: 22 }}>
+              {formatNumber(paw, locale, 1)}
             </text>
-            <text x="70" y="92" textAnchor="middle" className="landing-svg-label">
-              {t('landing.about.water')}
+            <text x="60" y="80" className="svg-t day-only" textAnchor="middle">
+              {t('landing.about.pctWater')}
+            </text>
+            <text x="60" y="80" className="svg-t night-only" textAnchor="middle">
+              % PAW
             </text>
           </svg>
-          <div className="landing-row landing-label">
-            <span>{t('landing.about.threshold')}</span>
-            <span>{t('landing.about.target')}</span>
+          <div className="row-sb">
+            <span className="lbl micro">
+              <span className="acc-t ember-t">▮</span>
+              {` ${t('landing.about.threshold', { value: String(d1.threshold) })}`}
+            </span>
+            <span className="lbl micro">
+              {`▮ ${t('landing.about.target', { value: String(d1.target) })}`}
+            </span>
           </div>
-        </article>
-        <p className="landing-about__statement">{t('landing.about.statement')}</p>
-        <article className="landing-tile">
-          <div className="landing-row">
-            <span className="landing-label">{t('landing.about.et0')}</span>
-            <Chip>{t('landing.sample')}</Chip>
+        </div>
+
+        <p className="statement rv">
+          {`${t('landing.about.statement.before')} `}
+          <em>{t('landing.about.statement.em')}</em>
+          {` ${t('landing.about.statement.after')} `}
+          <span>{t('landing.about.statement.muted')}</span>
+        </p>
+
+        <div className="tile rv">
+          <div className="tile-h">
+            <span className="lbl micro">{t('landing.about.et0')}</span>
+            <span className="chip">{t('landing.sample')}</span>
           </div>
-          <svg viewBox="0 0 210 100" role="img" aria-label={t('landing.about.et0Label')}>
-            {[20, 50, 80].map((y) => (
-              <line key={y} x1="0" y1={y} x2="210" y2={y} className="landing-chart-grid" />
-            ))}
-            {LANDING_ET0_WEEK.map((value, index) => {
+          <svg
+            viewBox="0 0 210 100"
+            width="100%"
+            role="img"
+            aria-label={t('landing.about.et0Label', {
+              min: formatNumber(min, locale, 1),
+              max: formatNumber(max, locale, 1),
+              tomorrow: formatNumber(tomorrow, locale, 1),
+            })}
+          >
+            <line x1="0" y1="10" x2="210" y2="10" className="st-grid" />
+            <line x1="0" y1="50" x2="210" y2="50" className="st-grid" />
+            <line x1="0" y1="90" x2="210" y2="90" className="st-grid" />
+            {LANDING_ET0_WEEK.map((mm, index) => {
               const x = 15 + index * 30;
-              const y = 88 - (value - 5.5) * 45;
+              const y = Math.round(290 - mm * 40);
               return (
                 <g key={x}>
-                  <line x1={x} y1="90" x2={x} y2={y} className="landing-et-stem" />
+                  <line x1={x} y1="90" x2={x} y2={y} className="et-stem draw" />
                   <circle
                     cx={x}
                     cy={y}
                     r={index === 0 ? 5 : 4}
-                    className={
-                      index === 0 ? 'landing-et-dot landing-et-dot--tonight' : 'landing-et-dot'
-                    }
+                    className={index === 0 ? 'et-dot em pop' : 'et-dot pop'}
                   />
                 </g>
               );
             })}
           </svg>
-          <div className="landing-row">
-            <Figure value={5.8} unit="mm" precision={1} size="md" />
-            <span className="landing-label">{t('landing.tomorrow')}</span>
+          <div className="row-sb">
+            <span className="num" style={{ fontSize: 30 }}>
+              {formatNumber(tomorrow, locale, 1)}
+              <i>mm</i>
+            </span>
+            <span className="lbl micro">{t('landing.tomorrow')}</span>
           </div>
-        </article>
+        </div>
       </div>
     </section>
   );
 }
 
+/** D-1's two sensors in the worked example; weighted 0.6 / 0.4 they give its 68.0 % PAW. */
+const D1_SENSORS = { 30: 70.4, 60: 64.4 } as const;
+const FACTS = [
+  ['imports', '~90%'],
+  ['target', '50%'],
+  ['holding', '60–70%'],
+] as const;
+
 export function WhySection() {
   const { t } = useTranslation();
+  const d1 = landingScenarios.irrigate.decision;
+  const weight = (depth: number) =>
+    farm07.sensors.find((sensor) => sensor.blockId === 'D-1' && sensor.depthCm === depth)?.weight ??
+    0;
+  const rootMm = blockById(farm07, 'D-1').rootDepthMm;
   return (
-    <section className="landing-wrap" aria-labelledby="landing-why-title">
-      <div className="landing-inverse landing-why">
-        <div className="landing-why__copy">
+    <section className="wrap" aria-labelledby="why-h">
+      <div className="band inv rv">
+        <div className="band-a">
           <SectionIndex number="02" label={t('landing.why.eyebrow')} />
-          <h2 id="landing-why-title">{t('landing.why.title')}</h2>
-          <div className="landing-facts">
-            {(['imports', 'target', 'holding'] as const).map((key) => (
-              <div className="landing-fact" key={key}>
-                <span className="num">{t(`landing.why.facts.${key}.value`)}</span>
-                <p>{t(`landing.why.facts.${key}.text`)}</p>
+          <h2 id="why-h" className="h2" style={{ fontSize: 'clamp(32px, 3.6vw, 52px)' }}>
+            {t('landing.why.title')}
+          </h2>
+          <div className="facts">
+            {FACTS.map(([fact, value]) => (
+              <div key={fact} className="fact">
+                <span className="num">{value}</span>
+                <p>{t(`landing.why.facts.${fact}`)}</p>
               </div>
             ))}
           </div>
         </div>
-        <blockquote className="landing-why__quote">
-          <span>{t('landing.why.job')}</span>
-          <p>“{t('landing.why.quote')}”</p>
+        <div className="accent-card ember-card">
+          <span className="k micro">{t('landing.why.job')}</span>
+          <blockquote>{t('landing.why.quote')}</blockquote>
           <cite>{t('landing.why.cite')}</cite>
-        </blockquote>
-        <div className="landing-why__soil">
-          <div className="landing-row">
-            <span className="landing-label">{t('landing.why.below')}</span>
-            <Chip variant="ok">{t('landing.why.fresh')}</Chip>
+        </div>
+        <div className="band-viz">
+          <div className="row-sb">
+            <span className="lbl micro">{t('landing.why.below')}</span>
+            <span className="chip ok mint">{t('landing.why.fresh')}</span>
           </div>
-          <svg viewBox="0 0 360 400" role="img" aria-label={t('landing.why.soilLabel')}>
-            <rect x="0" y="60" width="360" height="340" className="landing-soil" />
-            <line x1="0" y1="60" x2="360" y2="60" className="landing-soil-surface" />
-            <rect x="24" y="64" width="210" height="296" rx="8" className="landing-root-zone" />
-            <rect x="120" y="14" width="14" height="46" rx="3" className="landing-trunk" />
-            {[
-              'M127 60 C120 110 90 140 70 200',
-              'M127 60 C135 120 160 160 190 230',
-              'M127 60 C125 150 118 230 112 320',
-              'M127 60 C110 90 70 100 40 120',
-            ].map((d) => (
-              <path key={d} d={d} className="landing-root" />
-            ))}
-            <circle cx="170" cy="210" r="6" className="landing-probe" />
-            <line x1="176" y1="210" x2="236" y2="210" className="landing-probe-line" />
-            <text x="240" y="205" className="landing-svg-label landing-svg-label--strong">
-              30 cm
-            </text>
-            <text x="240" y="224" className="landing-svg-label">
-              70.4% · w 0.6
-            </text>
-            <circle cx="150" cy="348" r="6" className="landing-probe" />
-            <line x1="156" y1="348" x2="236" y2="348" className="landing-probe-line" />
-            <text x="240" y="343" className="landing-svg-label landing-svg-label--strong">
-              60 cm
-            </text>
-            <text x="240" y="362" className="landing-svg-label">
-              64.4% · w 0.4
-            </text>
-            <text x="24" y="386" className="landing-svg-label">
-              {t('landing.why.rootZone')}
-            </text>
+          <svg
+            viewBox="0 0 360 400"
+            width="100%"
+            role="img"
+            aria-label={t('landing.why.soilLabel', {
+              root: String(rootMm),
+              s30: String(D1_SENSORS[30]),
+              s60: String(D1_SENSORS[60]),
+              paw: String(d1.pawNow ?? 0),
+              threshold: String(d1.threshold),
+            })}
+          >
+            <SoilSection
+              surface={t('landing.why.surface')}
+              rootZone={t('landing.why.rootZone', { mm: String(rootMm) })}
+              w30={weight(30)}
+              w60={weight(60)}
+              paw={d1.pawNow ?? 0}
+              threshold={d1.threshold}
+              target={d1.target}
+            />
           </svg>
         </div>
       </div>
@@ -278,12 +266,79 @@ export function WhySection() {
   );
 }
 
-export function SectionIndex({ number, label }: { number: string; label: string }) {
+interface SoilProps {
+  surface: string;
+  rootZone: string;
+  w30: number;
+  w60: number;
+  paw: number;
+  threshold: number;
+  target: number;
+}
+
+function SoilSection({ surface, rootZone, w30, w60, paw, threshold, target }: SoilProps) {
+  const id = 'landing-soil-dots';
+  // Gauge: 0–100 % on y 180 → 80.
+  const level = (pct: number) => 180 - pct;
   return (
-    <span className="landing-index">
-      <span>{number}</span>
-      <i />
-      <b>{label}</b>
-    </span>
+    <>
+      <defs>
+        <pattern id={id} width="14" height="14" patternUnits="userSpaceOnUse">
+          <circle cx="3" cy="4" r="1" className="soil-dot" />
+          <circle cx="10" cy="11" r="0.8" className="soil-dot" />
+        </pattern>
+      </defs>
+      <text x="16" y="46" className="svg-t">
+        {surface}
+      </text>
+      <rect x="0" y="60" width="360" height="340" className="soil-body" />
+      <rect x="0" y="60" width="360" height="340" fill={`url(#${id})`} />
+      <line x1="0" y1="60" x2="360" y2="60" className="soil-surf" />
+      <rect x="120" y="14" width="14" height="46" rx="3" className="trunk" />
+      <rect x="24" y="64" width="210" height="296" rx="8" className="root-zone" />
+      <path d="M127 60 C 120 110, 90 140, 70 200" className="root draw" />
+      <path d="M127 60 C 135 120, 160 160, 190 230" className="root draw" />
+      <path d="M127 60 C 125 150, 118 230, 112 320" className="root draw" />
+      <path d="M127 60 C 110 90, 70 100, 40 120" className="root draw" />
+      <circle cx="170" cy="210" r="6" className="probe pop" />
+      <line x1="176" y1="210" x2="236" y2="210" className="lead-l" />
+      <text x="240" y="206" className="svg-t hi">
+        30 cm
+      </text>
+      <text x="240" y="222" className="svg-t">
+        {`${D1_SENSORS[30]}% · w ${w30}`}
+      </text>
+      <circle cx="150" cy="348" r="6" className="probe pop" />
+      <line x1="156" y1="348" x2="236" y2="348" className="lead-l" />
+      <text x="240" y="344" className="svg-t hi">
+        60 cm
+      </text>
+      <text x="240" y="360" className="svg-t">
+        {`${D1_SENSORS[60]}% · w ${w60}`}
+      </text>
+      <text x="36" y="384" className="svg-t">
+        {rootZone}
+      </text>
+      <rect x="322" y="80" width="22" height="100" rx="4" className="gauge-o" />
+      <rect
+        x="324"
+        y={level(paw) + 2}
+        width="18"
+        height={paw - 4}
+        rx="2"
+        className="gauge-f bar-y"
+      />
+      <line x1="316" y1={level(threshold)} x2="350" y2={level(threshold)} className="g-thr" />
+      <line x1="316" y1={level(target)} x2="350" y2={level(target)} className="g-tgt" />
+      <text x="310" y={level(target) + 4} className="svg-t" textAnchor="end">
+        {target}
+      </text>
+      <text x="310" y={level(threshold) + 4} className="svg-t em" textAnchor="end">
+        {threshold}
+      </text>
+      <text x="333" y="74" className="svg-t hi" textAnchor="middle">
+        {`${paw}%`}
+      </text>
+    </>
   );
 }

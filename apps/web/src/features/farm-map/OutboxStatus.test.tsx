@@ -25,12 +25,12 @@ describe('OutboxStatus', () => {
     expect(status()).toBe('24.21 N · 55.74 E · Open-Meteo point');
   });
 
-  it('counts the queued changes and when the oldest was saved, in GST', () => {
+  it('counts the queued Field updates and when the oldest was queued, in GST', () => {
     outbox.enqueue(action('b', '2026-10-23T06:30:00.000Z'));
     outbox.enqueue(action('a', '2026-10-23T05:00:00.000Z'));
     render(<OutboxStatus />);
-    expect(status()).toContain('2 changes saved on this phone');
-    expect(status()).toContain('Oldest queued 09:00 GST');
+    expect(status()).toContain('2 field updates waiting to sync');
+    expect(status()).toContain('Saved on this phone · queued 09:00');
   });
 
   it('says it is syncing while the queue flushes, then returns to the point', async () => {
@@ -41,7 +41,7 @@ describe('OutboxStatus', () => {
     act(() => {
       flushed = outbox.flush(() => new Promise<SendResult>((resolve) => (send = resolve)));
     });
-    expect(status()).toBe('Syncing…');
+    expect(status()).toContain('Syncing…');
     await act(async () => {
       send('sent');
       await flushed;
@@ -53,17 +53,17 @@ describe('OutboxStatus', () => {
     outbox.enqueue(action('a', '2026-10-23T05:00:00.000Z'));
     outbox.enqueue(action('b', '2026-10-23T06:00:00.000Z'));
     const { rerender } = render(<OutboxStatus />);
-    fireEvent.click(screen.getByRole('button', { name: 'Hide outbox status' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
     expect(status()).toBe('24.21 N · 55.74 E · Open-Meteo point');
     rerender(<OutboxStatus />);
-    expect(screen.queryByRole('button', { name: 'Hide outbox status' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Dismiss' })).toBeNull();
 
     // Same count, different actions: the status returns.
     act(() => {
       outbox.remove('b');
       outbox.enqueue(action('c', '2026-10-23T07:00:00.000Z'));
     });
-    expect(status()).toContain('2 changes saved on this phone');
-    expect(screen.getByRole('button', { name: 'Hide outbox status' })).toBeDefined();
+    expect(status()).toContain('2 field updates waiting to sync');
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeDefined();
   });
 });

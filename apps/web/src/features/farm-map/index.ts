@@ -1,4 +1,3 @@
-export { BlockList } from './BlockList';
 export { FarmMap } from './FarmMap';
 export { FarmMapPanel } from './FarmMapPanel';
 export { ZOOM_MAX, ZOOM_MIN, ZOOM_STEP, zoomViewBox } from './geometry';

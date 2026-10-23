@@ -6,7 +6,9 @@
       "label": "Main",
       "today": "Today",
       "field": "Field",
-      "makingOf": "Making-of",
+      "blocks": "Blocks",
+      "schedule": "Schedule",
+      "budget": "Budget",
       "about": "About"
     },
     "simulated": "Simulated sensors",
@@ -27,17 +29,7 @@
     }
   },
   "today": {
-    "title": "Tonight · {date}",
-    "planned": "{volume} planned",
     "saved": "{volume} saved",
-    "decisions": "Decisions for {date}",
-    "columns": {
-      "block": "Block",
-      "decision": "Decision",
-      "paw": "PAW now",
-      "volume": "Volume",
-      "confidence": "Confidence"
-    },
     "empty": "No decisions for today.",
     "plannedTonight": "Planned tonight",
     "savedVsFixed": "Saved vs fixed",
@@ -59,17 +51,23 @@
       "layers": "Layers",
       "water": "Water"
     },
-    "plannedAt": "Planned {time}",
+    "engine": "Engine {version}",
     "mapLabel": "Farm map",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "zoomLevel": "Zoom {level}×",
     "decisionsCount": "Decisions · {count} blocks",
     "schedule": "Tonight’s schedule",
-    "scheduleLabel": "Night irrigation from {start} to {end} GST",
     "volume": "Volume",
-    "pulsesTomorrow": "Tomorrow’s greenhouse pulses",
-    "barLabel": "{code}, {window}, {m3} m³",
+    "barDeficit": "{window} · deficit",
+    "row": {
+      "offline": "{depth} offline {hours} h",
+      "pulses": "Tomorrow {hours}",
+      "none": "No irrigation tonight",
+      "saves": "saves {m3} m³",
+      "skipSaves": "skip · saves {m3} m³",
+      "checkSensor": "Check sensor"
+    },
     "noIrrigation": "No irrigation needed tonight.",
     "noIrrigationSaves": "Saves {m3} m³ against a fixed schedule.",
     "budget": "Budget · {month}",
@@ -89,6 +87,7 @@
     "humidity": "Humidity",
     "wind": "Wind",
     "weatherStale": "Last updated {time} (forecast unavailable)",
+    "forecastEmpty": "No forecast days yet.",
     "sources": "Sources",
     "sourceWeather": "Weather & ET₀ · Open-Meteo, cached 30 min",
     "sourceSensors": "Soil sensors · simulated, hourly"
@@ -97,8 +96,9 @@
     "sensors": "Simulated sensors",
     "sensor": "Sensor · {depth}",
     "substrateSensor": "Substrate sensor",
-    "sensorWeight": "Weight {weight} · simulated",
-    "sensorStale": "Stale since {since}",
+    "coco": "coco",
+    "sensorWeight": "weight {weight} · simulated",
+    "sensorStale": "no data for {hours} h · stale",
     "offline": "Offline",
     "confidence": "{level} confidence",
     "chart": {
@@ -106,7 +106,7 @@
       "stale": "{sensor} sensor stale since {since}; the line uses the fresh readings only.",
       "empty": "{code}: no sensor readings in the last 14 days. Threshold {threshold}%, target {target}%.",
       "daysAgo": "−{days} d",
-      "now": "Now"
+      "now": "now"
     }
   },
   "block": {
@@ -311,21 +311,15 @@
   },
   "map": {
     "title": "Farm map",
-    "view": "View",
-    "map": "Map",
-    "list": "List",
-    "summary": "Map of {farm}: {count} blocks shaded by plant-available water. Watered tonight: {tonight}. Stale sensors: {stale}. The list view has every figure.",
+    "summary": "Map of {farm}: {count} blocks shaded by plant-available water. Watered tonight: {tonight}. Stale sensors: {stale}.",
     "none": "none",
     "water": "{paw} percent water",
     "noReading": "no fresh sensor reading",
     "volumeTonight": "{m3} cubic metres",
     "staleSensor": "stale sensor",
-    "legendLabel": "Map key",
     "dry": "Dry",
     "wet": "Wet",
     "stale": "Stale sensor",
-    "route": "Tonight’s water route",
-    "window": "Window",
     "pulses": "Pulses",
     "utility": {
       "well": "Well {label}",
@@ -336,6 +330,15 @@
     }
   },
   "mapControls": {
+    "legend": "Water now, dry to wet",
+    "railAlternative": "The Blocks list is its full text alternative.",
+    "utility": {
+      "well": "WELL {label}",
+      "ro": "RO",
+      "tank": "TANK",
+      "pump": "PUMP {capacity} m³/h",
+      "tse": "TSE INLET"
+    },
     "layers": {
       "title": "Map layers",
       "paw": {
@@ -368,20 +371,19 @@
       }
     },
     "outbox": {
-      "saved": "{count, plural, one {{count} change} other {{count} changes}} saved on this phone",
-      "oldest": "Oldest queued {time}",
-      "offline": "Offline",
+      "waiting": "{count, plural, one {{count} field update} other {{count} field updates}} waiting to sync",
+      "saved": "Saved on this phone · queued {time}",
+      "offline": "This phone is offline · queued {time}",
       "syncing": "Syncing…",
-      "dismiss": "Hide outbox status",
+      "dismiss": "Dismiss",
       "point": "{lat} N · {lon} E · Open-Meteo point"
     }
   },
   "landing": {
     "metaTitle": "Saqi — irrigation decisions, tonight",
     "sample": "Sample",
-    "workedExample": "Worked example",
+    "simulated": "Simulated sensors",
     "tomorrow": "tomorrow",
-    "tonight": "Tonight",
     "header": {
       "home": "Saqi, home",
       "navLabel": "Primary",
@@ -397,55 +399,67 @@
     "hero": {
       "read": "Read the soil.",
       "then": "Then water.",
-      "disclosure": "Farm 07 · Al Ain (fictional)\n24.21 N · 55.74 E · GST",
-      "title": "Water what the soil asks for.",
-      "thesis": "Tonight’s irrigation, decided by 21:30 GST — with the reasons.",
+      "credit": "Farm 07 · Al Ain (fictional)",
+      "title": {
+        "line1": "Water what",
+        "line2": "the soil",
+        "line3": "asks for."
+      },
+      "sub": "Tonight’s irrigation, decided by 21:30 — with the reasons.",
       "body": "Saqi reads live evapotranspiration and soil moisture at two depths, then plans which blocks to water tonight, how many cubic metres, and in what order.",
       "primary": "See tonight’s plan",
       "secondary": "How it decides",
       "summaryLabel": "Tonight’s plan summary",
       "summaryTitle": "Tonight · Farm 07",
-      "saved": "{volume} saved against a fixed schedule",
-      "pump": "Pump 60 m³/h",
+      "saved": "saved against a fixed schedule",
+      "pump": "Pump {rate} m³/h",
       "foot": "What’s below the surface matters more."
     },
     "status": {
       "label": "Data status",
       "tag": "Status",
-      "empty": "No forecast is available.",
+      "loading": "Loading the Open-Meteo forecast…",
+      "error": "Open-Meteo forecast unavailable",
+      "retry": "Retry",
+      "empty": "No forecast for tomorrow yet",
       "stale": "Open-Meteo forecast is stale",
-      "live": "Weather and ET₀ live from Open-Meteo",
+      "live": "Weather & ET₀ live from Open-Meteo",
       "simulated": "Soil sensors simulated — always labelled",
-      "tomorrow": "ET₀ tomorrow",
-      "sourceLink": "Where the numbers come from"
+      "tomorrow": "ET₀ tomorrow {mm} mm",
+      "updated": "Updated {time}",
+      "sourceLink": "Where the numbers come from →"
     },
     "about": {
-      "ringLabel": "D-1 plant-available water 68 percent, threshold 65, target 90",
-      "water": "% water",
-      "threshold": "65 threshold",
-      "target": "90 target",
-      "statement": "Saqi — Arabic for the one who waters — turns weather and soil readings into a plan a farm manager can trust or override. No fixed schedules, no habit: every block gets a decision, a volume and the reasons behind both.",
+      "waterNow": "D-1 · Water now",
+      "ringLabel": "D-1 plant-available water {paw} percent, threshold {threshold}, target {target}",
+      "pctWater": "% water",
+      "threshold": "{value} threshold",
+      "target": "{value} target",
+      "statement": {
+        "before": "Saqi — Arabic for",
+        "em": "the one who waters",
+        "after": "— turns weather and soil readings into a plan a farm manager can trust or override.",
+        "muted": "No fixed schedules, no habit: every block gets a decision, a volume and the reasons behind both."
+      },
       "et0": "ET₀ · next 7 days",
-      "et0Label": "Sample reference evapotranspiration over the next seven days, between 5.7 and 6.3 millimetres; 5.8 tomorrow"
+      "et0Label": "Reference evapotranspiration over the next seven days, between {min} and {max} millimetres; {tomorrow} tomorrow"
     },
     "why": {
       "eyebrow": "Why it matters",
       "title": "Water is the binding constraint.",
       "facts": {
-        "imports": { "value": "~90%", "text": "of the UAE’s food is imported today." },
-        "target": { "value": "50%", "text": "local production is the national target for 2051." },
-        "holding": {
-          "value": "60–70%",
-          "text": "Skipping a night while palms still hold this much plant-available water saves water without losing yield (ICARDA)."
-        }
+        "imports": "of the UAE’s food is imported today.",
+        "target": "local production is the national target for 2051.",
+        "holding": "Skipping a night while palms still hold this much plant-available water saves water without losing yield (ICARDA)."
       },
       "job": "The job, in one sentence",
-      "quote": "At 21:30, tell me which blocks to water tonight, how many cubic metres, in what order — and show me why, so I can trust it or override it.",
+      "quote": "“At 21:30, tell me which blocks to water tonight, how many cubic metres, in what order — and show me why, so I can trust it or override it.”",
       "cite": "— The farm manager, evening planning",
       "below": "Below the surface · D-1",
       "fresh": "Fresh",
-      "soilLabel": "Soil cross-section of block D-1: root zone 600 millimetres; sensor at 30 centimetres reads 70.4 percent, at 60 centimetres 64.4 percent; block water 68 percent against a 65 percent threshold",
-      "rootZone": "Root zone · 600 mm"
+      "surface": "SURFACE · 0 CM",
+      "rootZone": "ROOT ZONE · {mm} MM",
+      "soilLabel": "Soil cross-section of block D-1: root zone {root} millimetres; sensor at 30 centimetres reads {s30} percent, at 60 centimetres {s60} percent; block water {paw} percent against a {threshold} percent threshold"
     },
     "product": {
       "eyebrow": "Product",
@@ -462,7 +476,7 @@
           "surface": "Ops web",
           "title": "Block detail",
           "body": "Fourteen days of plant-available water, the threshold, every irrigation — and why tonight’s volume is what it is.",
-          "open": "Open block detail"
+          "open": "Open Block detail"
         },
         "field": {
           "surface": "Mobile web",
@@ -476,40 +490,72 @@
           "body": "A scroll story of the water model, the design tokens and the tests behind every number.",
           "open": "Open Making-of"
         }
+      },
+      "task": {
+        "block": "D-1 · Khalas palms",
+        "title": "Clear bubblers, row 4",
+        "done": "Mark done"
+      },
+      "chapters": {
+        "tokens": "Tokens",
+        "water": "Water",
+        "reasons": "Reasons",
+        "tests": "Tests",
+        "credits": "Credits"
+      },
+      "chart": {
+        "target": "TARGET {value}",
+        "threshold": "THRESHOLD {value}"
       }
     },
     "farm": {
       "eyebrow": "Farm 07 · tonight",
       "title": "Seven blocks. One pump. One night window.",
-      "lead": "Drawn from the farm layout: palms on recycled water, greenhouses on RO, fodder on the outer block. Colour is plant-available water — darker is wetter; the orange lines carry tonight’s water.",
+      "lead": "Drawn by hand from the farm’s layout: palms on recycled water, greenhouses on RO, fodder on the outer block. Colour is plant-available water — darker is wetter; the orange lines carry tonight’s water.",
+      "leadNight": "Drawn by hand from the farm’s layout: palms on recycled water, greenhouses on RO, fodder on the outer block. Colour is plant-available water; the orange lines carry tonight’s water.",
       "metrics": {
         "blocks": "blocks",
         "pump": "pump",
         "window": "night window",
         "sources": "water sources"
       },
-      "views": { "label": "Farm view", "map": "Map", "list": "List" },
-      "mapSummary": "Map of {farm}. Watered tonight: {irrigated}. The complete table is available in the List view.",
+      "views": {
+        "label": "Farm view",
+        "map": "Map",
+        "list": "List"
+      },
+      "offline": "Sensor offline {hours} h",
+      "mapLabel": "Map of Farm 07. {blocks} Use the List view for a table.",
+      "summaryPaw": "{paw} percent",
+      "summaryOffline": "sensor offline",
       "table": {
         "caption": "Farm 07 · tonight’s decisions, all blocks",
         "block": "Block",
         "crop": "Crop",
         "water": "Water now",
         "decision": "Decision",
-        "volume": "Volume or saving",
+        "volume": "Volume",
         "window": "Window (GST)",
-        "none": "No irrigation",
-        "saves": "saves {volume} m³"
+        "freshOnly": "{paw} · 30 cm only",
+        "checkSensor": "Skip · check sensor",
+        "saves": "0 · saves {volume}"
       },
-      "checkSensor": "Skip · check sensor",
       "noteTitle": "Blocks watered tonight",
-      "note": "D-1 runs first, F-1 follows at 01:01 GST — together they would exceed the 60 m³/h pump. The other five skip or pulse tomorrow.",
+      "note": "{first} runs first, {second} follows at {at} — together they would exceed the {pump} m³/h pump. The other five skip or pulse tomorrow.",
       "legend": {
         "water": "Plant-available water scale, dry to wet",
         "dry": "Dry",
         "wet": "Wet",
         "stale": "Stale sensor, over 3 h",
+        "staleShort": "Stale sensor > 3 h",
         "flow": "Water tonight"
+      },
+      "utilities": {
+        "well": "WELL W-1",
+        "ro": "RO",
+        "tank": "TANK",
+        "pump": "PUMP",
+        "tse": "TSE INLET"
       }
     },
     "decision": {
@@ -520,47 +566,92 @@
       "recommendation": "Recommendation",
       "window": "Window",
       "confidence": "Confidence",
+      "confidenceChip": "Confidence {level}",
+      "levels": {
+        "high": "high",
+        "medium": "medium",
+        "low": "low"
+      },
+      "when": {
+        "tonight": "Tonight",
+        "tomorrow": "Tomorrow"
+      },
+      "noIrrigation": "No irrigation tonight",
+      "meta": {
+        "trees": "{crop} · {area} ha · {trees} trees · {method}",
+        "substrate": "{crop} · soilless coco · {area} ha · {method}",
+        "field": "{crop} · {area} ha · {method}"
+      },
+      "reasons": {
+        "paw": "Plant-available water now",
+        "substrate": "Substrate water now",
+        "et0": "ET₀ tomorrow · Open-Meteo",
+        "crop": "Crop use, Kc {kc}",
+        "projected": "Projected by morning · threshold {threshold}%",
+        "refill": "Refill to {target}% · net → gross at {efficiency}%",
+        "hold": "Still above threshold — no yield risk",
+        "budget": "Month projected 4% over allocation — fodder is cut first",
+        "greenhouse": "ET₀ tomorrow × greenhouse factor {factor}",
+        "noRefill": "Above the {threshold}% threshold — no refill added",
+        "split": "Split across the day to keep roots even"
+      },
+      "scenarios": {
+        "irrigate": {
+          "hint": "Refill to target",
+          "sub": "{litres} L per tree · TSE recycled water"
+        },
+        "skip": {
+          "hint": "Save the water",
+          "sub": "Saves {saved} m³ against the fixed schedule"
+        },
+        "deficit": {
+          "hint": "Stay in budget",
+          "sub": "{pct}% of a full refill of {full} m³"
+        },
+        "pulse": {
+          "hint": "Short daytime doses",
+          "sub": "{count} pulses of {m3} m³, {minutes} min each · RO water"
+        }
+      },
       "formula": {
         "taw": "Total available water",
         "etc": "Tomorrow’s crop use",
         "volume": "Volume"
-      },
-      "scenarios": {
-        "irrigate": {
-          "hint": "Water tonight",
-          "summary": "Refill from tomorrow’s projected water to the 90% target."
-        },
-        "skip": {
-          "hint": "Hold tonight",
-          "summary": "Above threshold after tomorrow’s crop use; saves {saved} m³."
-        },
-        "deficit": {
-          "hint": "Budget-limited",
-          "summary": "Runs at 70% because the monthly water budget is tight."
-        },
-        "pulse": {
-          "hint": "Three doses",
-          "summary": "Three short greenhouse pulses replace tomorrow’s crop use."
-        }
       }
     },
     "instruments": {
       "eyebrow": "Instruments",
       "title": "Small instruments, honest numbers.",
       "lead": "Every figure carries its unit, its source and its age. Nothing on screen is decoration — if it moves, water moved.",
-      "budget": "Water budget · October",
+      "schedule": "Tonight’s schedule",
+      "budget": "Water budget · {month}",
+      "october": "October",
+      "tight": "Tight",
+      "budgetLabel": "Projected {pct} percent of the monthly allocation",
+      "projected": "projected",
+      "bands": "ok ≤ {ok} · tight ≤ 100",
+      "weather": "Weather · Al Ain",
+      "humidity": "Humidity",
+      "wind": "Wind",
+      "weatherUpdated": "Open-Meteo · updated {time}",
+      "weatherStale": "Open-Meteo · stale since {time}",
       "pulses": "Pulses · tomorrow",
-      "pulseLabel": "Greenhouse pulses tomorrow at 07:00, 11:00 and 15:00 GST",
+      "pulseLabel": "Greenhouse pulses tomorrow at {times}",
+      "pulseTimes": "{times} — {minutes} min each",
       "attention": "Needs attention",
-      "offline": "60 cm sensor offline 9 h",
+      "attentionLabel": "Blocks needing attention",
+      "offline": "60 cm sensor offline",
+      "stale": "Stale",
       "sensors": "Sensors · D-3 Fard palms",
-      "sensorLabel": "D-3 sample sensor readings: the 30 centimetre sensor reports continuously; the 60 centimetre sensor has been offline since 12:00 GST",
-      "sensorOffline": "60 cm offline",
-      "sensorSeries": "30 cm · 60 cm until 12:00 GST",
+      "lowConfidence": "Low confidence",
+      "sensorLabel": "D-3 sensor readings over the last 24 hours: the 30 centimetre sensor reports continuously; the 60 centimetre sensor has been offline since 12:00",
+      "sensorOffline": "60 CM OFFLINE",
+      "sensorSeries": "— 30 cm  ·  — 60 cm (until 12:00)",
+      "sensorSeriesNight": "— 30 cm  ·  ┄ 60 cm (since 12:00)",
       "usesFresh": "Uses 30 cm only",
       "saved": "Saved tonight vs fixed schedule",
-      "savedLabel": "Saved: D-2 25, D-3 23, D-4 14 cubic metres",
-      "footnote": "Figures are the engine’s worked example for fictional Farm 07 (ET₀ tomorrow 5.8 mm). In the cockpit, weather and ET₀ are fetched live from Open-Meteo and every soil reading is simulated."
+      "savedLabel": "Saved, cubic metres: {list}",
+      "footnote": "Figures are the engine’s worked example for the fictional Farm 07 (ET₀ tomorrow 5.8 mm). In the app, weather and ET₀ are fetched live from Open-Meteo and every soil reading is simulated — the interface says so wherever they appear."
     },
     "field": {
       "eyebrow": "Field companion",
@@ -575,18 +666,18 @@
           "body": "No signal at the far block? “Mark done” queues on the phone and syncs when the connection returns."
         },
         "languages": {
-          "label": "EN · ع · ار",
           "body": "English, Arabic and Urdu. The whole layout mirrors right-to-left; numbers stay Western."
         }
       },
-      "open": "Try the field view",
-      "phoneDescription": "Two inert phone illustrations show the same Field tasks in English and Arabic, including offline saved changes."
+      "open": "Try the field view →",
+      "phoneDescription": "Two phones show the Field companion in English and Arabic: offline with 2 changes saved, and tasks for D-1 and D-3, each with a large Mark done button."
     },
     "making": {
       "eyebrow": "Making-of",
       "title": "How it was built, in three chapters.",
       "lead": "The making-of page tells the engineering story behind the plan — for anyone who wants to check the working.",
       "chapter": "Chapter {number}",
+      "d1Tomorrow": "D-1 · tomorrow",
       "engineTests": "{count} engine tests",
       "chapters": {
         "tokens": {
@@ -599,10 +690,9 @@
         },
         "tests": {
           "title": "Tested like production.",
-          "body": "A pure engine under table-driven tests, Playwright journeys across the product, and CI on every commit."
+          "body": "A pure engine under table-driven tests, Playwright journeys across the three screens, and CI on every commit."
         }
-      },
-      "open": "Read the complete making-of"
+      }
     },
     "cta": {
       "window": "Night window · GST",
@@ -616,10 +706,11 @@
       "disclosure": "An irrigation decision cockpit for a fictional farm near Al Ain. A portfolio project — no real farm, client or company is shown.",
       "product": "Product",
       "data": "Data",
-      "weather": "Weather and ET₀ · Open-Meteo",
+      "weather": "Weather & ET₀ · Open-Meteo",
       "sensors": "Soil sensors · simulated",
       "farm": "Farm 07 · fictional",
       "builtBy": "Built by",
+      "github": "Husni Ramdani · GitHub",
       "gst": "Times in GST (UTC+4)"
     }
   },

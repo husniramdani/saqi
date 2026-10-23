@@ -2,6 +2,21 @@
 
 Working notes for whoever (human or Claude Code) picks up the next task. Read this before starting one.
 
+## Pixel-perfect port: token deviations
+
+- **Cockpit and app header (`app/shell.css`, `features/cockpit/cockpit.css`) follow `design/dashboard*.html` literally.** Where the reference's value differs from a token, the reference literal is used:
+  - `--accent-t` Day `#A84B0C` (token `accent-text` is `#A04709`); Night matches the token.
+  - `--flow` (tonight's moving dashes) `#FFFFFF` in both themes (token `tag-text` is `#F2F1EE` at night).
+  - Latin pages use the reference's font stack `Geist, ui-sans-serif, system-ui` (token `font-sans` puts IBM Plex Sans Arabic second), so glyphs Geist lacks (₀) fall back the same way.
+  - The map's grid and the schedule track's hour ticks are CSS gradients, the language buttons are 32 px and the bar's icon buttons 38 px, all as in the reference (design.md asks for no gradients and 44 px targets).
+  - Kept from the tokens on purpose: the focus ring colour (`focus`, ≥ 3 : 1; the reference's fill orange is 2.63 : 1 on the Day page).
+- **Farm geometry differs from the reference by a few units:** `farm07` draws the RO unit 50 × 40 at y 520 and the TSE inlet with r 10; every reference draws them 50 × 36 at y 522 and r 12. Left as data (it is the API's farm); change `farm07.utilities` if the drawing should match exactly.
+- **The reference at 390 px overflows sideways** (its top bar is wider than the phone). Today reproduces it; Field and block pages let the bar wrap instead.
+- **Supersedes the T11–T13 notes below where they disagree:** the header tabs are Today · Blocks · Schedule · Budget · Field (Blocks, Schedule and Budget are `/today#blocks`, `#schedule`, `#budget`: the rail, the schedule card and the Water tab, focused on arrival); the bar keeps the reference's FM badge and sizes; under 1180 px the cockpit is one column in the reference's order (rail, map, plan) and a bottom bar replaces the hidden tabs. The map has no Map | List switch (`BlockList` is gone): the Blocks rail is its text alternative, as the reference's map label says. The schedule card floats over the map. Risk order is irrigate, deficit, low confidence, then water now, driest first (`risk.ts`). The rail's 14-day chart card is the link to the block page ("Open D-1"), so the reference's layout stays intact.
+- **Landing (`routes/landing/landing.css`) is a literal merge of `design/landing.html` and `design/landing-night.html`.** Day variables point at tokens where the hex matches; these differ and use the reference literal: `--tree` `rgba(22,32,27,.18)` (token `tree` 16 %), `--shadow` (not `shadow-raised`), the inverse panels' `--raised #243029`, `--raised2 #2A362F`, `--line #2E3A33`, `--line-s #3C4A42`, `--text-3 #9AA49E`, `--ok #7CC59A` and their own water scale, and the reference's font stacks. Night is the reference's green-black palette (`#0B1410` page, `#0F1C16` panels, sage text, its own water scale): only `--ember` matches a token (`accent`). Glow and scrim gradients, the Night hero card's blur and the uppercase mono micro-labels are kept, as the reference renders them.
+- **Night landing reproduces the reference's class typos:** its About and Instruments cards are `class="tilerv"` / `"tilespan2 rv"`, so at night they render without card chrome and the wide instruments don't span two columns. The port keeps that (no `.tile`/`.span2` rules at night) so both themes match their reference exactly; restoring the chrome is one rule each if wanted.
+- **Landing differences from the reference that are on purpose:** the header has a theme toggle (the nav pill sits 28 px further left); the weather tile and status strip show live Open-Meteo values (the reference's 31 °C / 38 % / 14 km/h are fixed); the Today card's route reads `/today`; chapter 3 counts the real engine tests (`test-stats.json`) instead of "14 table-driven engine cases"; IBM Plex Sans Arabic loads a real 600 weight, so the Arabic phone's bold labels are lighter than the reference's synthesised bold. Arabic and Urdu mirror the layout; drawings keep LTR geometry and labels.
+
 ## TODO seams and the task that fills each
 
 Search the code for `TODO(Txx)` to find each seam.

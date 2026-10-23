@@ -1,38 +1,36 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { LanguageSwitch } from '@/app/LanguageSwitch';
-import { LogoMark } from '@/app/Logo';
 import { ThemeToggle } from '@/app/ThemeToggle';
-import { buttonClasses, PillArrow } from '@/ui';
+import { ArrowIcon, LandingLogo } from './LandingIcons';
 
 const NAV = ['product', 'tonight', 'decide', 'field', 'making-of'] as const;
 
 export function LandingHeader() {
   const { t } = useTranslation();
   return (
-    <header className="landing-header landing-wrap">
-      <a href="#top" className="landing-logo" aria-label={t('landing.header.home')}>
-        <LogoMark size={30} />
-        <span className="landing-logo__name">Saqi</span>
-        <span lang="ar" className="landing-logo__arabic">
-          ساقي
-        </span>
+    <header className="wrap nav">
+      <a href="#top" className="logo" aria-label={t('landing.header.home')}>
+        <LandingLogo />
       </a>
-      <nav aria-label={t('landing.header.navLabel')} className="landing-header__nav">
+      <nav className="nav-links" aria-label={t('landing.header.navLabel')}>
         {NAV.map((anchor) => (
           <a key={anchor} href={`#${anchor}`}>
             {t(`landing.header.nav.${anchor}`)}
           </a>
         ))}
       </nav>
-      <div className="landing-header__actions">
-        <LanguageSwitch />
+      <div className="nav-end">
+        {/* The shared switch keeps its behaviour; `.lang` restyles it to the landing pill. */}
+        <div className="lang">
+          <LanguageSwitch />
+        </div>
         <ThemeToggle />
-        <Link
-          to="/today"
-          className={`${buttonClasses({ variant: 'ink', arrow: true })} landing-header__cta`}
-        >
-          {t('landing.header.open')} <PillArrow variant="ink" />
+        <Link className="pill sm" to="/today">
+          {t('landing.header.open')}{' '}
+          <span className="arr">
+            <ArrowIcon />
+          </span>
         </Link>
       </div>
     </header>

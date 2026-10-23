@@ -22,9 +22,9 @@ const withDeficit: BlockDecision[] = scenarioDecisions.map((d) =>
 
 describe('BudgetSection', () => {
   it.each([
-    ['ok', 'ok'],
-    ['tight', 'warn'],
-    ['over', 'error'],
+    ['ok', 'chip ok'],
+    ['tight', 'chip warn'],
+    ['over', 'chip warn'],
   ] as const)('maps %s to a %s chip', (status, chip) => {
     expect(BUDGET_CHIP[status]).toBe(chip);
   });

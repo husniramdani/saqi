@@ -1,6 +1,6 @@
 import { expect, test } from './fixtures';
 
-test('Today shows tonight’s plan: seven blocks, D-1 irrigates 90.4 m³, two night runs, six pulses, a tight month', async ({
+test('Today shows tonight’s plan: seven blocks, D-1 irrigates 90.4 m³, two night runs, tomorrow’s pulses, a tight month', async ({
   page,
   todayPage,
 }) => {
@@ -11,7 +11,8 @@ test('Today shows tonight’s plan: seven blocks, D-1 irrigates 90.4 m³, two ni
 
   await expect(todayPage.nightRuns()).toHaveCount(2);
   await expect(todayPage.nightRuns().first()).toHaveAccessibleName(/^D-1\W+22:00/);
-  await expect(todayPage.pulses()).toHaveCount(6);
+  await expect(todayPage.decision('G-1')).toContainText('Tomorrow 07 · 11 · 15');
+  await expect(todayPage.decision('G-2')).toContainText('Tomorrow 07 · 11 · 15');
 
   await todayPage.openWaterTab();
   await expect(todayPage.planPanel().getByText('Tight', { exact: true })).toBeVisible();

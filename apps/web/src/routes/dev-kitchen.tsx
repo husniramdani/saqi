@@ -24,7 +24,7 @@ import {
   Toggle,
 } from '@/ui';
 import { DEV_SCENARIOS, devScenario } from '@/api/client';
-import { BlockList, FarmMap, MapLegend } from '@/features/farm-map';
+import { FarmMap } from '@/features/farm-map';
 import { MotionLab } from './dev-kitchen-motion';
 import { scenarioDecisions, scenarioSchedule } from '@/features/farm-map/scenario';
 
@@ -85,7 +85,6 @@ export function Component() {
   const [view, setView] = useState<'map' | 'list'>('map');
   const [layer, setLayer] = useState(true);
   const [block, setBlock] = useState<string>('D-1');
-  const [mapView, setMapView] = useState<'map' | 'list'>('map');
 
   useEffect(() => {
     const root = document.documentElement;
@@ -362,37 +361,16 @@ export function Component() {
         note="The demo night: D-1 and F-1 watered tonight, D-3's 60 cm sensor stale. Hover or Tab through the blocks; arrows move, Enter selects."
       >
         <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-5 shadow-raised">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-md font-semibold">
-              Farm 07 · selected <span className="num">{block}</span>
-            </span>
-            <SegmentedControl
-              label="View"
-              value={mapView}
-              onChange={setMapView}
-              options={[
-                { value: 'map', label: 'Map' },
-                { value: 'list', label: 'List' },
-              ]}
-            />
-          </div>
-          {mapView === 'map' ? (
-            <FarmMap
-              farm={farm07}
-              decisions={scenarioDecisions}
-              schedule={scenarioSchedule}
-              selectedId={block}
-              onSelect={setBlock}
-            />
-          ) : (
-            <BlockList
-              farm={farm07}
-              decisions={scenarioDecisions}
-              schedule={scenarioSchedule}
-              onSelect={setBlock}
-            />
-          )}
-          <MapLegend />
+          <span className="text-md font-semibold">
+            Farm 07 · selected <span className="num">{block}</span>
+          </span>
+          <FarmMap
+            farm={farm07}
+            decisions={scenarioDecisions}
+            schedule={scenarioSchedule}
+            selectedId={block}
+            onSelect={setBlock}
+          />
         </div>
       </Section>
 

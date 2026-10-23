@@ -1,7 +1,6 @@
 import { farm07 } from '@saqi/shared';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { BlockList } from './BlockList';
 import { FarmMap } from './FarmMap';
 import { DEFAULT_MAP_LAYERS, type MapLayers } from './layers';
 import { scenarioDecisions, scenarioSchedule } from './scenario';
@@ -9,7 +8,7 @@ import { scenarioDecisions, scenarioSchedule } from './scenario';
 const renderMap = (
   onSelect = vi.fn(),
   selectedId?: string,
-  extra: { layers?: MapLayers; zoom?: number } = {},
+  extra: { layers?: MapLayers; zoom?: number; variant?: 'default' | 'canvas' } = {},
 ) =>
   render(
     <FarmMap
@@ -182,22 +181,14 @@ describe('FarmMap', () => {
   });
 });
 
-describe('BlockList', () => {
-  it('lists all seven blocks with their window and the stale sensor', () => {
-    const onSelect = vi.fn();
-    render(
-      <BlockList
-        farm={farm07}
-        decisions={scenarioDecisions}
-        schedule={scenarioSchedule}
-        onSelect={onSelect}
-      />,
+describe('FarmMap canvas (Today)', () => {
+  it('lets the canvas ground show through, labels every source and points to the rail', () => {
+    const { container } = renderMap(vi.fn(), undefined, { variant: 'canvas' });
+    expect(container.querySelector('.layer-ground')).toBeNull();
+    for (const label of ['WELL W-1', 'RO', 'TANK', 'PUMP 60 m³/h', 'TSE INLET'])
+      expect(screen.getByText(label)).toBeDefined();
+    expect(screen.getByRole('group', { name: /^Map of / }).getAttribute('aria-label')).toMatch(
+      /The Blocks list is its full text alternative\.$/,
     );
-    const rows = screen.getAllByRole('row');
-    expect(rows).toHaveLength(8); // header + 7
-    expect(screen.getByText('22:00 → 01:01 GST')).toBeDefined();
-    expect(screen.getByText('Stale · 9 h', { exact: false })).toBeDefined();
-    fireEvent.click(screen.getByRole('button', { name: /D-3/ }));
-    expect(onSelect).toHaveBeenCalledWith('D-3');
   });
 });

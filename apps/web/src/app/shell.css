@@ -1,0 +1,315 @@
+/*
+ * The operational shell, ported from design/dashboard.html (`.app` + `.top`). The reference's
+ * variables map onto the generated tokens; `--accent-t` and `--flow` keep the reference's own
+ * values (saqi/NOTES.md · Pixel-perfect port: token deviations).
+ */
+.sq-app {
+  --bg: var(--color-background);
+  --panel: var(--color-surface);
+  --raised: var(--color-surface-raised);
+  --raised2: var(--color-surface-well);
+  --line: var(--color-border);
+  --line-s: var(--color-border-strong);
+  --text: var(--color-text-primary);
+  --text-2: var(--color-text-secondary);
+  --text-3: var(--color-text-muted);
+  --accent: var(--color-accent);
+  --accent-t: #a84b0c;
+  --on-accent: var(--color-accent-foreground);
+  --accent-soft: var(--color-accent-soft);
+  --ok: var(--color-success);
+  --ok-soft: var(--color-success-soft);
+  --w0: var(--color-water-0);
+  --w1: var(--color-water-1);
+  --w2: var(--color-water-2);
+  --w3: var(--color-water-3);
+  --w4: var(--color-water-4);
+  --w5: var(--color-water-5);
+  --w6: var(--color-water-6);
+  --map: var(--color-map);
+  --grid: var(--color-map-grid);
+  --glass: var(--color-overlay);
+  --shadow: var(--shadow-raised);
+  --track: var(--color-surface-well);
+  --stale: var(--color-stale);
+  --flow: #ffffff;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 100dvh;
+  padding: 10px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14.5px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+/* Latin pages use the reference's stack, so glyphs Geist lacks (₀, ³) fall back the same way. */
+.sq-app:lang(en) {
+  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+}
+[data-theme='night'] .sq-app {
+  --accent-t: var(--color-accent-text);
+}
+/* Today fills one viewport on desktop; its side panels scroll inside themselves. */
+.sq-app.is-cockpit {
+  height: 100vh;
+  min-height: 760px;
+  overflow: hidden;
+}
+/* The reference's rounded ring, in the `focus` token's colour (≥ 3 : 1, NOTES.md). */
+:where(.sq-app .top, .ck) :focus-visible {
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Shared reference atoms, scoped to the header and the cockpit so app pages keep their own. */
+:where(.sq-app .top, .ck) .m {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' 1;
+}
+:where(.sq-app .top, .ck) .lbl {
+  font-size: 12.5px;
+  line-height: 1.35;
+  font-weight: 500;
+  color: var(--text-3);
+}
+:where(.sq-app .top, .ck) .ic {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:where(.sq-app .top, .ck) .num {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+:where(.sq-app .top, .ck) .num i {
+  font-style: normal;
+  font-size: 0.5em;
+  letter-spacing: 0;
+  color: var(--text-3);
+  margin-inline-start: 0.2em;
+  vertical-align: 0.5em;
+}
+:where(.sq-app .top, .ck) .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+:where(.sq-app .top, .ck) .dot.live {
+  background: var(--ok);
+}
+:where(.sq-app .top, .ck) .dot.sim {
+  border: 1.5px dashed var(--accent-t);
+  width: 9px;
+  height: 9px;
+}
+:where(.sq-app .top, .ck) .dot.off {
+  background: var(--accent);
+}
+:where(.sq-app .top, .ck) .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding-inline: 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border: 1px solid var(--line-s);
+  color: var(--text-2);
+  white-space: nowrap;
+  background: var(--panel);
+}
+:where(.sq-app .top, .ck) .chip.solid {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+:where(.sq-app .top, .ck) .chip.ok {
+  background: var(--ok-soft);
+  border-color: transparent;
+  color: var(--ok);
+}
+:where(.sq-app .top, .ck) .chip.warn {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent-t);
+}
+
+/* Top bar */
+.sq-app .top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  padding-inline: 10px 6px;
+  flex: none;
+}
+.sq-app .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--text);
+  text-decoration: none;
+  min-height: 44px;
+}
+.sq-app .logo-name {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.sq-app .logo .lbl {
+  margin-inline-start: 4px;
+}
+.sq-app .tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: var(--shadow);
+}
+.sq-app .tabs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding-inline: 16px;
+  border-radius: 999px;
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+.sq-app .tabs a:hover {
+  color: var(--text);
+  background: var(--raised);
+}
+.sq-app .tabs a[aria-current='page'] {
+  background: var(--text);
+  color: var(--bg);
+}
+.sq-app .top-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sq-app .tb-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding-inline: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text-2);
+  font-size: 13.5px;
+  text-decoration: none;
+  font-weight: 500;
+}
+.sq-app .tb-pill b {
+  font-weight: 600;
+  color: var(--accent-t);
+}
+.sq-app a.tb-pill:hover {
+  color: var(--accent-t);
+}
+/* Words follow the locale's font; only Latin runs take the reference's mono. */
+.sq-app :is(:lang(ar), :lang(ur)) .tb-pill .m {
+  font-family: var(--font-arabic);
+}
+.sq-app .avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+  font: 500 12px var(--font-mono);
+  flex: none;
+}
+/* The shared language switch and theme toggle, at the reference's `.lang` / `.icon-btn` size. */
+.sq-app .top-end > [role='group'] {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px;
+  background: var(--panel);
+}
+.sq-app .top-end > [role='group'] > button {
+  min-width: 34px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-2);
+  font: 500 12.5px var(--font-mono);
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.sq-app .top-end > [role='group'] > button[aria-pressed='true'] {
+  background: var(--raised2);
+  color: var(--text);
+}
+.sq-app .top-end > [role='group'] > button:not([lang='en']) {
+  font-family: var(--font-arabic);
+  font-size: 14px;
+}
+.sq-app .top-end > button {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex: none;
+}
+
+/* Phones and tablets: the section tabs leave the bar for the bottom navigation. */
+.sq-bottom-nav {
+  display: none;
+}
+@media (max-width: 1180px) {
+  .sq-app.is-cockpit {
+    height: auto;
+    overflow: visible;
+  }
+  .sq-app .tabs {
+    display: none;
+  }
+  .sq-app {
+    padding-bottom: calc(66px + env(safe-area-inset-bottom));
+  }
+  .sq-bottom-nav {
+    display: block;
+  }
+}
+@media (max-width: 640px) {
+  .sq-app .top-end .tb-pill.fresh {
+    display: none;
+  }
+  /* Still says "simulated" (CLAUDE.md §6): the dashed dot stays, the words go to screen readers. */
+  .sq-app .top-end .tb-pill.simb {
+    padding-inline: 14px;
+  }
+  /* Field and block pages on a phone: the bar wraps rather than scroll the page sideways. */
+  .sq-app:not(.is-cockpit) :is(.top, .top-end) {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+}

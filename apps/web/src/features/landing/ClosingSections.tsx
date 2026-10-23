@@ -1,31 +1,34 @@
+import { farm07 } from '@saqi/shared';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { LogoMark } from '@/app/Logo';
-import { buttonClasses, PillArrow } from '@/ui';
+import { ArrowIcon, LandingLogo } from './LandingIcons';
 
-const REPOSITORY = 'https://github.com/husniramdani/saqi';
-const LINKEDIN = 'https://linkedin.com/in/husniramdani';
-const STYLEBASE = 'https://stylebase.dev';
+const GITHUB = 'https://github.com/husniramdani';
 
 export function LandingCta() {
   const { t } = useTranslation();
   return (
-    <section className="landing-wrap" aria-labelledby="landing-cta-title">
-      <div className="landing-inverse landing-cta">
-        <div className="landing-row">
-          <span className="num">22:00 GST</span>
-          <span className="landing-label">{t('landing.cta.window')}</span>
-          <span className="num">05:00 GST</span>
+    <section className="wrap" aria-labelledby="cta-h">
+      <div className="cta inv">
+        <div className="cta-glow" aria-hidden="true" />
+        <div className="row-sb">
+          <span className="acc-m ember-m">{farm07.nightWindow.start}</span>
+          <span className="lbl micro">{t('landing.cta.window')}</span>
+          <span className="acc-m ember-m">{farm07.nightWindow.end}</span>
         </div>
-        <h2 id="landing-cta-title">
+        <h2 id="cta-h" className="cta-hl">
           {t('landing.cta.title')}
+          <br />
           <span>{t('landing.cta.emphasis')}</span>
         </h2>
-        <div className="landing-cta__actions">
-          <Link to="/today" className={buttonClasses({ variant: 'accent', arrow: true })}>
-            {t('landing.cta.open')} <PillArrow variant="accent" />
+        <div className="cta-actions">
+          <Link className="pill accent ember" to="/today">
+            {t('landing.cta.open')}{' '}
+            <span className="arr">
+              <ArrowIcon />
+            </span>
           </Link>
-          <a href={REPOSITORY} target="_blank" rel="noreferrer" className="landing-text-link">
+          <a className="tlink" href={GITHUB}>
             {t('landing.cta.source')}
           </a>
         </div>
@@ -37,82 +40,67 @@ export function LandingCta() {
 export function LandingFooter() {
   const { t } = useTranslation();
   return (
-    <footer className="landing-wrap">
-      <div className="landing-footer">
-        <div className="landing-footer__intro">
-          <a href="#top" className="landing-logo" aria-label={t('landing.footer.backToTop')}>
-            <LogoMark size={30} />
-            <span className="landing-logo__name">Saqi</span>
-            <span lang="ar" className="landing-logo__arabic">
-              ساقي
-            </span>
+    <footer className="wrap">
+      <div className="foot">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: '34ch' }}>
+          <a href="#top" className="logo" aria-label={t('landing.footer.backToTop')}>
+            <LandingLogo />
           </a>
-          <p>{t('landing.footer.disclosure')}</p>
+          <p className="foot-about">{t('landing.footer.disclosure')}</p>
         </div>
-        <FooterGroup
-          title={t('landing.footer.product')}
-          links={[
-            { label: t('shell.nav.today'), href: '/today' },
-            { label: t('landing.product.cards.block.title'), href: '/blocks/D-1' },
-            { label: t('landing.product.cards.field.title'), href: '/field' },
-            { label: t('shell.nav.makingOf'), href: '/making-of' },
-          ]}
-        />
         <div>
-          <h3>{t('landing.footer.data')}</h3>
+          <h4>{t('landing.footer.product')}</h4>
           <ul>
-            <li>{t('landing.footer.weather')}</li>
-            <li>{t('landing.footer.sensors')}</li>
-            <li>{t('landing.footer.farm')}</li>
+            <li>
+              <Link to="/today">{t('landing.product.cards.today.title')}</Link>
+            </li>
+            <li>
+              <Link to="/blocks/D-1">{t('landing.product.cards.block.title')}</Link>
+            </li>
+            <li>
+              <Link to="/field">{t('landing.product.cards.field.title')}</Link>
+            </li>
+            <li>
+              <Link to="/making-of">{t('landing.product.cards.making.title')}</Link>
+            </li>
           </ul>
         </div>
         <div>
-          <h3>{t('landing.footer.builtBy')}</h3>
+          <h4>{t('landing.footer.data')}</h4>
           <ul>
             <li>
-              <a href={REPOSITORY} target="_blank" rel="noreferrer">
-                Husni Ramdani · GitHub
-              </a>
+              <span>{t('landing.footer.weather')}</span>
             </li>
             <li>
-              <a href={LINKEDIN} target="_blank" rel="noreferrer">
-                LinkedIn
-              </a>
+              <span>{t('landing.footer.sensors')}</span>
             </li>
             <li>
-              <a href={STYLEBASE} target="_blank" rel="noreferrer">
-                Stylebase
-              </a>
+              <span>{t('landing.footer.farm')}</span>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h4>{t('landing.footer.builtBy')}</h4>
+          <ul>
+            <li>
+              <a href={GITHUB}>{t('landing.footer.github')}</a>
+            </li>
+            <li>
+              <a href="https://linkedin.com/in/husniramdani">LinkedIn</a>
+            </li>
+            <li>
+              <a href="https://stylebase.dev">Stylebase</a>
             </li>
           </ul>
         </div>
       </div>
-      <div className="landing-footer__bottom">
-        <span className="num">24.21 N · 55.74 E</span>
-        <span>{t('landing.footer.gst')}</span>
-        <span>© 2026 Saqi</span>
+      <div className="foot-b">
+        <span className="micro" dir="ltr">
+          {`${farm07.lat.toFixed(2)} N · ${farm07.lon.toFixed(2)} E`}
+        </span>
+        <span className="micro">{t('landing.footer.gst')}</span>
+        <span className="micro">© 2026 Saqi</span>
       </div>
     </footer>
-  );
-}
-
-function FooterGroup({
-  title,
-  links,
-}: {
-  title: string;
-  links: { label: string; href: string }[];
-}) {
-  return (
-    <div>
-      <h3>{title}</h3>
-      <ul>
-        {links.map((link) => (
-          <li key={link.href}>
-            <Link to={link.href}>{link.label}</Link>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }

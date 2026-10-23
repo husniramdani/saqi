@@ -7,13 +7,10 @@ import { useLocale } from '@/i18n';
 import { formatNumber, formatTimeGst } from '@/i18n/format';
 import { cx, Spinner } from '@/ui';
 
-const chip =
-  'flex min-h-11 w-max max-w-full items-center gap-2 rounded-md border border-border bg-overlay px-3 py-1.5 text-xs text-text-secondary shadow-floating';
-
 /**
- * The map's corner status: Field actions waiting on this phone (and their sync), or else the
- * forecast point. Dismissing hides one exact queue; any change to it (an action added, sent or
- * replaced) brings the status back, even at the same count.
+ * The map's corner status (design/dashboard.html `.toast` / `.coord`): Field updates waiting on
+ * this phone (and their sync), or else the forecast point. Dismissing hides one exact queue; any
+ * change to it (an action added, sent or replaced) brings the status back, even at the same count.
  */
 export function OutboxStatus() {
   const { t } = useTranslation();
@@ -31,47 +28,51 @@ export function OutboxStatus() {
     (a, b) => (a && a.createdAt <= b.createdAt ? a : b),
     undefined,
   );
+  const queuedAt = oldest ? formatTimeGst(oldest.createdAt, locale).replace(' GST', '') : '';
 
   // One live region whose words change, so each change is announced.
   return (
-    <div role="status" className={cx(chip, view === 'queued' && 'py-1 pe-1')}>
-      {view === 'syncing' ? (
-        <>
-          <Spinner />
-          <span className="text-text-primary">{t('mapControls.outbox.syncing')}</span>
-        </>
-      ) : view === 'queued' && oldest ? (
-        <>
-          <span className="flex flex-col">
-            <span className="font-medium text-text-primary">
-              {t('mapControls.outbox.saved', { count: actions.length })}
-            </span>
-            <span>
-              {online ? null : `${t('mapControls.outbox.offline')} · `}
-              {t('mapControls.outbox.oldest', { time: formatTimeGst(oldest.createdAt, locale) })}
-            </span>
-          </span>
-          <button
-            type="button"
-            aria-label={t('mapControls.outbox.dismiss')}
-            onClick={() => setDismissed(signature)}
-            className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-surface-well hover:text-text-primary"
-          >
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path
-                d="M3 3l8 8M11 3l-8 8"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </>
-      ) : (
+    <div role="status" className={cx(view === 'point' ? 'coord' : 'glass toast')}>
+      {view === 'point' ? (
         t('mapControls.outbox.point', {
           lat: formatNumber(farm07.lat, locale, 2),
           lon: formatNumber(farm07.lon, locale, 2),
         })
+      ) : (
+        <>
+          <span className="toast-ic" aria-hidden="true">
+            {view === 'syncing' ? (
+              <Spinner />
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 16 16">
+                <path d="M8 3v7M5 7l3 3 3-3M3 13h10" className="ic" />
+              </svg>
+            )}
+          </span>
+          <span className="toast-t">
+            <b>
+              {view === 'syncing'
+                ? t('mapControls.outbox.syncing')
+                : t('mapControls.outbox.waiting', { count: actions.length })}
+            </b>
+            <span>
+              {t(online ? 'mapControls.outbox.saved' : 'mapControls.outbox.offline', {
+                time: queuedAt,
+              })}
+            </span>
+          </span>
+          {view === 'queued' ? (
+            <button
+              type="button"
+              aria-label={t('mapControls.outbox.dismiss')}
+              onClick={() => setDismissed(signature)}
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M4 4l8 8M12 4l-8 8" className="ic" />
+              </svg>
+            </button>
+          ) : null}
+        </>
       )}
     </div>
   );

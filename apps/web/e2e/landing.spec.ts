@@ -4,9 +4,7 @@ test('the landing page explains a decision, lists every block and opens the cock
   page,
 }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-    'Water what the soil asks for.',
-  );
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Water what the soil asks for.');
 
   // The decision explorer: Irrigate → Skip swaps the recommendation to D-2, holding tonight.
   const explorer = page.getByRole('group', { name: 'Choose a decision' });
@@ -19,10 +17,12 @@ test('the landing page explains a decision, lists every block and opens the cock
   );
   await expect(recommendation).toContainText('Lulu palms');
   await expect(recommendation).toContainText('Skip');
-  await expect(recommendation).toContainText('0.0m³');
+  await expect(recommendation).toContainText('0m³');
 
   // Map → List: the table alternative shows all seven Farm 07 blocks.
-  await page.getByRole('tablist', { name: 'Farm view' }).getByRole('tab', { name: 'List' }).click();
+  const views = page.getByRole('group', { name: 'Farm view' });
+  await views.getByRole('button', { name: 'List' }).click();
+  await expect(views.getByRole('button', { name: 'List' })).toHaveAttribute('aria-pressed', 'true');
   const table = page.getByRole('table', { name: /tonight’s decisions, all blocks/ });
   await expect(table).toBeVisible();
   await expect(table.getByRole('row')).toHaveCount(8);

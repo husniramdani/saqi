@@ -1,17 +1,21 @@
 import type { Budget, BlockDecision, BudgetStatus } from '@saqi/shared';
 import { useTranslation } from 'react-i18next';
-import { intlLocale } from '@/i18n/format';
 import { useLocale } from '@/i18n';
-import { formatNumber } from '@/i18n/format';
-import { Chip, Figure, Meter, type ChipVariant } from '@/ui';
+import { formatNumber, intlLocale } from '@/i18n/format';
 
-export const BUDGET_CHIP: Record<BudgetStatus, ChipVariant> = {
-  ok: 'ok',
-  tight: 'warn',
-  over: 'error',
+export const BUDGET_CHIP: Record<BudgetStatus, string> = {
+  ok: 'chip ok',
+  tight: 'chip warn',
+  over: 'chip warn',
 };
 
-/** Monthly water budget: projected share of the allocation, the 97 % tight line, and why cuts happened. */
+/** The month counts as tight from 97 % of the allocation (the meter's tick). */
+const TIGHT = 0.97;
+
+/**
+ * Monthly water budget (design/dashboard.html Water tab): projected share of the allocation,
+ * the 97 % tight line, and why cuts happened.
+ */
 export function BudgetSection({
   budget,
   decisions,
@@ -22,6 +26,7 @@ export function BudgetSection({
   const { t } = useTranslation();
   const locale = useLocale();
   const share = budget.allocationM3 > 0 ? budget.projectedAfterPlanM3 / budget.allocationM3 : 0;
+  const pct = Math.round(share * 100);
   const month = new Intl.DateTimeFormat(intlLocale(locale), {
     month: 'long',
     timeZone: 'UTC',
@@ -39,28 +44,43 @@ export function BudgetSection({
   const over = formatNumber(overPct, locale, overPct < 1 ? 1 : 0);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-xs font-medium text-text-muted">{t('today.budget', { month })}</h3>
-        <Chip variant={BUDGET_CHIP[budget.status]}>{t(`today.budgetStatus.${budget.status}`)}</Chip>
+    <section id="budget" tabIndex={-1} className="sect">
+      <div className="sect-h">
+        <h3 className="lbl">{t('today.budget', { month })}</h3>
+        <span className={BUDGET_CHIP[budget.status]}>
+          {t(`today.budgetStatus.${budget.status}`)}
+        </span>
       </div>
-      <Figure value={share * 100} unit="%" precision={0} size="lg" />
-      <Meter
-        value={share}
-        mark={0.97}
-        label={t('today.budgetMeter', { pct: Math.round(share * 100) })}
-      />
-      <div className="flex justify-between text-xs">
-        <span className="num text-text-primary">
+      <span className="num budget-pct">
+        {formatNumber(pct, locale, 0)}
+        <i>%</i>
+      </span>
+      <div
+        className="meter"
+        role="meter"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={pct}
+        aria-label={t('today.budgetMeter', { pct })}
+      >
+        <span
+          className="meter-fill"
+          data-meter-fill
+          style={{ inlineSize: `${Math.min(100, share * 100)}%` }}
+        />
+        <span className="meter-tick" style={{ insetInlineStart: `${TIGHT * 100}%` }} />
+      </div>
+      <div className="sect-row">
+        <span className="m budget-used">
           {t('today.budgetUsed', {
             used: formatNumber(budget.projectedAfterPlanM3, locale, 0),
             allocation: formatNumber(budget.allocationM3, locale, 0),
           })}
         </span>
-        <span className="text-text-muted">{t('today.budgetProjected')}</span>
+        <span className="lbl">{t('today.budgetProjected')}</span>
       </div>
       {cuts.length > 0 ? (
-        <p className="text-sm text-text-secondary">
+        <p>
           {t('today.deficitNote', {
             over,
             count: cuts.length,
@@ -68,6 +88,6 @@ export function BudgetSection({
           })}
         </p>
       ) : null}
-    </div>
+    </section>
   );
 }

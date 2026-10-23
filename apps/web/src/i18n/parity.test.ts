@@ -64,6 +64,7 @@ describe.each(Object.entries(locales))('%s strings', (locale, strings) => {
       'today.budgetUsed',
       'field.context',
       'map.utility.ro',
+      'mapControls.utility.ro',
       'makingOf.scene5.links.stylebase',
     ]);
     expect(latin.map(([key]) => key).filter((k) => !allowed.has(k))).toEqual([]);

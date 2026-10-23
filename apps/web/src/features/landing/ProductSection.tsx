@@ -1,86 +1,124 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { Arrow } from '@/ui';
-import { LandingMapArtwork } from './LandingMapArtwork';
-import { SectionIndex } from './TopSections';
+import { ArrowIcon, SectionIndex } from './LandingIcons';
+import { MiniMap } from './LandingMapArtwork';
+import { landingScenarios } from './workedExample';
 
-const PRODUCTS = [
-  { key: 'today', to: '/today', route: '/today' },
-  { key: 'block', to: '/blocks/D-1', route: '/blocks/D-1' },
-  { key: 'field', to: '/field', route: '/field' },
-  { key: 'making', to: '/making-of', route: '/making-of' },
-] as const;
-
-function ProductVisual({ type }: { type: (typeof PRODUCTS)[number]['key'] }) {
-  if (type === 'today') return <LandingMapArtwork variant="thumbnail" />;
-  if (type === 'block') {
-    return (
-      <svg viewBox="0 0 280 150" aria-hidden="true">
-        <rect x="10" y="22" width="260" height="30" className="landing-mini-band" />
-        <line x1="10" y1="52" x2="270" y2="52" className="landing-mini-threshold" />
-        <polyline
-          points="10,40 40,50 60,55 62,30 100,45 130,53 132,28 170,42 200,50 202,27 240,40 262,48"
-          className="landing-mini-line"
-        />
-        <circle cx="262" cy="48" r="5" className="landing-mini-now" />
-      </svg>
-    );
-  }
-  if (type === 'field') {
-    return (
-      <div className="landing-mini-task">
-        <span className="landing-label">D-1 · Khalas palms</span>
-        <b>Clear bubblers, row 4</b>
-        <span>Mark done</span>
-      </div>
-    );
-  }
-  return (
-    <div className="landing-mini-chapters">
-      {['Tokens', 'Water', 'Reasons', 'Tests', 'Credits'].map((chapter, index) => (
-        <span key={chapter} className={index === 1 ? 'is-active' : ''}>
-          <b className="num">0{index + 1}</b>
-          <i />
-          {chapter}
-        </span>
-      ))}
-    </div>
-  );
-}
+const CHAPTERS = ['tokens', 'water', 'reasons', 'tests', 'credits'] as const;
 
 export function ProductSection() {
   const { t } = useTranslation();
   return (
-    <section className="landing-wrap landing-section" id="product">
-      <div className="landing-section-head">
+    <section className="wrap sec" id="product">
+      <div className="sec-head">
         <div>
           <SectionIndex number="03" label={t('landing.product.eyebrow')} />
-          <h2>{t('landing.product.title')}</h2>
+          <h2 className="h2">{t('landing.product.title')}</h2>
         </div>
-        <p>{t('landing.product.lead')}</p>
+        <p className="lead">{t('landing.product.lead')}</p>
       </div>
-      <div className="landing-products">
-        {PRODUCTS.map((product, index) => (
-          <article className="landing-product-card" key={product.key}>
-            <div className="landing-product-card__visual" aria-hidden="true">
-              <ProductVisual type={product.key} />
-            </div>
-            <div className="landing-product-card__body">
-              <span className="landing-label">
-                0{index + 1} · {t(`landing.product.cards.${product.key}.surface`)}
+      <div className="cards4">
+        <SurfaceCard index="01" card="today" to="/today" visual={<MiniMap />} />
+        <SurfaceCard
+          index="02"
+          card="block"
+          to="/blocks/D-1"
+          route="/blocks/:id"
+          visual={<MiniChart />}
+        />
+        <SurfaceCard
+          index="03"
+          card="field"
+          to="/field"
+          visual={
+            <div className="mini-task">
+              <span className="lbl micro mini-task-k">{t('landing.product.task.block')}</span>
+              <span style={{ fontSize: 15, fontWeight: 500 }}>
+                {t('landing.product.task.title')}
               </span>
-              <h3>{t(`landing.product.cards.${product.key}.title`)}</h3>
-              <p>{t(`landing.product.cards.${product.key}.body`)}</p>
-              <div className="landing-product-card__footer">
-                <span className="num landing-label">{product.route}</span>
-                <Link to={product.to} aria-label={t(`landing.product.cards.${product.key}.open`)}>
-                  <Arrow size={16} />
-                </Link>
-              </div>
+              <span className="mini-btn">{t('landing.product.task.done')}</span>
             </div>
-          </article>
-        ))}
+          }
+        />
+        <SurfaceCard
+          index="04"
+          card="making"
+          to="/making-of"
+          visual={
+            <div className="chap">
+              {CHAPTERS.map((chapter, index) => (
+                <div key={chapter} className={index === 1 ? 'chap-r on' : 'chap-r'}>
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <b />
+                  <span>{t(`landing.product.chapters.${chapter}`)}</span>
+                </div>
+              ))}
+            </div>
+          }
+        />
       </div>
     </section>
+  );
+}
+
+interface CardProps {
+  index: string;
+  card: 'today' | 'block' | 'field' | 'making';
+  to: string;
+  /** The route pattern shown on the card, when it isn't the link itself. */
+  route?: string;
+  visual: ReactNode;
+}
+
+function SurfaceCard({ index, card, to, route = to, visual }: CardProps) {
+  const { t } = useTranslation();
+  return (
+    <article className="scard rv">
+      <div className="scard-viz" aria-hidden="true">
+        {visual}
+      </div>
+      <div className="scard-b">
+        <span className="lbl micro">
+          {`${index} · ${t(`landing.product.cards.${card}.surface`)}`}
+        </span>
+        <h3>{t(`landing.product.cards.${card}.title`)}</h3>
+        <p>{t(`landing.product.cards.${card}.body`)}</p>
+        <div className="scard-f">
+          <span className="lbl mono micro" dir="ltr">
+            {route}
+          </span>
+          <Link className="rbtn" to={to} aria-label={t(`landing.product.cards.${card}.open`)}>
+            <ArrowIcon />
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/** Block detail thumbnail: fourteen days of water against the target band and threshold. */
+function MiniChart() {
+  const { t } = useTranslation();
+  const d1 = landingScenarios.irrigate.decision;
+  return (
+    <svg viewBox="0 0 280 150" width="100%">
+      <rect x="10" y="22" width="260" height="30" className="mc-band" />
+      <line x1="10" y1="52" x2="270" y2="52" className="mc-thr" />
+      <polyline
+        points="10,40 40,50 60,55 62,30 100,45 130,53 132,28 170,42 200,50 202,27 240,40 262,48"
+        className="mc-line draw"
+      />
+      <circle cx="262" cy="48" r="5" className="mc-now pop" />
+      <path d="M60 140 l5 -8 l5 8 z" className="mc-tri" />
+      <path d="M126 140 l5 -8 l5 8 z" className="mc-tri" />
+      <path d="M196 140 l5 -8 l5 8 z" className="mc-tri" />
+      <text x="270" y="16" className="svg-t" textAnchor="end">
+        {t('landing.product.chart.target', { value: String(d1.target) })}
+      </text>
+      <text x="270" y="68" className="svg-t em" textAnchor="end">
+        {t('landing.product.chart.threshold', { value: String(d1.threshold) })}
+      </text>
+    </svg>
   );
 }
