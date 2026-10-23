@@ -21,6 +21,7 @@ export function HeroSection() {
   return (
     <section id="top" className="wrap">
       <div className="hero">
+        <div className="hero-glow" aria-hidden="true" />
         <svg className="hero-topo" viewBox="0 0 900 600" aria-hidden="true">
           {TOPO.map((d) => (
             <path key={d} className="topo" d={d} />
@@ -33,6 +34,7 @@ export function HeroSection() {
             </div>
           </div>
         </div>
+        <div className="hero-scrim" aria-hidden="true" />
 
         <div className="hero-top">
           <span className="acc-m ember-m hero-fade">{t('landing.hero.read')}</span>

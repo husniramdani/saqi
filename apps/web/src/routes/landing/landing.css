@@ -696,6 +696,18 @@
 :where([data-theme='night']) .landing .hero {
   background-color: var(--n900);
 }
+.landing .hero-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+}
+:where(:root:not([data-theme='night'])) .landing .hero-glow {
+  background: radial-gradient(50% 46% at 72% 40%, rgba(232, 118, 45, 0.14), transparent 72%);
+}
+:where([data-theme='night']) .landing .hero-glow {
+  background: radial-gradient(48% 42% at 70% 40%, rgba(240, 138, 62, 0.17), transparent 72%);
+}
 .landing .hero-stage {
   position: absolute;
   inset-inline-end: -9%;
@@ -711,6 +723,44 @@
 }
 [dir='rtl'] .landing .hero-tilt {
   transform: rotateX(52deg) rotateZ(17deg);
+}
+.landing .hero-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+:where(:root:not([data-theme='night'])) .landing .hero-scrim {
+  background: linear-gradient(
+    90deg,
+    #ffffff 20%,
+    rgba(255, 255, 255, 0.8) 42%,
+    rgba(255, 255, 255, 0) 66%
+  );
+}
+:where([data-theme='night']) .landing .hero-scrim {
+  background: linear-gradient(
+    90deg,
+    #0f1c16 18%,
+    rgba(15, 28, 22, 0.72) 42%,
+    rgba(15, 28, 22, 0) 66%
+  );
+}
+[dir='rtl']:where(:not([data-theme='night'])) .landing .hero-scrim {
+  background: linear-gradient(
+    270deg,
+    #ffffff 20%,
+    rgba(255, 255, 255, 0.8) 42%,
+    rgba(255, 255, 255, 0) 66%
+  );
+}
+[dir='rtl']:where([data-theme='night']) .landing .hero-scrim {
+  background: linear-gradient(
+    270deg,
+    #0f1c16 18%,
+    rgba(15, 28, 22, 0.72) 42%,
+    rgba(15, 28, 22, 0) 66%
+  );
 }
 .landing .hero-top {
   display: flex;
@@ -761,16 +811,8 @@
   overflow: hidden;
   padding-bottom: 0.06em;
 }
-/* Each headline line sits on the hero's own solid colour, so the plan behind never lowers contrast. */
 .landing .hl-line > span {
   display: block;
-  width: fit-content;
-}
-:where(:root:not([data-theme='night'])) .landing .hl-line > span {
-  background-color: var(--panel);
-}
-:where([data-theme='night']) .landing .hl-line > span {
-  background-color: var(--n900);
 }
 .landing .hero-sub {
   font-family: var(--f-mono);
@@ -2553,11 +2595,21 @@
 :where([data-theme='night']) .landing .fpoint p {
   color: var(--sage);
 }
+/* Each phone is as tall as its own screen (the Arabic one sits lower), never stretched to the
+   pair's height, which left an empty bezel under the English screen. */
 .landing .phones {
   position: relative;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   padding-block: 20px;
+}
+/* The overlapping pair needs about 560 px; side by side with the points it only gets that from
+   1261 px, so narrower screens put the phones under the text, both at full size. */
+@media (max-width: 1260px) {
+  .landing .field {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .landing .phone {
   width: 310px;
@@ -2926,6 +2978,18 @@
   background-color: var(--n900);
   border: 1px solid var(--line);
 }
+.landing .cta-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+:where(:root:not([data-theme='night'])) .landing .cta-glow {
+  background: radial-gradient(40% 55% at 50% 100%, rgba(240, 138, 62, 0.24), transparent 75%);
+}
+:where([data-theme='night']) .landing .cta-glow {
+  background: radial-gradient(40% 55% at 50% 100%, rgba(240, 138, 62, 0.22), transparent 75%);
+}
 .landing .cta-hl {
   font-size: clamp(52px, 8vw, 124px);
   font-weight: 300;
@@ -3075,6 +3139,18 @@
   :where([data-theme='night']) .landing .hero-stage {
     opacity: 0.55;
   }
+  :where(:root:not([data-theme='night'])) .landing .hero-scrim {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.9) 60%);
+  }
+  :where([data-theme='night']) .landing .hero-scrim {
+    background: linear-gradient(180deg, rgba(15, 28, 22, 0.2), rgba(15, 28, 22, 0.85) 60%);
+  }
+  [dir='rtl']:where(:not([data-theme='night'])) .landing .hero-scrim {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.9) 60%);
+  }
+  [dir='rtl']:where([data-theme='night']) .landing .hero-scrim {
+    background: linear-gradient(180deg, rgba(15, 28, 22, 0.2), rgba(15, 28, 22, 0.85) 60%);
+  }
   .landing .hero-main {
     grid-template-columns: minmax(0, 1fr);
     padding-top: 160px;
@@ -3083,9 +3159,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .landing .dec-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .landing .field {
     grid-template-columns: minmax(0, 1fr);
   }
   .landing .jgrid {
