@@ -6,7 +6,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setLocale } from '@/i18n';
 import { AppShell } from './AppShell';
-import { setTheme } from './theme';
+import { applyTheme, storedTheme } from './theme';
 
 // The shell's data comes from the API; here it is stubbed so no request leaves the test.
 const decision = (
@@ -54,7 +54,8 @@ function renderShell(path = '/today') {
 
 afterEach(async () => {
   await act(() => setLocale('en'));
-  setTheme('day');
+  localStorage.removeItem('saqi.theme');
+  applyTheme(storedTheme());
 });
 
 describe('AppShell', () => {
@@ -103,13 +104,14 @@ describe('AppShell', () => {
     root.remove();
   });
 
-  it('toggles and remembers the night theme', () => {
+  it('starts at night, and toggles and remembers the day theme', () => {
     renderShell();
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to the day theme' }));
+    expect(document.documentElement.dataset['theme']).toBeUndefined();
+    expect(localStorage.getItem('saqi.theme')).toBe('day');
     fireEvent.click(screen.getByRole('button', { name: 'Switch to the night theme' }));
     expect(document.documentElement.dataset['theme']).toBe('night');
     expect(localStorage.getItem('saqi.theme')).toBe('night');
-    fireEvent.click(screen.getByRole('button', { name: 'Switch to the day theme' }));
-    expect(document.documentElement.dataset['theme']).toBeUndefined();
   });
 
   it('moves focus to the page heading after navigating, not on first load', async () => {

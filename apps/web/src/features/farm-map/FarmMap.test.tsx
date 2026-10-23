@@ -187,11 +187,10 @@ describe('FarmMap', () => {
     expect(route()).toBeNull();
     expect(running()).toEqual(['D-1']);
 
-    // Tonight's flow switched off: the selected route stays, running.
-    rerender(draw('D-1', without('flow')));
-    expect(route()?.getAttribute('data-route')).toBe('D-1');
-    expect(hidden(route())).toBe(false);
-    expect(running()).toEqual(['D-1']);
+    // "Tonight's water" switched off hides all of it, the selected block's route included.
+    rerender(draw('G-2', without('flow')));
+    expect(route()?.getAttribute('data-route')).toBe('G-2');
+    expect(hidden(route())).toBe(true);
     expect(hidden(container.querySelector('[data-scheduled="D-1"]'))).toBe(true);
   });
 

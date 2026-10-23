@@ -334,7 +334,7 @@
   cursor: pointer;
   box-shadow: var(--shadow);
 }
-.ck .zoom button:disabled {
+.ck .zoom button[aria-disabled='true'] {
   color: var(--text-3);
   cursor: default;
 }
@@ -777,9 +777,12 @@
     inset: 68px 10px 150px;
     width: calc(100% - 20px);
   }
+  /* The zoom column would sit on F-1 (D-3 in Arabic) and take its taps, and on a plan this
+     small 2× shows only the farm's middle: phones zoom the page with a pinch instead. */
   .ck .toast,
   .ck .coord,
-  .ck .legend {
+  .ck .legend,
+  .ck .zoom {
     display: none;
   }
   .ck .sched {

@@ -56,7 +56,7 @@
     "volume": "Volume",
     "barDeficitNote": "· deficit",
     "row": {
-      "offline": "{depth} offline {hours} h",
+      "offline": "{depth} offline {hours}\u00a0h",
       "pulses": "Tomorrow {hours}",
       "none": "No irrigation tonight",
       "saves": "saves {m3} m³",
@@ -94,7 +94,7 @@
     "substrateSensor": "Substrate sensor",
     "coco": "coco",
     "sensorWeight": "weight {weight} · simulated",
-    "sensorStale": "no data for {hours} h · stale",
+    "sensorStale": "no data for {hours}\u00a0h · stale",
     "offline": "Offline",
     "confidence": "{level} confidence",
     "chart": {
@@ -287,7 +287,7 @@
     "notFoundBody": "Farm 07 has seven blocks, D-1 to G-2. Pick one on Today’s map, or open today’s field tasks.",
     "home": "Back to Today",
     "noData": "No data",
-    "stale": "Stale · {hours} h"
+    "stale": "Stale · {hours}\u00a0h"
   },
   "reason": {
     "PAW_NOW": "Soil water now {paw}%",
@@ -299,7 +299,7 @@
     "SAVES_VS_FIXED": "Saves {m3} m³ against a fixed schedule",
     "GREENHOUSE_PULSES": "{count} pulses of {m3} m³ tomorrow",
     "BUDGET_DEFICIT": "Cut to {factor}× the usual volume because this month’s water budget is tight",
-    "SENSOR_STALE": "The {sensor} sensor has not reported for {hours} h",
+    "SENSOR_STALE": "The {sensor} sensor has not reported for {hours}\u00a0h",
     "LOW_CONFIDENCE": "No fresh sensor data, so check the block by hand",
     "WINDOW_ASSIGNED": "Runs {start} → {end} GST",
     "WINDOW_OVERFLOW": "Cut by {cutM3} m³ to fit the night window",
@@ -378,6 +378,7 @@
   "landing": {
     "metaTitle": "Saqi · irrigation decisions for tonight",
     "sample": "Example",
+    "workedExample": "Worked example",
     "simulated": "Simulated sensors",
     "tomorrow": "tomorrow",
     "header": {
@@ -520,7 +521,7 @@
         "map": "Map",
         "list": "List"
       },
-      "offline": "Sensor offline {hours} h",
+      "offline": "Sensor offline {hours}\u00a0h",
       "mapLabel": "Map of Farm 07. {blocks} Use the List view for a table.",
       "summaryPaw": "{paw} percent",
       "summaryOffline": "sensor offline",
@@ -534,7 +535,7 @@
         "window": "Window (GST)",
         "freshOnly": "{paw} · 30 cm only",
         "checkSensor": "Skip · check sensor",
-        "saves": "0 · saves {volume}"
+        "saves": "0 · saves {volume} m³"
       },
       "noteTitle": "Blocks watered tonight",
       "note": "{first} runs first and {second} follows at {at}, because together they would exceed the {pump} m³/h pump. The other five skip or pulse tomorrow.",
@@ -581,7 +582,7 @@
       "reasons": {
         "paw": "Plant-available water now",
         "substrate": "Substrate water now",
-        "et0": "ET₀ tomorrow · Open-Meteo",
+        "et0": "ET₀ tomorrow · worked example",
         "crop": "Crop use, Kc {kc}",
         "projected": "Projected by morning · threshold {threshold}%",
         "refill": "Refill to {target}% · net → gross at {efficiency}%",

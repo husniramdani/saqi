@@ -103,8 +103,15 @@ export function tagFontSize(scale: number): number {
   return Math.min(40, Math.max(22, 12.5 / Math.max(scale, 0.01)));
 }
 
-/** Utility labels are 17 units; below 12 px on screen they hide rather than shrink. */
-export const showUtilityLabels = (scale: number) => 17 * scale >= 12;
+/**
+ * Utility label size in SVG units for the map's scale: 17 as drawn, larger where that would
+ * render under 12 px (design.md), and none (null) once it would pass 24 units, where the
+ * strip's neighbours (well, RO, tank) start to collide. Phones get the shapes alone.
+ */
+export function utilityLabelSize(scale: number): number | null {
+  const size = Math.max(17, 12 / Math.max(scale, 0.01));
+  return size <= 24 ? size : null;
+}
 
 /** A block is stale when the engine had to decide without a fresh sensor. */
 export const isStale = (d: BlockDecision) =>

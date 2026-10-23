@@ -11,6 +11,6 @@ test('D-3’s silent 60 cm sensor shows as stale on the map and on its page, wit
   await expect(page.getByText(/60 cm sensor offline since/)).toBeVisible();
   await expect(page.getByText('Confidence: Low')).toBeVisible();
   await expect(page.getByRole('list', { name: 'Why' })).toContainText(
-    /The \u2066?60 cm\u2069? sensor has not reported for \d+ h/,
+    /The \u2066?60 cm\u2069? sensor has not reported for \d+\sh/,
   );
 });

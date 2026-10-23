@@ -1,5 +1,5 @@
 import { gstDate } from '@saqi/shared';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { ApiError } from '@/api/client';
@@ -21,7 +21,6 @@ import { LogIrrigation } from '@/features/recommendation/LogIrrigation';
 import { RecommendationCard } from '@/features/recommendation/RecommendationCard';
 import { BlockTasks } from '@/features/tasks/BlockTasks';
 import { useLocale } from '@/i18n';
-import { duration, ease, getFlip, takeBlock, useGSAP, useMotion } from '@/motion';
 import { Arrow, MoistureSwatch, Panel, Skeleton, textLinkClasses } from '@/ui';
 
 export function Component() {
@@ -39,24 +38,6 @@ export function Component() {
   const notFound = recommendation.error instanceof ApiError && recommendation.error.status === 404;
   usePageTitle(
     notFound ? t('state.notFound') : block ? `${block.id} ${block.name[locale]}` : blockId,
-  );
-  const swatch = useRef<HTMLSpanElement>(null);
-  const { reduced } = useMotion();
-  // M5 · arriving from the map: the block's swatch morphs out of where the map block was.
-  useGSAP(
-    () => {
-      const state = takeBlock(blockId);
-      const Flip = getFlip();
-      if (!state || !Flip || reduced || !swatch.current) return;
-      Flip.from(state, {
-        targets: swatch.current,
-        duration: duration.settle,
-        ease: ease.emphasized,
-        absolute: true,
-        scale: true,
-      });
-    },
-    { dependencies: [blockId] },
   );
   const source = farm.data?.sources.find((s) => s.id === block?.sourceId);
 
@@ -78,10 +59,7 @@ export function Component() {
       {back}
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-4">
-          {/* The Flip target (T16): the map block's swatch morphs into this one. */}
-          <span ref={swatch} data-flip-id={`block-${blockId}`} className="inline-flex">
-            <MoistureSwatch paw={recommendation.data?.pawNow ?? null} size={32} />
-          </span>
+          <MoistureSwatch paw={recommendation.data?.pawNow ?? null} size={32} />
           <h1 className="flex items-baseline gap-3 text-3xl font-light tracking-[-0.035em] sm:text-4xl">
             <span className="num font-normal">{blockId}</span>
             <span>{block?.name[locale]}</span>

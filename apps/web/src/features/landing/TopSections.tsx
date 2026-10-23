@@ -288,7 +288,7 @@ function SoilSection({ surface, rootZone, w30, w60, paw, threshold, target }: So
           <circle cx="10" cy="11" r="0.8" className="soil-dot" />
         </pattern>
       </defs>
-      <text x="16" y="46" className="svg-t">
+      <text x="16" y="46" className="svg-t soil-surface">
         {surface}
       </text>
       <rect x="0" y="60" width="360" height="340" className="soil-body" />
@@ -305,16 +305,18 @@ function SoilSection({ surface, rootZone, w30, w60, paw, threshold, target }: So
       <text x="240" y="206" className="svg-t hi">
         30 cm
       </text>
-      <text x="240" y="222" className="svg-t">
-        {`${D1_SENSORS[30]}% · w ${w30}`}
+      <text x="240" y="222" className="svg-t soil-val">
+        {`${D1_SENSORS[30]}%`}
+        <tspan className="soil-w">{` · w ${w30}`}</tspan>
       </text>
       <circle cx="150" cy="348" r="6" className="probe pop" />
       <line x1="156" y1="348" x2="236" y2="348" className="lead-l" />
       <text x="240" y="344" className="svg-t hi">
         60 cm
       </text>
-      <text x="240" y="360" className="svg-t">
-        {`${D1_SENSORS[60]}% · w ${w60}`}
+      <text x="240" y="360" className="svg-t soil-val">
+        {`${D1_SENSORS[60]}%`}
+        <tspan className="soil-w">{` · w ${w60}`}</tspan>
       </text>
       <text x="36" y="384" className="svg-t">
         {rootZone}

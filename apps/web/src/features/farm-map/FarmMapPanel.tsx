@@ -111,14 +111,19 @@ export function FarmMapPanel({
     );
   };
 
+  // At a limit the button says so (aria-disabled) but stays focusable: a `disabled` button
+  // drops keyboard focus to the page the moment the last press lands.
   const zoomButton = (plus: boolean) => {
+    const atLimit = plus ? zoom >= ZOOM_MAX : zoom <= ZOOM_MIN;
     const next = zoom + (plus ? ZOOM_STEP : -ZOOM_STEP);
     return (
       <button
         type="button"
         aria-label={t(plus ? 'today.zoomIn' : 'today.zoomOut')}
-        disabled={plus ? zoom >= ZOOM_MAX : zoom <= ZOOM_MIN}
-        onClick={() => onZoomChange(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, next)))}
+        aria-disabled={atLimit}
+        onClick={() => {
+          if (!atLimit) onZoomChange(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, next)));
+        }}
       >
         <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
           <path d={plus ? 'M8 3v10M3 8h10' : 'M3 8h10'} className="ic" />

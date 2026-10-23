@@ -24,6 +24,7 @@ import {
   Toggle,
 } from '@/ui';
 import { DEV_SCENARIOS, devScenario } from '@/api/client';
+import { applyTheme, storedTheme } from '@/app/theme';
 import { FarmMap } from '@/features/farm-map';
 import { MotionLab } from './dev-kitchen-motion';
 import { scenarioDecisions, scenarioSchedule } from '@/features/farm-map/scenario';
@@ -80,7 +81,7 @@ function Swatches({ names }: { names: string[] }) {
 }
 
 export function Component() {
-  const [theme, setTheme] = useState<'day' | 'night'>('day');
+  const [theme, setTheme] = useState<'day' | 'night'>(storedTheme);
   const [dir, setDir] = useState<'ltr' | 'rtl'>('ltr');
   const [view, setView] = useState<'map' | 'list'>('map');
   const [layer, setLayer] = useState(true);
@@ -90,9 +91,7 @@ export function Component() {
     const root = document.documentElement;
     if (theme === 'night') root.dataset.theme = 'night';
     else delete root.dataset.theme;
-    return () => {
-      delete root.dataset.theme;
-    };
+    return () => applyTheme(storedTheme());
   }, [theme]);
 
   return (

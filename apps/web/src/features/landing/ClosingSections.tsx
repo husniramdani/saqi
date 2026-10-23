@@ -10,7 +10,6 @@ export function LandingCta() {
   return (
     <section className="wrap" aria-labelledby="cta-h">
       <div className="cta inv">
-        <div className="cta-glow" aria-hidden="true" />
         <div className="row-sb">
           <span className="acc-m ember-m">{farm07.nightWindow.start}</span>
           <span className="lbl micro">{t('landing.cta.window')}</span>

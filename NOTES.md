@@ -177,10 +177,8 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **M1 map reveal** (`features/farm-map/mapMotion.ts`, Today only, once per session): block outlines draw (DrawSVG), water fills fade in, textures and the stale hatch follow, pipes draw, tags rise, utilities appear; about 1.9 s. Any pointerdown or keydown finishes it. The session flag (`saqi.mapRevealed`) is set on complete/skip, not at start.
 - **M2 water flow:** the dashes on tonight's pipes travel pump → block by animating `strokeDashoffset` (as on the canvas), not capsules on a MotionPath. MotionPath is therefore not loaded at all. Paused on `visibilitychange` and when the map is off-screen (IntersectionObserver). Reduced motion: still dashes.
 - **M3** counters in `Figure` (from the previous value, never 0; the first render is final). **M4** meter fills from 0 on first show, then from the previous share. **M6** schedule bars grow from the start edge, then pulse chips fade in. **M7** reasons rise one by one. **M8** hover thickens the outline and lifts the tag 2 px; the tooltip enters with a 4 px rise.
-- **M5 Flip:** "Open D-1" in the rail records the map block (`motion/flip.ts`); the Block page morphs its header swatch out of it (settle, power3.inOut, absolute + scale). Today preloads the map plugins so Flip is ready by the first click. Only a click records, so back/forward and deep links never play it.
-- **Two StrictMode traps, both fixed and commented:**
-  - `useGSAP` hands the second dev run the context the first run's cleanup reverted, so anything `context.add`-ed after an async load is killed on arrival. The reveal owns its timeline and kills it in its own cleanup.
-  - The Block page's double mount consumed the Flip state before the real mount. `takeBlock` lets the same block retake it within 300 ms, never later. Tested with fake timers.
+- **M5 Flip (removed):** the morph was built for a map click that navigated. In the cockpit a map click only selects and navigation starts from the rail, so the swatch flew out of the map wherever you clicked. The Block page now arrives as a plain route change (plan/06's own fallback); see Deviations.
+- **A StrictMode trap, fixed and commented:** `useGSAP` hands the second dev run the context the first run's cleanup reverted, so anything `context.add`-ed after an async load is killed on arrival. The reveal owns its timeline and kills it in its own cleanup.
 - **Verification note:** the Claude browser pane throttles animation frames while hidden, so GSAP looked frozen. Moments were verified by driving `gsap.ticker.tick()` by hand:
   - reveal at 500 ms: outlines drawing, fills at 0.77, tags pending; done by 2.3 s;
   - flow offset moving;
@@ -224,7 +222,7 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 
 ## Block detail (T14)
 
-- `features/moisture-chart/` (hand SVG + pure `chart.ts`), `features/recommendation/` (card, events table, manual log), `features/tasks/BlockTasks`. The page: header with the Flip swatch (`data-flip-id="block-…"`, for T16), chart panel with the stale banner, recommendation card, events, the block's tasks and the manual log.
+- `features/moisture-chart/` (hand SVG + pure `chart.ts`), `features/recommendation/` (card, events table, manual log), `features/tasks/BlockTasks`. The page: header with the block's water swatch, chart panel with the stale banner, recommendation card, events, the block's tasks and the manual log.
 - **Chart:**
   - Block PAW is the weighted mean per hour over the sensors that reported (as the engine does), so D-3's line continues on the 30 cm sensor while the dashed 60 cm line stops (no interpolation across gaps; tested).
   - Time runs with the reading direction; RTL is computed into the coordinates, so the SVG is `direction: ltr` inside (otherwise text anchors flip twice).
@@ -262,7 +260,7 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
   - The `<svg>` is `role="group"` with a summary label (`role="img"` would hide the block buttons inside it).
   - Each block is a `<g role="button" tabIndex={0} aria-pressed>` named "D-1 Khalas palms, 68 percent water, Irrigate, 90.4 cubic metres".
   - SVG can't show `:focus-visible` outlines reliably, so focus draws its own ring in the `focus` token.
-- **Motion hooks for T16:** `.layer-*` groups, `data-flip-id="block-…"` on fills, `data-scheduled` on tonight's pipes. Tonight's flow is a static dashed line until GSAP animates it.
+- **Motion hooks for T16:** `.layer-*` groups, `data-block-fill` on fills, `data-scheduled` on tonight's pipes. Tonight's flow is a static dashed line until GSAP animates it.
 - **Night's water scale runs dark → light** (charcoal → mint), as on the canvas: in Night, lighter means wetter. design.md's "darker always means wetter" holds for Day only; the token check accepts either direction as long as lightness is ordered.
 - `/dev/kitchen` shows the map with the demo night (D-3 stale). T13 puts `FarmMapPanel` on Today and wires `onSelect` to the block route.
 
@@ -289,6 +287,11 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 ## Deviations from the plan
 
 - **Arabic farm name uses Western digits** ("مزرعة 07"), not `٠٧` as in plan/03 §1, per the design.md rule.
+- **No M5 block → detail Flip.** plan/06 morphs the clicked map block into the detail header. The cockpit's map click selects instead of navigating, and the rail opens the page, so the morph had no click to come from. A plain route change is plan/06's fallback for M5.
+- **Night is the default theme** (on request; design.md's description and "what this system is not" were updated to match). `storedTheme()` falls back to night, `index.html` ships `data-theme="night"` and the night `theme-color` so the first paint is already dark, and only a stored `day` changes it. Tokens keep Day as the base with Night as the `[data-theme='night']` override. Visual baselines are now Night.
+- **No zoom controls on phones (≤ 640 px).** On a 330 px plan the zoom column sat on F-1 (D-3 in Arabic) and took its taps, and 2× shows only the farm's middle with no panning. Phones zoom the page with a pinch. From 641 px up the controls stay; at a limit they are `aria-disabled` (still focusable) rather than `disabled`.
+- **The selected block's running route belongs to "Tonight's water".** Selecting a block points the moving water at it alone (tonight's other routes stay orange and still); switching that layer off hides all of it, the selected route included.
+- **Product cards ("Four surfaces, one decision") are a feature + list, not the reference's four equal cards:** Today, where the decision is made, is the feature card; the other three surfaces sit beside it (stacked under it below 1100 px), and every card's open arrow sits with its title, so short descriptions no longer end in an empty band.
 - **`FarmSchema.utilities`** (well, RO, tank, pump, TSE inlet) comes from T04; plan/03 §2 doesn't list it. The `farms` table gains a `utilities jsonb` column to match.
 - **Added schemas:** `NewIrrigationEventSchema` (POST body, 0.1–500 m³), `TaskTemplateSchema`, `HealthSchema`, `MonthSchema`. The shared error type is exported as `ApiErrorBody`, leaving the short name `ApiError` free for the web's thrown error class.
 - **`pawNow` and `pawProjected` are nullable** (T05). When every sensor is stale there is no honest PAW, so the API sends `null` instead of a made-up 0. The web shows "No data".
@@ -330,6 +333,14 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **ESLint lints `apps/web/playwright-report/`.** It is git-ignored but missing from `eslint.config` `ignores`, so after an E2E run that records a trace (any retry), `pnpm lint` fails on thousands of errors in the trace viewer's minified assets. Delete the folder, or add `'**/playwright-report/**'` to the ignores.
 - **Schedule bar ranges in Arabic read backwards.** The bar text is `22:00 → 00:58`; in an RTL line the arrow (not a mirrored glyph) ends up pointing at the start time (`00:58 → 22:00` on screen). Use `←` in RTL or a bidi-isolated LTR run.
 - **Map tooltips are placed in px from their own measured size** (`placeTooltip` in `farm-map/geometry.ts`) and keyed per block. Don't position them with Tailwind `translate-*` again: GSAP writes `translate: none` inline when it tweens the entrance, which cancels those classes and left the card off the map on phones.
+- **Same-page links glide** (`motion/smoothScroll.ts`, GSAP ScrollTo, mounted once in `app/providers.tsx`): a capture-phase click listener, ahead of React Router's `<Link>` and ScrollRestoration, which would jump. On arrival it sets the hash so the URL, history and the focus starting point match a native jump. Arriving at `/today#attention` from another page still lands at once (ScrollRestoration scrolls to the hash first); only same-page clicks glide.
+- **Left from the 2026-10-24 UI audit** (the rest was fixed):
+  - **Memory data drifts hourly** (`repo/hourly.ts` rebuilds on the hour): between 19:55 and 20:05 GST D-1's history start moved from 22:00 to 23:00 while tonight's run still said 22:00, and D-3's "offline" age jumped 10 h → 8 h; the landing, the D-3 task and the stale banner name three different hours. Needs a data decision, not a UI fix.
+  - **2× zoom can't pan** and always centres on the farm (`zoomViewBox`); centring it on the selected block would be the next step.
+  - **Touch targets under 44 px** in the shell and cockpit (header controls 34–38 px, zoom 38, tabs 40, schedule rows 28). Fine for a mouse; the phone header keeps today's sizes.
+  - **Times without "GST"** in the decision list windows, task titles and the landing night-window chip; **uppercase micro labels** on the app map ("WELL W-1", "TSE INLET") and landing soil section; **desktop soil-section labels** at 10.8 px.
+  - **Block chart labels** ("68.0%", "65% threshold") sit on the data line; in Arabic the threshold label reads "65 عتبة%" (bidi).
+  - **Accessible-name nits:** a stray space in schedule row names ("D-1 , 22:00"); bidi isolate characters inside decision button names.
 
 ## Languages and production copy
 

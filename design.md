@@ -1,7 +1,7 @@
 ---
 version: '1.0'
 name: 'Saqi Nightfield'
-description: "Warm paper and ink for a UAE farm irrigation cockpit, with one orange for tonight's action and a sand-to-teal water scale where darker always means wetter. Geist and Geist Mono, IBM Plex Sans Arabic for Arabic (RTL). Day theme by default, graphite Night theme."
+description: "Warm paper and ink for a UAE farm irrigation cockpit, with one orange for tonight's action and a sand-to-teal water scale where darker always means wetter. Geist and Geist Mono, IBM Plex Sans Arabic for Arabic (RTL). Graphite Night theme by default, Day theme on request."
 
 # Day theme. Night overrides every colour below under x-stylebase.themes.night (same names).
 colors:
@@ -300,4 +300,4 @@ Water flow along pipes uses the `water` ease (linear). Staggers: list 0.04 s, re
 
 ## What this system is not
 
-Not a dark "command centre" by default, not glassy, not gradient, not a grid of KPI cards, not traffic lights, not an AI chat product. If a screen could belong to any startup, it is wrong.
+Not a neon "command centre", not glassy, not gradient, not a grid of KPI cards, not traffic lights, not an AI chat product. Night is graphite and calm, not dark for drama. If a screen could belong to any startup, it is wrong.

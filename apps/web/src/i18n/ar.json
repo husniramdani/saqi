@@ -56,7 +56,7 @@
     "volume": "الحجم",
     "barDeficitNote": "· ري ناقص",
     "row": {
-      "offline": "{depth} متوقف منذ {hours} س",
+      "offline": "{depth} متوقف منذ {hours}\u00a0س",
       "pulses": "غدًا {hours}",
       "none": "لا ري الليلة",
       "saves": "يوفّر {m3} m³",
@@ -94,7 +94,7 @@
     "substrateSensor": "حساس الركيزة",
     "coco": "ألياف جوز الهند",
     "sensorWeight": "الوزن {weight} · محاكاة",
-    "sensorStale": "لا بيانات منذ {hours} س · قديم",
+    "sensorStale": "لا بيانات منذ {hours}\u00a0س · قديم",
     "offline": "متوقف",
     "confidence": "ثقة {level}",
     "chart": {
@@ -287,7 +287,7 @@
     "notFoundBody": "في مزرعة 07 سبع قطع، من D-1 إلى G-2. اختر واحدة من خريطة اليوم، أو افتح مهام الحقل لليوم.",
     "home": "العودة إلى اليوم",
     "noData": "لا بيانات",
-    "stale": "قديمة · {hours} س"
+    "stale": "قديمة · {hours}\u00a0س"
   },
   "reason": {
     "PAW_NOW": "ماء التربة الآن {paw}%",
@@ -299,7 +299,7 @@
     "SAVES_VS_FIXED": "يوفّر {m3} m³ مقارنة بالجدول الثابت",
     "GREENHOUSE_PULSES": "{count, plural, one {نبضة واحدة} two {نبضتان} few {{count} نبضات} many {{count} نبضة} other {{count} نبضة}} بحجم {m3} m³ غدًا",
     "BUDGET_DEFICIT": "خُفّضت إلى {factor}× من الكمية المعتادة لأن ميزانية المياه هذا الشهر ضيقة",
-    "SENSOR_STALE": "حساس {sensor} لم يرسل بيانات منذ {hours} س",
+    "SENSOR_STALE": "حساس {sensor} لم يرسل بيانات منذ {hours}\u00a0س",
     "LOW_CONFIDENCE": "لا بيانات حديثة من الحساسات، لذا افحص القطعة يدويًا",
     "WINDOW_ASSIGNED": "يعمل {start} ← {end} GST",
     "WINDOW_OVERFLOW": "خُفّض بمقدار {cutM3} m³ ليتسع في نافذة الليل",
@@ -378,6 +378,7 @@
   "landing": {
     "metaTitle": "ساقي · قرارات الري لهذه الليلة",
     "sample": "مثال",
+    "workedExample": "مثال توضيحي",
     "simulated": "حساسات محاكاة",
     "tomorrow": "غدًا",
     "header": {
@@ -520,7 +521,7 @@
         "map": "خريطة",
         "list": "قائمة"
       },
-      "offline": "الحساس متوقف {hours} س",
+      "offline": "الحساس متوقف {hours}\u00a0س",
       "mapLabel": "خريطة مزرعة 07. {blocks} استخدم عرض القائمة لجدول.",
       "summaryPaw": "{paw} بالمئة",
       "summaryOffline": "الحساس متوقف",
@@ -534,7 +535,7 @@
         "window": "النافذة (GST)",
         "freshOnly": "{paw} · 30 سم فقط",
         "checkSensor": "تخطٍّ · افحص الحساس",
-        "saves": "0 · يوفر {volume}"
+        "saves": "0 · يوفّر {volume} m³"
       },
       "noteTitle": "قطع تُروى الليلة",
       "note": "تبدأ {first} أولًا، وتليها {second} عند {at}، لأنهما معًا تتجاوزان مضخة {pump} m³/h. أما القطع الخمس الأخرى فتتخطى أو تأخذ نبضات غدًا.",
@@ -581,7 +582,7 @@
       "reasons": {
         "paw": "الماء المتاح للنبات الآن",
         "substrate": "ماء الوسط الزراعي الآن",
-        "et0": "ET₀ غدًا · Open-Meteo",
+        "et0": "ET₀ غدًا · مثال توضيحي",
         "crop": "استهلاك المحصول، Kc {kc}",
         "projected": "المتوقع بحلول الصباح · العتبة {threshold}%",
         "refill": "إعادة الملء إلى {target}% · صافٍ ← إجمالي بكفاءة {efficiency}%",

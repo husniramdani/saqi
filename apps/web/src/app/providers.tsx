@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { i18n } from '@/i18n';
-import { MotionProvider } from '@/motion';
+import { MotionProvider, useSmoothAnchors } from '@/motion';
 import { Toaster } from './Toaster';
 import { useOutboxSync } from './useOutboxSync';
 
@@ -15,7 +15,10 @@ export function Providers({ children }: { children: ReactNode }) {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
         <RuntimeEffects />
-        <MotionProvider>{children}</MotionProvider>
+        <MotionProvider>
+          <MotionEffects />
+          {children}
+        </MotionProvider>
       </QueryClientProvider>
     </I18nextProvider>
   );
@@ -25,4 +28,10 @@ export function Providers({ children }: { children: ReactNode }) {
 function RuntimeEffects() {
   useOutboxSync();
   return <Toaster />;
+}
+
+/** App-wide motion that needs the reduced-motion setting: same-page links glide. */
+function MotionEffects() {
+  useSmoothAnchors();
+  return null;
 }

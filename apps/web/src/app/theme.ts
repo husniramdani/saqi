@@ -3,12 +3,12 @@ import { colors, nightColors } from '@saqi/tokens';
 export type Theme = 'day' | 'night';
 const STORAGE_KEY = 'saqi.theme';
 
-/** Day is the default (design.md); Night is the graphite dashboard theme. */
+/** Night (graphite) is the default; Day (warm paper and ink) only when chosen. */
 export function storedTheme(): Theme {
   try {
-    return localStorage.getItem(STORAGE_KEY) === 'night' ? 'night' : 'day';
+    return localStorage.getItem(STORAGE_KEY) === 'day' ? 'day' : 'night';
   } catch {
-    return 'day'; // storage blocked
+    return 'night'; // storage blocked
   }
 }
 

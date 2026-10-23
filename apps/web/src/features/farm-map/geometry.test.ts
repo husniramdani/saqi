@@ -7,8 +7,8 @@ import {
   placeTooltip,
   readingOrder,
   scheduledTonight,
-  showUtilityLabels,
   tagFontSize,
+  utilityLabelSize,
   ZOOM_MAX,
   ZOOM_MIN,
   ZOOM_STEP,
@@ -37,9 +37,16 @@ describe('farm map geometry', () => {
     expect(Math.min(units, 40) * scale >= 8).toBe(true);
   });
 
-  it('hides utility labels once they would drop under 12 px', () => {
-    expect(showUtilityLabels(1)).toBe(true);
-    expect(showUtilityLabels(0.6)).toBe(false);
+  it.each([
+    [1, 17],
+    [0.64, 18.75],
+    [0.5, 24],
+  ])('utility labels at scale %d are %d units: never under 12 px on screen', (scale, units) => {
+    expect(utilityLabelSize(scale)).toBeCloseTo(units, 5);
+  });
+
+  it('drops utility labels where 12 px would make the strip collide (a phone-sized map)', () => {
+    expect(utilityLabelSize(0.33)).toBeNull();
   });
 
   it('walks blocks in reading order, mirrored within rows for RTL', () => {

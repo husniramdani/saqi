@@ -19,7 +19,7 @@ describe('panel states', () => {
 
   it('stale: a word and a hatch, never colour alone', () => {
     const { container } = render(<StaleTag hours={9} />);
-    expect(container.textContent).toContain('Stale · 9 h');
+    expect(container.textContent).toContain('Stale · 9\u00a0h');
     expect(container.querySelector('pattern')).not.toBeNull();
   });
 

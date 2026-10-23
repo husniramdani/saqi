@@ -18,7 +18,7 @@ import { SchedulePanel } from '@/features/schedule/SchedulePanel';
 import { WeatherSection } from '@/features/weather/WeatherSection';
 import { useLocale } from '@/i18n';
 import { formatDateGst, formatM3, formatNumber, formatTimeGst } from '@/i18n/format';
-import { loadMapPlugins, useMotion } from '@/motion';
+import { glideTo, useMotion } from '@/motion';
 import { Skeleton } from '@/ui';
 import '@/features/cockpit/cockpit.css';
 
@@ -54,10 +54,6 @@ export function Component() {
   const tabBody = useRef<HTMLDivElement>(null);
   const { reduced, forceReduced } = useMotion();
 
-  // The map plugins (DrawSVG, Flip) load with Today, so the block Flip is ready by the first click.
-  useEffect(() => {
-    void loadMapPlugins();
-  }, []);
   const p = plan.data;
   const f = farm.data;
   const ready = Boolean(p && f);
@@ -69,9 +65,9 @@ export function Component() {
   useTabSwitch(tabBody, tab, locale, reduced);
   useSelectionFade(root, selected, reduced);
 
-  // The attention link (#attention) opens its view (on that
-  // navigation, while rendering) and takes focus there once it exists: a frame later, so the
-  // shell's route-change focus can't undo it.
+  // The attention link (#attention) opens its view (on that navigation, while rendering) and
+  // takes focus there once it exists: a frame later, so the shell's route-change focus can't
+  // undo it. The page glides to it (one column) rather than jumping with the focus.
   const [arrived, setArrived] = useState(visit);
   if (arrived !== visit) {
     setArrived(visit);
@@ -86,10 +82,11 @@ export function Component() {
       if (!target) return;
       reached.current = visit;
       if (!target.hasAttribute('tabindex')) target.tabIndex = -1;
-      target.focus();
+      target.focus({ preventScroll: true });
+      void glideTo(target, reduced);
     });
     return () => cancelAnimationFrame(frame);
-  }, [hash, visit, tab, ready]);
+  }, [hash, visit, tab, ready, reduced]);
 
   const failed = (
     <div className="p-pad">
@@ -196,7 +193,8 @@ export function Component() {
               <span className="lbl">{t('today.blocksSub', { count: p.decisions.length })}</span>
             ) : null}
           </div>
-          <span className="chip">{t('today.waterNow')}</span>
+          {/* Names the % column below; a label, so it doesn't look like a control that does nothing. */}
+          <span className="lbl">{t('today.waterNow')}</span>
         </div>
         <div className="scroll">
           {plan.isError ? (

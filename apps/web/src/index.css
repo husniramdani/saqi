@@ -12,15 +12,27 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Arabic leads with IBM Plex Sans Arabic; a touch more line height for the script. */
-  :lang(ar) {
+  /* Arabic leads with IBM Plex Sans Arabic and a touch more line height for the script. Set on
+     the root and inherited: as a plain `:lang(ar)` rule it matched every element, so spans lost
+     their parent's line height and large Arabic headings and figures collapsed onto the text
+     below. Geist Mono has no Arabic, so words inside mono runs fall through to the Arabic face
+     (not a system monospace that breaks their joins); digits stay Geist Mono. */
+  html:lang(ar) {
     font-family: var(--font-arabic);
     line-height: calc(var(--text-base--line-height) + 2px);
+    --font-mono: 'Geist Mono', var(--font-arabic);
   }
 
   :focus-visible {
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
+  }
+
+  /* Route changes focus the new page's <h1> (tabindex -1) so its name is read out. It is not a
+     control and can't be activated, so it draws no ring; after a click Chrome would otherwise
+     count that script focus as visible and box the page title. */
+  h1[tabindex='-1']:focus {
+    outline: none;
   }
 }
 

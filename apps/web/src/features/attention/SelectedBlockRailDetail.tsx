@@ -8,7 +8,7 @@ import { RailMoistureChart } from '@/features/moisture-chart/RailMoistureChart';
 import { HOUR_MS } from '@/features/moisture-chart/chart';
 import { useLocale } from '@/i18n';
 import { formatNumber, formatPct } from '@/i18n/format';
-import { captureBlock, duration, ease, gsap, stagger, useGSAP, useMotion } from '@/motion';
+import { duration, ease, gsap, stagger, useGSAP, useMotion } from '@/motion';
 import { Skeleton } from '@/ui';
 
 const CONFIDENCE_CHIP: Record<Confidence, string> = {
@@ -131,7 +131,6 @@ export function SelectedBlockRailDetail({
       <section aria-label={t('block.chartPanel')} className="chart">
         <Link
           to={`/blocks/${d.blockId}`}
-          onClick={() => captureBlock(d.blockId)}
           className="chart-link"
           aria-label={t('today.openBlock', { code: d.blockId })}
         />

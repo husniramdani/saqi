@@ -18,8 +18,10 @@ export function ProductSection() {
         </div>
         <p className="lead">{t('landing.product.lead')}</p>
       </div>
+      {/* Today is where the one decision is made: the feature card. The other three surfaces
+          serve it and sit beside it as a list (stacked under it on narrower screens). */}
       <div className="cards4">
-        <SurfaceCard index="01" card="today" to="/today" visual={<MiniMap />} />
+        <SurfaceCard index="01" card="today" to="/today" visual={<MiniMap />} feature />
         <SurfaceCard index="02" card="block" to="/blocks/D-1" visual={<MiniChart />} />
         <SurfaceCard
           index="03"
@@ -61,12 +63,13 @@ interface CardProps {
   card: 'today' | 'block' | 'field' | 'making';
   to: string;
   visual: ReactNode;
+  feature?: boolean;
 }
 
-function SurfaceCard({ index, card, to, visual }: CardProps) {
+function SurfaceCard({ index, card, to, visual, feature = false }: CardProps) {
   const { t } = useTranslation();
   return (
-    <article className="scard rv">
+    <article className={feature ? 'scard scard-feature rv' : 'scard rv'}>
       <div className="scard-viz" aria-hidden="true">
         {visual}
       </div>
@@ -74,12 +77,15 @@ function SurfaceCard({ index, card, to, visual }: CardProps) {
         <span className="lbl micro">
           {`${index} · ${t(`landing.product.cards.${card}.surface`)}`}
         </span>
-        <h3>{t(`landing.product.cards.${card}.title`)}</h3>
-        <p>{t(`landing.product.cards.${card}.body`)}</p>
-        <div className="scard-f">
-          <Link className="rbtn" to={to} aria-label={t(`landing.product.cards.${card}.open`)}>
-            <ArrowIcon />
-          </Link>
+        {/* The way in sits with the title, so a short description never ends in an empty band. */}
+        <div className="scard-main">
+          <div className="scard-t">
+            <h3>{t(`landing.product.cards.${card}.title`)}</h3>
+            <Link className="rbtn" to={to} aria-label={t(`landing.product.cards.${card}.open`)}>
+              <ArrowIcon />
+            </Link>
+          </div>
+          <p>{t(`landing.product.cards.${card}.body`)}</p>
         </div>
       </div>
     </article>

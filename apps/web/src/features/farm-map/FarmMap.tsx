@@ -10,11 +10,11 @@ import {
   nextInOrder,
   readingOrder,
   scheduledTonight,
-  showUtilityLabels,
   tagFontSize,
   TREE_GRID,
   UTILITY_LINES,
   VIEW,
+  utilityLabelSize,
   zoomRect,
   zoomViewBox,
   type Rect,
@@ -37,7 +37,7 @@ interface FarmMapProps {
   zoom?: number;
   /**
    * `canvas`: Today's map surface (design/dashboard.html): no ground of its own (the canvas grid
-   * shows through), reference-size tags and the utility labels at every size.
+   * shows through) and the utility labels in the canvas's own wording.
    */
   variant?: 'default' | 'canvas';
 }
@@ -124,23 +124,25 @@ export function FarmMap({
   const byId = new Map(decisions.map((d) => [d.blockId, d]));
   const tonight = scheduledTonight(schedule);
   const canvas = variant === 'canvas';
-  const font = canvas ? 22 : tagFontSize(scale);
+  // Tags never under 12.5 px on screen, so a phone-sized canvas grows them (22 units on desktop).
+  const font = tagFontSize(scale);
+  const labelSize = utilityLabelSize(scale);
   const dash = canvas ? 'var(--flow)' : 'var(--color-tag-text)';
   // The water points at the selection: with a block selected, only its route runs, pump →
   // block; tonight's other routes stay orange and still. Its own route is drawn when tonight's
-  // flow doesn't already show it, and stays with the flow layer off: like the outline, it is a
-  // selection cue. Nothing selected: all of tonight's routes run.
+  // routes don't include it. All of it is "Tonight's water", so that layer switch hides it all.
+  // Nothing selected: all of tonight's routes run.
   const selectedBlock = selectedId ? blocks.find(({ block }) => block.id === selectedId) : undefined;
-  const shownTonight = Boolean(selectedBlock && layers.flow && tonight.has(selectedBlock.block.id));
-  const selectedRoute = selectedBlock && !shownTonight ? selectedBlock : undefined;
-  const runs = (id: string) => (selectedBlock ? selectedBlock.block.id === id : layers.flow);
-  const runningKey = selectedRoute
-    ? `route:${selectedRoute.block.id}`
-    : selectedBlock
-      ? `tonight:${selectedBlock.block.id}`
-      : layers.flow
-        ? [...tonight].join(',')
-        : '';
+  const selectedRoute =
+    selectedBlock && !tonight.has(selectedBlock.block.id) ? selectedBlock : undefined;
+  const runs = (id: string) => !selectedBlock || selectedBlock.block.id === id;
+  const runningKey = !layers.flow
+    ? ''
+    : selectedRoute
+      ? `route:${selectedRoute.block.id}`
+      : selectedBlock
+        ? `tonight:${selectedBlock.block.id}`
+        : [...tonight].join(',');
   useMapReveal(scope, reveal);
   usePipeFlow(scope, runningKey);
   useHoverLift(scope, active);
@@ -321,7 +323,6 @@ export function FarmMap({
                 <rect
                   {...rect}
                   rx={10}
-                  data-flip-id={`block-${block.id}`}
                   data-block-fill={block.id}
                   fill={layers.paw ? moistureToken(d?.pawNow ?? null) : 'var(--color-surface-well)'}
                   stroke="var(--color-block-edge)"
@@ -397,24 +398,16 @@ export function FarmMap({
               .filter(({ block }) => tonight.has(block.id))
               .map(({ block }) => (
                 <g key={block.id} data-scheduled={block.id}>
-                  {waterPipe(block.geometry.pipePath, block.id, dash, runs(block.id) && !selectedRoute)}
+                  {waterPipe(block.geometry.pipePath, block.id, dash, runs(block.id))}
                 </g>
               ))}
+            {selectedRoute ? (
+              <g className="layer-route" data-route={selectedRoute.block.id}>
+                {waterPipe(selectedRoute.block.geometry.pipePath, selectedRoute.block.id, dash, true)}
+              </g>
+            ) : null}
           </g>
         </g>
-
-        {selectedRoute ? (
-          <g
-            className="layer-route"
-            data-route={selectedRoute.block.id}
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            pointerEvents="none"
-          >
-            {waterPipe(selectedRoute.block.geometry.pipePath, selectedRoute.block.id, dash, true)}
-          </g>
-        ) : null}
 
         <g {...layer('utilities')}>
           <g className="layer-utilities" pointerEvents="none">
@@ -443,7 +436,7 @@ export function FarmMap({
                 />
               ),
             )}
-            {canvas || showUtilityLabels(scale)
+            {labelSize
               ? farm.utilities.map((u) => {
                   const cx = u.shape === 'circle' ? u.x : u.x + u.width / 2;
                   return (
@@ -454,7 +447,7 @@ export function FarmMap({
                       x={cx}
                       y={canvas ? (u.kind === 'tse' ? 598 : 592) : 594}
                       textAnchor="middle"
-                      fontSize={17}
+                      fontSize={labelSize}
                       // Mono for Latin codes; Arabic-script words need their own font to join.
                       className={isRtl(locale) ? undefined : 'font-mono'}
                       fill={
@@ -540,8 +533,8 @@ export function FarmMap({
                     <text
                       x={x}
                       y={y}
-                      // The canvas sets its 22-unit codes 8 units under the tag's middle.
-                      dy={canvas ? 8 : '0.35em'}
+                      // The canvas sets its codes 8/22 of their size under the tag's middle.
+                      dy={canvas ? font * (8 / 22) : '0.35em'}
                       textAnchor="middle"
                       fontSize={font}
                       fontWeight={500}

@@ -21,7 +21,6 @@ export function HeroSection() {
   return (
     <section id="top" className="wrap">
       <div className="hero">
-        <div className="hero-glow" aria-hidden="true" />
         <svg className="hero-topo" viewBox="0 0 900 600" aria-hidden="true">
           {TOPO.map((d) => (
             <path key={d} className="topo" d={d} />
@@ -34,7 +33,6 @@ export function HeroSection() {
             </div>
           </div>
         </div>
-        <div className="hero-scrim" aria-hidden="true" />
 
         <div className="hero-top">
           <span className="acc-m ember-m hero-fade">{t('landing.hero.read')}</span>
@@ -77,6 +75,8 @@ export function HeroSection() {
           </div>
 
           <aside className="hero-card inv" aria-label={t('landing.hero.summaryLabel')}>
+            {/* The cockpit plans the live night; this card is the fixed example the page explains. */}
+            <span className="chip hc-example">{t('landing.workedExample')}</span>
             <div className="row-sb">
               <span className="lbl micro">{t('landing.hero.summaryTitle')}</span>
               <span className="lbl mono micro" dir="ltr">

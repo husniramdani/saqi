@@ -203,6 +203,10 @@
   align-items: center;
   gap: 8px;
 }
+/* A layout-free group on wider screens, so the pills sit in the bar exactly as before. */
+.sq-app .top-status {
+  display: contents;
+}
 .sq-app .tb-pill {
   display: inline-flex;
   align-items: center;
@@ -299,24 +303,41 @@
     display: block;
   }
 }
-@media (max-width: 640px) {
-  .sq-app .top-end .tb-pill.fresh {
-    display: none;
-  }
-  /* Still says "simulated" (CLAUDE.md §6): the dashed dot stays, the words go to screen readers. */
-  .sq-app .top-end .tb-pill.simb {
-    padding-inline: 14px;
-  }
-  /* Phones: the bar wraps rather than scroll the page sideways (Today included). */
-  .sq-app :is(.top, .top-end) {
+@media (max-width: 960px) {
+  /*
+   * Below 960 px the one-row bar no longer fits (English needs ~916 px, Arabic ~824 px, plus
+   * room for a two-digit attention count), so brand and controls share the first row and the
+   * data badges take a full-width row beneath. "Simulated sensors" and the freshness stay in
+   * words (CLAUDE.md §6) and the bar never scrolls the page sideways (Today included).
+   */
+  .sq-app .top {
     flex-wrap: wrap;
-    row-gap: 8px;
+    column-gap: 8px;
+    row-gap: 6px;
+  }
+  .sq-app .logo {
+    margin-inline-end: auto;
   }
   .sq-app .top-end {
-    margin-inline-start: auto;
-    justify-content: flex-end;
+    display: contents;
   }
-  /* The farm name is already on the page; the brand alone keeps the bar to two rows at most. */
+  .sq-app .top-status {
+    order: 1;
+    flex-basis: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  /* Read-only badges, not targets, so they can sit lower than the 38 px controls. */
+  .sq-app .top-status .tb-pill {
+    gap: 6px;
+    min-height: 30px;
+    padding-inline: 10px;
+    font-size: 12.5px;
+  }
+}
+@media (max-width: 640px) {
+  /* The farm name is already on the page; the brand alone keeps the controls on the first row. */
   .sq-app .logo .lbl {
     display: none;
   }

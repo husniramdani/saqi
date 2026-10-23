@@ -27,6 +27,13 @@
   line-height: 1.55;
   overflow-x: hidden;
 }
+/* Geist and Geist Mono have no Arabic glyphs. Arabic words fall through to Plex Sans Arabic
+   (not the system face), so letters join, while digits and Latin codes keep the Latin faces. */
+.landing:lang(ar),
+.landing :lang(ar) {
+  --f-sans: 'Geist', var(--f-ar);
+  --f-mono: 'Geist Mono', var(--f-ar);
+}
 :where(:root:not([data-theme='night'])) .landing {
   --bg: var(--color-background);
   --panel: var(--color-surface);
@@ -689,18 +696,6 @@
 :where([data-theme='night']) .landing .hero {
   background-color: var(--n900);
 }
-.landing .hero-glow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: -2;
-}
-:where(:root:not([data-theme='night'])) .landing .hero-glow {
-  background: radial-gradient(50% 46% at 72% 40%, rgba(232, 118, 45, 0.14), transparent 72%);
-}
-:where([data-theme='night']) .landing .hero-glow {
-  background: radial-gradient(48% 42% at 70% 40%, rgba(240, 138, 62, 0.17), transparent 72%);
-}
 .landing .hero-stage {
   position: absolute;
   inset-inline-end: -9%;
@@ -716,44 +711,6 @@
 }
 [dir='rtl'] .landing .hero-tilt {
   transform: rotateX(52deg) rotateZ(17deg);
-}
-.landing .hero-scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-}
-:where(:root:not([data-theme='night'])) .landing .hero-scrim {
-  background: linear-gradient(
-    90deg,
-    #ffffff 20%,
-    rgba(255, 255, 255, 0.8) 42%,
-    rgba(255, 255, 255, 0) 66%
-  );
-}
-:where([data-theme='night']) .landing .hero-scrim {
-  background: linear-gradient(
-    90deg,
-    #0f1c16 18%,
-    rgba(15, 28, 22, 0.72) 42%,
-    rgba(15, 28, 22, 0) 66%
-  );
-}
-[dir='rtl']:where(:not([data-theme='night'])) .landing .hero-scrim {
-  background: linear-gradient(
-    270deg,
-    #ffffff 20%,
-    rgba(255, 255, 255, 0.8) 42%,
-    rgba(255, 255, 255, 0) 66%
-  );
-}
-[dir='rtl']:where([data-theme='night']) .landing .hero-scrim {
-  background: linear-gradient(
-    270deg,
-    #0f1c16 18%,
-    rgba(15, 28, 22, 0.72) 42%,
-    rgba(15, 28, 22, 0) 66%
-  );
 }
 .landing .hero-top {
   display: flex;
@@ -804,8 +761,16 @@
   overflow: hidden;
   padding-bottom: 0.06em;
 }
+/* Each headline line sits on the hero's own solid colour, so the plan behind never lowers contrast. */
 .landing .hl-line > span {
   display: block;
+  width: fit-content;
+}
+:where(:root:not([data-theme='night'])) .landing .hl-line > span {
+  background-color: var(--panel);
+}
+:where([data-theme='night']) .landing .hl-line > span {
+  background-color: var(--n900);
 }
 .landing .hero-sub {
   font-family: var(--f-mono);
@@ -847,10 +812,12 @@
   box-shadow: 0 24px 48px -24px rgba(22, 32, 27, 0.5);
 }
 :where([data-theme='night']) .landing .hero-card {
-  background-color: rgba(11, 20, 16, 0.82);
+  background-color: var(--n950);
   border: 1px solid var(--line2);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+}
+/* Labels the card as the page's fixed example; the cockpit shows the live night. */
+.landing .hero-card .hc-example {
+  align-self: flex-start;
 }
 .landing .hero-foot {
   text-align: center;
@@ -1299,7 +1266,8 @@
   justify-content: space-between;
 }
 :where([data-theme='night']) .landing .ember-card .micro {
-  color: rgba(15, 28, 21, 0.72);
+  /* 0.72 measures 4.27:1 on the ember; 0.82 gives 5.23:1, as the Day card does. */
+  color: rgba(15, 28, 21, 0.82);
 }
 :where([data-theme='night']) .landing .ember-card blockquote {
   margin: 0;
@@ -1462,10 +1430,27 @@
 :where([data-theme='night']) .landing .g-tgt {
   stroke: #eeebe1;
 }
+/* Product: Today, where the one decision is made, is the feature card; Block detail, Field
+   companion and Making-of serve it as a list. Desktop: the feature at the inline start, the
+   list beside it. 641-1099 px: the feature on top, the list as full-width rows. Phones: one
+   column of upright cards. */
 .landing .cards4 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(272px, 100%), 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+}
+@media (min-width: 1100px) {
+  .landing .cards4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, auto);
+  }
+  .landing .scard-feature {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+  .landing .scard:not(.scard-feature) {
+    grid-column: 2;
+  }
 }
 .landing .scard {
   border: 1px solid var(--line);
@@ -1490,6 +1475,15 @@
   place-items: center;
   padding: 18px;
 }
+/* The feature's tile takes whatever height the list beside it needs; the plan stays whole. */
+.landing .scard-feature .scard-viz {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 260px;
+}
+.landing .scard-feature .scard-viz > svg {
+  max-height: 340px;
+}
 :where(:root:not([data-theme='night'])) .landing .scard-viz {
   background-color: var(--raised);
 }
@@ -1502,6 +1496,50 @@
   flex-direction: column;
   gap: 8px;
   flex: 1;
+}
+.landing .scard-feature .scard-b {
+  flex: 0 0 auto;
+  padding: 22px 14px 12px;
+}
+.landing .scard-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.landing .scard-t {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.landing .scard-t .rbtn {
+  flex: none;
+}
+/* Chart labels in the Block detail tile: 13 units is about 14 px on a phone's upright card;
+   the narrower tile from 641 px up draws at about 0.67, so 18 units keeps them at 12 px. */
+.landing .scard-viz .svg-t {
+  font-size: 13px;
+}
+@media (min-width: 641px) {
+  .landing .scard-viz .svg-t {
+    font-size: 18px;
+  }
+}
+/* From tablet up, the list cards lie on their side: tile at the inline start, text beside it. */
+@media (min-width: 641px) {
+  .landing .scard:not(.scard-feature) {
+    flex-direction: row;
+  }
+  .landing .scard:not(.scard-feature) .scard-viz {
+    flex: 0 0 clamp(200px, 38%, 260px);
+    height: auto;
+    min-height: 168px;
+  }
+  .landing .scard:not(.scard-feature) .scard-b {
+    justify-content: center;
+    padding-block: 14px 12px;
+    padding-inline: 22px 12px;
+  }
 }
 .landing .scard-b h3 {
   font-size: 24px;
@@ -1516,13 +1554,6 @@
 }
 :where([data-theme='night']) .landing .scard-b p {
   color: var(--sage);
-}
-.landing .scard-f {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-top: auto;
-  padding-top: 14px;
 }
 :where(:root:not([data-theme='night'])) .landing .mm-blk {
   stroke: #ffffff;
@@ -2895,18 +2926,6 @@
   background-color: var(--n900);
   border: 1px solid var(--line);
 }
-.landing .cta-glow {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-}
-:where(:root:not([data-theme='night'])) .landing .cta-glow {
-  background: radial-gradient(40% 55% at 50% 100%, rgba(240, 138, 62, 0.24), transparent 75%);
-}
-:where([data-theme='night']) .landing .cta-glow {
-  background: radial-gradient(40% 55% at 50% 100%, rgba(240, 138, 62, 0.22), transparent 75%);
-}
 .landing .cta-hl {
   font-size: clamp(52px, 8vw, 124px);
   font-weight: 300;
@@ -3056,18 +3075,6 @@
   :where([data-theme='night']) .landing .hero-stage {
     opacity: 0.55;
   }
-  :where(:root:not([data-theme='night'])) .landing .hero-scrim {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.9) 60%);
-  }
-  :where([data-theme='night']) .landing .hero-scrim {
-    background: linear-gradient(180deg, rgba(15, 28, 22, 0.2), rgba(15, 28, 22, 0.85) 60%);
-  }
-  [dir='rtl']:where(:not([data-theme='night'])) .landing .hero-scrim {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.9) 60%);
-  }
-  [dir='rtl']:where([data-theme='night']) .landing .hero-scrim {
-    background: linear-gradient(180deg, rgba(15, 28, 22, 0.2), rgba(15, 28, 22, 0.85) 60%);
-  }
   .landing .hero-main {
     grid-template-columns: minmax(0, 1fr);
     padding-top: 160px;
@@ -3201,6 +3208,34 @@
   }
   .landing .hero-stage {
     top: 4%;
+  }
+  /*
+   * The 1000-unit farm plan renders at about a third of its size on a phone. Block codes grow
+   * to stay at 12 px or more; tag values and utility names hide (the List view carries them).
+   */
+  .landing .farm-map .pl-code {
+    font-size: 42px;
+    transform: translateY(16px);
+  }
+  .landing .farm-map :is(.pl-val, .u-lbl) {
+    display: none;
+  }
+  /*
+   * The soil section renders at about 0.7 scale: its labels grow to stay at 12 px or more, and
+   * the surface caption and sensor weights hide to leave them room.
+   */
+  .landing .band-viz .svg-t {
+    font-size: 18px;
+  }
+  .landing .band-viz :is(.soil-surface, .soil-w) {
+    display: none;
+  }
+  .landing .band-viz .soil-val {
+    transform: translateY(6px);
+  }
+  /* The sensor tile's offline label, in the hatched half, at 12 px or more down to 360 px. */
+  .landing .st-off {
+    font-size: 13px;
   }
   /* 72 px either side (144 px between sections) is a desktop rhythm; a phone reads it as empty. */
   .landing .sec {
@@ -3365,13 +3400,14 @@
   direction: ltr;
 }
 
-/* Arabic: keep the landing line heights (the base layer sets a fixed one per element) and
-   never track Arabic script. */
-.landing :where(:lang(ar)) {
-  line-height: inherit;
-}
+/* Arabic: never track the script. */
 :root:lang(ar) .landing * {
   letter-spacing: 0;
+}
+/* Arabic dots and vowel marks sit below the Latin descent; the headline's clipped reveal lines
+   need the script's full height or they cut them off. */
+:root:lang(ar) .landing .hl {
+  line-height: 1.25;
 }
 
 .landing-skip {

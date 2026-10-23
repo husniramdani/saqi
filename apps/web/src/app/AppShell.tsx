@@ -76,16 +76,19 @@ export function AppShell() {
         </nav>
 
         <div className="top-end">
-          <span className="tb-pill simb">
-            <span aria-hidden="true" className="dot sim" />
-            <span className="max-[640px]:sr-only">{t('shell.simulated')}</span>
-          </span>
-          {lastUpdated > 0 ? (
-            <span className="tb-pill fresh">
-              <span aria-hidden="true" className="dot live" />
-              <UpdatedLabel time={formatTimeGst(new Date(lastUpdated).toISOString(), locale)} />
+          {/* The honest data badges; narrow screens give them a row of their own (shell.css). */}
+          <div className="top-status">
+            <span className="tb-pill simb">
+              <span aria-hidden="true" className="dot sim" />
+              <span>{t('shell.simulated')}</span>
             </span>
-          ) : null}
+            {lastUpdated > 0 ? (
+              <span className="tb-pill fresh">
+                <span aria-hidden="true" className="dot live" />
+                <UpdatedLabel time={formatTimeGst(new Date(lastUpdated).toISOString(), locale)} />
+              </span>
+            ) : null}
+          </div>
           {attention ? (
             <Link to="/today#attention" className="tb-pill">
               <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true">

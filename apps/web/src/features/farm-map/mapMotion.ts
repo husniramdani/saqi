@@ -2,8 +2,8 @@ import { useRef, type RefObject } from 'react';
 import { duration, ease, gsap, loadMapPlugins, stagger, useGSAP, useMotion } from '@/motion';
 import { MAP_LAYER_KEYS, type MapLayers } from './layers';
 
-/** The base network, tonight's routes and the selected block's route draw in together. */
-const PIPES = '.layer-pipes path, .layer-flow path, .layer-route path';
+/** The base network and tonight's routes (the selected block's included) draw in together. */
+const PIPES = '.layer-pipes path, .layer-flow path';
 
 const REVEALED = 'saqi.mapRevealed';
 

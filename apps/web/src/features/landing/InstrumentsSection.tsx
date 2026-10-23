@@ -362,7 +362,7 @@ function SensorTile() {
           points="0,52 30,54 60,57 90,59 120,49 150,51 180,53 186,54"
           className="st-line st-60 draw"
         />
-        <text x="243" y="56" className="svg-t em" textAnchor="middle">
+        <text x="243" y="56" className="svg-t em st-off" textAnchor="middle">
           {t('landing.instruments.sensorOffline')}
         </text>
       </svg>

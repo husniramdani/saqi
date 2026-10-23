@@ -11,9 +11,10 @@ gsap.registerPlugin(useGSAP);
 let mapPlugins: Promise<void> | null = null;
 let flip: (typeof import('gsap/Flip'))['Flip'] | null = null;
 let storyPlugins: Promise<StoryPlugins> | null = null;
+let scrollPlugin: Promise<void> | null = null;
 
 /**
- * DrawSVG and Flip: Today's map reveal, the block Flip and Field's task done. (Water flow animates the stroke
+ * DrawSVG and Flip: Today's map reveal and Field's task done. (Water flow animates the stroke
  * offset, as on the Nightfield canvas, so MotionPath isn't needed.)
  */
 export function loadMapPlugins(): Promise<void> {
@@ -40,6 +41,14 @@ export function loadStoryPlugins(): Promise<StoryPlugins> {
     },
   );
   return storyPlugins;
+}
+
+/** ScrollTo: same-page links glide to their section instead of jumping. */
+export function loadScrollPlugin(): Promise<void> {
+  scrollPlugin ??= import('gsap/ScrollToPlugin').then(({ ScrollToPlugin }) => {
+    gsap.registerPlugin(ScrollToPlugin);
+  });
+  return scrollPlugin;
 }
 
 /** Flip, once the map plugins have loaded (null before). */

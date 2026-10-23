@@ -16,7 +16,7 @@ const PHONES = [
     brand: 'Saqi · Field',
     on: 0,
     hello: 'Good morning, Rahim',
-    date: 'Thu 23 Oct · 5 tasks',
+    date: 'Fri 23 Oct · 5 tasks',
     offline: 'Offline · 2 changes saved',
     tasks: [
       { group: 'D-1 · Khalas palms', title: 'Clear bubblers, row 4' },
@@ -32,7 +32,7 @@ const PHONES = [
     brand: 'ساقي · الحقل',
     on: 1,
     hello: 'صباح الخير، رحيم',
-    date: 'الخميس 23 أكتوبر · 5 مهام',
+    date: 'الجمعة 23 أكتوبر · 5 مهام',
     offline: 'غير متصل · تم حفظ تغييرين',
     tasks: [
       { group: 'D-1 · نخيل خلاص', title: 'تنظيف المنقّطات، الصف 4' },

@@ -1,6 +1,13 @@
-export { captureBlock, takeBlock } from './flip';
-export { getFlip, gsap, loadMapPlugins, loadStoryPlugins, useGSAP } from './gsap';
+export {
+  getFlip,
+  gsap,
+  loadMapPlugins,
+  loadScrollPlugin,
+  loadStoryPlugins,
+  useGSAP,
+} from './gsap';
 export type { StoryPlugins } from './gsap';
+export { glideTo, useSmoothAnchors } from './smoothScroll';
 export { MotionProvider, useMotion, type Motion } from './MotionProvider';
 export {
   countTo,

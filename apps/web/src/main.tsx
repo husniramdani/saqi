@@ -6,7 +6,8 @@ import { router } from '@/app/router';
 import { applyTheme, storedTheme } from '@/app/theme';
 import './index.css';
 
-// Before the first paint, so a Night user never sees a flash of Day.
+// Before the first paint. The HTML already says Night (the default), so only a stored Day
+// changes anything here.
 applyTheme(storedTheme());
 
 const root = document.getElementById('root');
