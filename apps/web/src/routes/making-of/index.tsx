@@ -8,7 +8,7 @@ import { usePageTitle } from '@/app/usePageTitle';
 import { useLocale } from '@/i18n';
 import { formatNumber } from '@/i18n/format';
 import { getFlip, loadMapPlugins, loadStoryPlugins, useGSAP, useMotion } from '@/motion';
-import { FALLBACK_STATS, fetchTestStats } from './data';
+import { FALLBACK_STATS, fetchTestStats } from '@/features/test-stats/data';
 import { AuthorScene, DesignScene, ReasonsScene, TestsScene, WaterScene } from './scenes';
 import { buildStory } from './storyMotion';
 

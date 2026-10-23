@@ -6,6 +6,8 @@ export interface TrackBar {
   to: number;
   /** Accessible name, e.g. "D-1, 22:00 to 01:01, 90.4 m³". */
   label: string;
+  /** Short visible text inside the bar (e.g. "22:00 → 01:01"); the label stays the name. */
+  text?: string;
   onClick?: () => void;
 }
 
@@ -37,7 +39,9 @@ export function TimeTrack({
           insetInlineStart: `${bar.from * 100}%`,
           inlineSize: `${Math.max(0, bar.to - bar.from) * 100}%`,
         };
-        const className = 'absolute inset-y-1 rounded-[4px] bg-accent';
+        const className =
+          'absolute inset-y-1 flex items-center overflow-hidden rounded-[4px] bg-accent px-2 font-mono text-xs font-medium whitespace-nowrap text-accent-foreground';
+        const text = bar.text ? <span className="num truncate">{bar.text}</span> : null;
         return bar.onClick ? (
           <button
             key={bar.label}
@@ -47,7 +51,9 @@ export function TimeTrack({
             onClick={bar.onClick}
             className={className}
             style={style}
-          />
+          >
+            {text}
+          </button>
         ) : (
           <span
             key={bar.label}
@@ -56,7 +62,9 @@ export function TimeTrack({
             aria-label={bar.label}
             className={className}
             style={style}
-          />
+          >
+            {text}
+          </span>
         );
       })}
       {children}

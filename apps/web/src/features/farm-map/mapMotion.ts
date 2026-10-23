@@ -1,5 +1,9 @@
-import type { RefObject } from 'react';
+import { useRef, type RefObject } from 'react';
 import { duration, ease, gsap, loadMapPlugins, stagger, useGSAP, useMotion } from '@/motion';
+import { MAP_LAYER_KEYS, type MapLayers } from './layers';
+
+/** The base network and tonight's routes draw in together. */
+const PIPES = '.layer-pipes path, .layer-flow path';
 
 const REVEALED = 'saqi.mapRevealed';
 
@@ -38,7 +42,7 @@ export function useMapReveal(scope: RefObject<HTMLElement | null>, enabled: bool
         ...q('[data-block-fill]'),
         ...q('.layer-texture'),
         ...q('.layer-stale'),
-        ...q('.layer-pipes path'),
+        ...q(PIPES),
         ...q('[data-tag]'),
         ...q('.layer-utilities > *'),
       ];
@@ -71,7 +75,7 @@ export function useMapReveal(scope: RefObject<HTMLElement | null>, enabled: bool
                 '<0.35',
               )
               .fromTo(
-                q('.layer-pipes path'),
+                q(PIPES),
                 { opacity: 1, drawSVG: '0%' },
                 { drawSVG: '100%', duration: duration.drift, stagger: stagger.list },
                 '<',
@@ -103,14 +107,15 @@ export function useMapReveal(scope: RefObject<HTMLElement | null>, enabled: bool
 /**
  * M2 · water flows along tonight's pipes: the dashes travel pump → block (stroke offset,
  * about 125 units/s, linear). Paused while the tab is hidden or the map is off-screen.
- * Reduced motion: the dashed route stays still.
+ * Reduced motion: the dashed route stays still. An empty `routeKey` (no routes, or the flow
+ * layer off) runs no loop.
  */
 export function usePipeFlow(scope: RefObject<HTMLElement | null>, routeKey: string) {
   const { reduced } = useMotion();
   useGSAP(
     () => {
       const root = scope.current;
-      if (reduced || !root) return;
+      if (reduced || !root || !routeKey) return;
       const flows = gsap.utils.toArray<SVGPathElement>('[data-flow]', root);
       if (flows.length === 0) return;
       // 160 = 10 dash periods (4 + 12), so the loop is seamless.
@@ -162,5 +167,53 @@ export function useHoverLift(scope: RefObject<HTMLElement | null>, activeId: str
     },
     // revertOnUpdate: the previous block settles back when another becomes active.
     { scope, dependencies: [activeId, reduced], revertOnUpdate: true },
+  );
+}
+
+/**
+ * Layer switches fade their `[data-layer]` groups in or out (`step`); reduced motion swaps at
+ * once. The first render needs nothing: the markup already carries each layer's visibility.
+ * Plant-available water is a swap, not a hide: the new fill fades in over the dry well.
+ */
+export function useLayerFade(scope: RefObject<HTMLElement | null>, layers: MapLayers) {
+  const { reduced } = useMotion();
+  const previous = useRef(layers);
+  useGSAP(
+    () => {
+      const root = scope.current;
+      const before = previous.current;
+      previous.current = layers;
+      if (!root) return;
+      for (const key of MAP_LAYER_KEYS) {
+        const on = layers[key];
+        if (on === before[key]) continue;
+        if (key === 'paw') {
+          if (!reduced)
+            gsap.fromTo(
+              root.querySelectorAll('[data-block-fill]'),
+              { fillOpacity: 0 },
+              { fillOpacity: 1, duration: duration.step, ease: ease.standard, overwrite: true },
+            );
+          continue;
+        }
+        const groups = root.querySelectorAll(`[data-layer="${key}"]`);
+        if (reduced) gsap.set(groups, { autoAlpha: on ? 1 : 0, overwrite: true });
+        else
+          gsap.fromTo(
+            groups,
+            { autoAlpha: on ? 0 : 1 },
+            {
+              autoAlpha: on ? 1 : 0,
+              duration: duration.step,
+              ease: ease.standard,
+              overwrite: true,
+            },
+          );
+      }
+    },
+    {
+      scope,
+      dependencies: [...MAP_LAYER_KEYS.map((key) => layers[key]), reduced],
+    },
   );
 }

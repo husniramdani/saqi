@@ -39,11 +39,11 @@ test('keyboard only: into the map, across blocks, open D-1, and back', async ({
   await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
 
   await page.goBack();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/today$/);
   await expect(todayPage.map()).toBeVisible();
 });
 
-const ROUTES = ['/', '/blocks/D-1', '/field', '/making-of'];
+const ROUTES = ['/', '/today', '/blocks/D-1', '/field', '/making-of'];
 const LOCALES: Locale[] = ['en', 'ar'];
 
 test.describe('axe', () => {

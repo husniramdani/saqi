@@ -3,6 +3,28 @@ import type { BlockDecision, ScheduleItem } from '@saqi/shared';
 /** The site plan's coordinate system (plan/03 §1 · Map geometry). */
 export const VIEW = { width: 1000, height: 620 } as const;
 
+/** Map zoom: 1× shows the whole farm, 2× a quarter of it, in quarter steps. */
+export const ZOOM_MIN = 1;
+export const ZOOM_MAX = 2;
+export const ZOOM_STEP = 0.25;
+
+export const clampZoom = (zoom: number) =>
+  Number.isFinite(zoom) ? Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoom)) : ZOOM_MIN;
+
+/** The visible part of the plan at a zoom, centred on the middle of Farm 07. */
+export function zoomRect(zoom: number): Rect {
+  const z = clampZoom(zoom);
+  const width = VIEW.width / z;
+  const height = VIEW.height / z;
+  return { x: (VIEW.width - width) / 2, y: (VIEW.height - height) / 2, width, height };
+}
+
+/** SVG `viewBox` for a zoom (rounded to 0.01 units). */
+export function zoomViewBox(zoom: number): string {
+  const { x, y, width, height } = zoomRect(zoom);
+  return [x, y, width, height].map((n) => Number(n.toFixed(2))).join(' ');
+}
+
 /** Tree grids per palm block, cols × rows (plan/03 §1: "D-1: 12×10, D-2: 12×8, …"). */
 export const TREE_GRID: Record<string, readonly [number, number]> = {
   'D-1': [12, 10],

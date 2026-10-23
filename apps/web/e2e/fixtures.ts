@@ -30,7 +30,7 @@ export class TodayPage {
   readonly openBlock = (code: string) => this.rail().getByRole('link', { name: `Open ${code}` });
 
   async goto() {
-    await this.page.goto('/');
+    await this.page.goto('/today');
     await expect(this.map()).toBeVisible();
   }
 

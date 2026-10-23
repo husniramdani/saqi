@@ -51,32 +51,33 @@ export function SchedulePanel({
     return h === 0 || h === window.hours ? label : label.slice(0, 2);
   };
 
+  const clock = (iso: string) => formatTimeGst(iso, locale).replace(' GST', '');
+
   return (
     <section
       aria-label={t('today.schedule')}
-      className="rounded-md border border-border bg-surface-raised p-4"
+      className="rounded-md border border-border bg-overlay px-4 py-3 shadow-floating"
     >
-      <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 className="text-sm font-semibold">{t('today.schedule')}</h2>
-        <span className="num text-xs text-text-muted">GST</span>
-      </div>
+      <h2 className="sr-only">{t('today.schedule')}</h2>
       {night.length === 0 ? (
         <EmptyState title={t('today.noIrrigation')}>
           {t('today.noIrrigationSaves', { m3: plan.totals.savedVsFixedM3 })}
         </EmptyState>
       ) : (
-        <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-x-3 gap-y-2 sm:grid-cols-[2.75rem_minmax(0,1fr)_5.5rem]">
-          <span />
+        <div className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1 sm:grid-cols-[2.75rem_minmax(0,1fr)_5.5rem]">
+          <span aria-hidden="true" className="text-xs text-text-muted">
+            GST
+          </span>
           {/* Mono and tabular but not `num`: the ruler must follow the reading direction, like the bars. */}
           <div
             aria-hidden="true"
-            className="flex justify-between font-mono text-2xs text-text-muted tabular-nums"
+            className="flex justify-between font-mono text-2xs text-text-secondary tabular-nums"
           >
             {Array.from({ length: window.hours + 1 }, (_, h) => (
               <span key={h}>{hourLabel(h)}</span>
             ))}
           </div>
-          <span className="num hidden text-end text-2xs text-text-muted sm:block">
+          <span className="hidden text-end text-xs text-text-muted sm:block">
             {t('today.volume')}
           </span>
           {night.map((item) => {
@@ -102,7 +103,16 @@ export function SchedulePanel({
                 </span>
                 {/* Decorative here: the row's own name already says the window. */}
                 <span aria-hidden="true" className="contents">
-                  <TimeTrack hours={window.hours} bars={[{ ...barShare(item, window), label }]} />
+                  <TimeTrack
+                    hours={window.hours}
+                    bars={[
+                      {
+                        ...barShare(item, window),
+                        label,
+                        text: `${clock(item.start)} → ${clock(item.end)}`,
+                      },
+                    ]}
+                  />
                 </span>
                 <span className="hidden text-end sm:block">
                   <Figure value={item.volumeM3} unit="m³" size="sm" />
@@ -115,7 +125,7 @@ export function SchedulePanel({
         </div>
       )}
       {pulses.length > 0 ? (
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-text-secondary">
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-2 text-xs text-text-secondary">
           <span className="font-medium">{t('today.pulsesTomorrow')}</span>
           {[...new Set(pulses.map((p) => p.blockId))].map((id) => (
             <span key={id} className="num inline-flex items-center gap-1.5" data-pulse-block={id}>
@@ -128,7 +138,7 @@ export function SchedulePanel({
                     dateTime={p.start}
                     className="rounded-sm bg-surface-well px-1.5 py-0.5"
                   >
-                    {formatTimeGst(p.start, locale).replace(' GST', '')}
+                    {clock(p.start)}
                   </time>
                 ))}
             </span>

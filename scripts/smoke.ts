@@ -104,21 +104,23 @@ const checks: [name: string, run: () => Promise<string>][] = [
       return `weather fresh, budget ${over.budget.status} as without it`;
     },
   ],
-  ...['/', '/blocks/D-1', '/field', '/making-of'].map((path): [string, () => Promise<string>] => [
-    `Web ${path} serves the app shell`,
-    async () => {
-      const res = await get(`${WEB}${path}`);
-      expect(res.status === 200, `answered ${res.status}`);
-      const html = await res.text();
-      expect(html.includes('<div id="root"></div>'), 'no #root in the page');
-      const script = /<script type="module" crossorigin src="(\/assets\/[^"]+\.js)"/.exec(html);
-      expect(script?.[1] !== undefined, 'no built entry script');
-      const entry = await get(`${WEB}${script[1]}`);
-      const type = entry.headers.get('content-type') ?? '';
-      expect(entry.ok && type.includes('javascript'), `entry is ${entry.status} ${type}`);
-      return script[1];
-    },
-  ]),
+  ...['/', '/today', '/blocks/D-1', '/field', '/making-of'].map(
+    (path): [string, () => Promise<string>] => [
+      `Web ${path} serves the SPA entry`,
+      async () => {
+        const res = await get(`${WEB}${path}`);
+        expect(res.status === 200, `answered ${res.status}`);
+        const html = await res.text();
+        expect(html.includes('<div id="root"></div>'), 'no #root in the page');
+        const script = /<script type="module" crossorigin src="(\/assets\/[^"]+\.js)"/.exec(html);
+        expect(script?.[1] !== undefined, 'no built entry script');
+        const entry = await get(`${WEB}${script[1]}`);
+        const type = entry.headers.get('content-type') ?? '';
+        expect(entry.ok && type.includes('javascript'), `entry is ${entry.status} ${type}`);
+        return script[1];
+      },
+    ],
+  ),
   [
     'Social image resolves',
     async () => {

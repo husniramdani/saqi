@@ -1,15 +1,14 @@
 import type { BlockDecision, Farm, ScheduleItem } from '@saqi/shared';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
 import { useLocale } from '@/i18n';
-import { captureBlock } from '@/motion';
-import { buttonClasses, Chip, cx, DECISION_CHIP, Figure, MoistureSwatch, PillArrow } from '@/ui';
-import { windowLabel } from '@/features/farm-map/window';
+import { cx, Figure, MoistureSwatch } from '@/ui';
 import { byRisk } from './risk';
+import { SelectedBlockRailDetail } from './SelectedBlockRailDetail';
 
 /**
- * Left rail (Nightfield canvas "Blocks"): every block, riskiest first, with water now. The
- * selected block opens to show why: projected PAW, tonight's crop use, threshold and target.
+ * Left rail (Nightfield canvas "Blocks"): every block, riskiest first, with its crop, area,
+ * method and water now. The selected block opens to show why: projected PAW, each simulated
+ * sensor, tonight's figures and the last 14 days.
  */
 export function BlockRail({
   farm,
@@ -26,14 +25,13 @@ export function BlockRail({
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
-  const name = (id: string) => farm.blocks.find((b) => b.id === id)?.name[locale] ?? id;
 
   return (
     <ul className="flex flex-col">
       {byRisk(decisions).map((d) => {
         const open = d.blockId === selectedId;
         const panelId = `rail-${d.blockId}`;
-        const window = windowLabel(d.blockId, schedule, locale);
+        const block = farm.blocks.find((b) => b.id === d.blockId);
         return (
           <li key={d.blockId} className="border-b border-border last:border-b-0">
             <button
@@ -42,7 +40,7 @@ export function BlockRail({
               aria-controls={panelId}
               onClick={() => onSelect(d.blockId)}
               className={cx(
-                'grid min-h-14 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5 text-start',
+                'grid min-h-16 w-full grid-cols-[auto_minmax(0,1fr)_auto_14px] items-center gap-3 px-4 py-2.5 text-start hover:bg-surface-raised',
                 open
                   ? 'bg-surface-raised shadow-[inset_3px_0_0_var(--color-accent)] rtl:shadow-[inset_-3px_0_0_var(--color-accent)]'
                   : '',
@@ -51,68 +49,47 @@ export function BlockRail({
               <MoistureSwatch paw={d.pawNow} size={18} />
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="truncate font-medium">
-                  <span className="num">{d.blockId}</span> · {name(d.blockId)}
+                  <span className="num">{d.blockId}</span> · {block?.name[locale] ?? d.blockId}
                 </span>
-                <span className="truncate text-xs text-text-muted">
-                  {t(`decision.${d.decision}`)}
-                  {window ? (
-                    <>
-                      {' · '}
-                      <span className="num">{window}</span>
-                    </>
-                  ) : null}
-                </span>
+                {block ? (
+                  <span className="truncate text-xs text-text-muted">
+                    {[
+                      t(`block.crop.${block.crop}`),
+                      t('block.area', { ha: block.areaHa }),
+                      t(`block.method.${block.method}`),
+                    ].join(' · ')}
+                  </span>
+                ) : null}
               </span>
               {d.pawNow === null ? (
                 <span className="text-xs text-text-secondary">{t('state.noData')}</span>
               ) : (
-                <Figure value={d.pawNow} unit="%" size="sm" />
+                <Figure value={d.pawNow} unit="%" size="sm" accent={d.pawNow < d.threshold} />
               )}
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+                className={cx('text-text-muted', open ? 'rotate-180' : '')}
+              >
+                <path
+                  d="M3.5 6L8 10.5 12.5 6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
             {open ? (
-              <div id={panelId} className="flex flex-col gap-4 bg-surface-raised px-4 pt-1 pb-4">
-                <dl className="grid grid-cols-2 gap-3">
-                  {[
-                    [
-                      t('today.projected'),
-                      d.pawProjected,
-                      '%',
-                      d.pawProjected !== null && d.pawProjected < d.threshold,
-                    ],
-                    [t('today.et0Tomorrow'), d.et0Mm, 'mm', false],
-                    [t('today.cropUse'), d.etcMm, 'mm', false],
-                    [t('today.threshold'), d.threshold, '%', false],
-                    [t('today.target'), d.target, '%', false],
-                    [t('today.columns.volume'), d.volumeM3, 'm³', d.volumeM3 > 0],
-                  ].map(([label, value, unit, accent]) => (
-                    <div key={String(label)} className="flex flex-col gap-1">
-                      <dt className="text-xs font-medium text-text-muted">{label}</dt>
-                      <dd>
-                        {value === null ? (
-                          <span className="text-sm text-text-secondary">{t('state.noData')}</span>
-                        ) : (
-                          <Figure
-                            value={Number(value)}
-                            unit={String(unit)}
-                            size="sm"
-                            accent={Boolean(accent)}
-                          />
-                        )}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-                <div className="flex items-center justify-between gap-3">
-                  <Chip variant={DECISION_CHIP[d.decision]}>{t(`decision.${d.decision}`)}</Chip>
-                  <Link
-                    to={`/blocks/${d.blockId}`}
-                    onClick={() => captureBlock(d.blockId)}
-                    className={buttonClasses({ variant: 'ink', arrow: true })}
-                  >
-                    {t('today.openBlock', { code: d.blockId })} <PillArrow variant="ink" />
-                  </Link>
-                </div>
-              </div>
+              <SelectedBlockRailDetail
+                id={panelId}
+                decision={d}
+                sensors={farm.sensors.filter((s) => s.blockId === d.blockId)}
+                schedule={schedule}
+              />
             ) : null}
           </li>
         );

@@ -1,4 +1,4 @@
-import { gstDate, type SensorSeries } from '@saqi/shared';
+import { gstDate } from '@saqi/shared';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
@@ -15,46 +15,14 @@ import { NotFound } from '@/app/NotFound';
 import { usePageTitle } from '@/app/usePageTitle';
 import { QueryState } from '@/app/QueryState';
 import { MoistureChart } from '@/features/moisture-chart/MoistureChart';
+import { StaleBanner } from '@/features/moisture-chart/StaleBanner';
 import { EventsTable } from '@/features/recommendation/EventsTable';
 import { LogIrrigation } from '@/features/recommendation/LogIrrigation';
 import { RecommendationCard } from '@/features/recommendation/RecommendationCard';
 import { BlockTasks } from '@/features/tasks/BlockTasks';
 import { useLocale } from '@/i18n';
-import { formatTimeGst } from '@/i18n/format';
 import { duration, ease, getFlip, takeBlock, useGSAP, useMotion } from '@/motion';
-import { Arrow, Chip, MoistureSwatch, Panel, Skeleton, textLinkClasses } from '@/ui';
-
-/** "60 cm sensor offline since 12:00 GST…": stale sensors say so inside the chart panel. */
-function StaleBanner({ series }: { series: SensorSeries[] }) {
-  const { t } = useTranslation();
-  const locale = useLocale();
-  const stale = series.filter((s) => s.stale);
-  if (stale.length === 0) return null;
-  const depth = (s: SensorSeries) =>
-    s.depthCm === null ? t('block.chart.substrate') : `${s.depthCm} cm`;
-  const fresh = series.find((s) => !s.stale);
-  return (
-    <div
-      role="status"
-      className="flex items-start gap-3 rounded-md bg-warning-soft p-3 text-sm text-text-primary"
-    >
-      <Chip variant="warn">{t('map.stale')}</Chip>
-      <p className="pt-0.5">
-        {fresh
-          ? stale
-              .map((s) =>
-                t('block.staleBanner', {
-                  sensor: depth(s),
-                  since: formatTimeGst(s.lastAt, locale),
-                  fresh: depth(fresh),
-                }),
-              )
-              .join(' ')
-          : t('block.allStale')}
-      </p>
-    </div>
-  );
-}
+import { Arrow, MoistureSwatch, Panel, Skeleton, textLinkClasses } from '@/ui';
 
 export function Component() {
   const { t } = useTranslation();
@@ -93,7 +61,7 @@ export function Component() {
   const source = farm.data?.sources.find((s) => s.id === block?.sourceId);
 
   const back = (
-    <Link to="/" className={`${textLinkClasses} gap-2 self-start`}>
+    <Link to="/today" className={`${textLinkClasses} gap-2 self-start`}>
       <span className="-scale-x-100 rtl:scale-x-100">
         <Arrow size={14} />
       </span>

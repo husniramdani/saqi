@@ -8,6 +8,10 @@ import {
   scheduledTonight,
   showUtilityLabels,
   tagFontSize,
+  ZOOM_MAX,
+  ZOOM_MIN,
+  ZOOM_STEP,
+  zoomViewBox,
 } from './geometry';
 import { scenarioDecisions, scenarioSchedule } from './scenario';
 
@@ -47,5 +51,25 @@ describe('farm map geometry', () => {
   it('knows which blocks are stale and which pipes carry water tonight', () => {
     expect(scenarioDecisions.filter(isStale).map((d) => d.blockId)).toEqual(['D-3']);
     expect([...scheduledTonight(scenarioSchedule)]).toEqual(['D-1', 'F-1']);
+  });
+
+  it.each([
+    [1, '0 0 1000 620'], // the whole farm
+    [1.5, '166.67 103.33 666.67 413.33'],
+    [2, '250 155 500 310'], // a quarter of it, still centred on (500, 310)
+    [0.5, '0 0 1000 620'], // clamped up to 1×
+    [3, '250 155 500 310'], // clamped down to 2×
+    [Number.NaN, '0 0 1000 620'],
+  ])('zoom %d shows viewBox %s', (zoom, viewBox) => {
+    expect(zoomViewBox(zoom)).toBe(viewBox);
+  });
+
+  it('keeps every zoom step centred on the farm', () => {
+    for (let zoom = ZOOM_MIN; zoom <= ZOOM_MAX; zoom += ZOOM_STEP) {
+      const [x = 0, y = 0, w = 0, h = 0] = zoomViewBox(zoom).split(' ').map(Number);
+      expect(x + w / 2).toBeCloseTo(500, 1);
+      expect(y + h / 2).toBeCloseTo(310, 1);
+      expect(w / h).toBeCloseTo(1000 / 620, 2);
+    }
   });
 });

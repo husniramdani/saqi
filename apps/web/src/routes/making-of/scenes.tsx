@@ -7,7 +7,9 @@ import { useLocale } from '@/i18n';
 import { formatM3, formatNumber } from '@/i18n/format';
 import { ReasonText } from '@/i18n/ReasonText';
 import { Chip, DECISION_CHIP, textLinkClasses } from '@/ui';
-import { colourExcerpt, d1Formula, miniMapDecisions, storyDecisions, type TestStats } from './data';
+import { d1Formula, miniMapDecisions, storyDecisions } from '@/features/landing/workedExample';
+import type { TestStats } from '@/features/test-stats/data';
+import { colourExcerpt } from './data';
 
 /**
  * The five scenes as plain, readable sections. Motion (storyMotion.ts) only adds to them: with
@@ -294,7 +296,7 @@ export function TestsScene({ stats }: { stats: TestStats }) {
 
 /** Author links. ponytail: only links that exist are listed; T24 fills LinkedIn and email. */
 const LINKS: { key: string; href: string; external: boolean }[] = [
-  { key: 'app', href: '/', external: false },
+  { key: 'app', href: '/today', external: false },
   { key: 'repo', href: 'https://github.com/husniramdani/saqi', external: true },
   { key: 'stylebase', href: 'https://stylebase.dev', external: true },
 ];

@@ -11,7 +11,7 @@ export function NotFound({ title }: { title: string }) {
       <h1 className="text-4xl font-light tracking-[-0.035em]">{title}</h1>
       <p className="text-lg text-text-secondary">{t('state.notFoundBody')}</p>
       <div className="flex flex-wrap gap-3">
-        <Link to="/" className={buttonClasses({ variant: 'ink', arrow: true })}>
+        <Link to="/today" className={buttonClasses({ variant: 'ink', arrow: true })}>
           {t('state.home')} <PillArrow variant="ink" />
         </Link>
         <Link to="/field" className={buttonClasses({ variant: 'ghost' })}>

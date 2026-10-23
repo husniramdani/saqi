@@ -28,15 +28,14 @@ vi.mock('@/api/queries', () => ({
   }),
 }));
 
-function renderShell(path = '/') {
+function renderShell(path = '/today') {
   const router = createMemoryRouter(
     [
       {
-        path: '/',
         element: <AppShell />,
         children: [
-          { index: true, element: <h1>Today page</h1> },
-          { path: 'field', element: <h1>Field page</h1> },
+          { path: '/today', element: <h1>Today page</h1> },
+          { path: '/field', element: <h1>Field page</h1> },
         ],
       },
     ],
@@ -88,7 +87,7 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: 'ع, العربية' }).getAttribute('aria-pressed')).toBe(
       'true',
     );
-    expect(screen.getByRole('link', { name: /^Saqi.*, اليوم$/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Saqi، الرئيسية' })).toBeTruthy();
   });
 
   it('crossfades the app around the switch (M12) and still lands it', async () => {

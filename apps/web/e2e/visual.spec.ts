@@ -9,10 +9,17 @@ async function settle(page: Page) {
   ).toHaveCount(0);
 }
 
+test('Landing, en @desktop', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await settle(page);
+  await expect(page).toHaveScreenshot('landing-en.png', { fullPage: true });
+});
+
 for (const locale of ['en', 'ar'] as Locale[]) {
   test(`Today, ${locale} @desktop`, async ({ page, todayPage }) => {
     await page.addInitScript((l) => localStorage.setItem('saqi.locale', l), locale);
-    await page.goto('/');
+    await page.goto('/today');
     await expect(todayPage.map().or(page.getByRole('group', { name: /^خريطة/ }))).toBeVisible();
     await settle(page);
     await expect(page).toHaveScreenshot(`today-${locale}.png`, { fullPage: true });

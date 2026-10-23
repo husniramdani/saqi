@@ -3,15 +3,15 @@ import { AppShell } from './AppShell';
 
 // Each route module exports `Component` and loads lazily, so heavy features split per route.
 export const router = createBrowserRouter([
+  { path: '/', lazy: () => import('@/routes/landing'), HydrateFallback: () => null },
   {
-    path: '/',
     element: <AppShell />,
     // Lazy routes resolve before the first render; nothing to show meanwhile.
     HydrateFallback: () => null,
     children: [
-      { index: true, lazy: () => import('@/routes/today') },
-      { path: 'blocks/:blockId', lazy: () => import('@/routes/block') },
-      { path: 'field', lazy: () => import('@/routes/field') },
+      { path: '/today', lazy: () => import('@/routes/today') },
+      { path: '/blocks/:blockId', lazy: () => import('@/routes/block') },
+      { path: '/field', lazy: () => import('@/routes/field') },
       { path: '*', lazy: () => import('@/routes/not-found') },
     ],
   },

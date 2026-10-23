@@ -1,11 +1,16 @@
 import { farm07 } from '@saqi/shared';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { BlockList } from './BlockList';
 import { FarmMap } from './FarmMap';
+import { DEFAULT_MAP_LAYERS, type MapLayers } from './layers';
 import { scenarioDecisions, scenarioSchedule } from './scenario';
 
-const renderMap = (onSelect = vi.fn(), selectedId?: string) =>
+const renderMap = (
+  onSelect = vi.fn(),
+  selectedId?: string,
+  extra: { layers?: MapLayers; zoom?: number } = {},
+) =>
   render(
     <FarmMap
       farm={farm07}
@@ -13,8 +18,22 @@ const renderMap = (onSelect = vi.fn(), selectedId?: string) =>
       schedule={scenarioSchedule}
       selectedId={selectedId}
       onSelect={onSelect}
+      {...extra}
     />,
   );
+
+const without = (...off: (keyof MapLayers)[]): MapLayers => ({
+  ...DEFAULT_MAP_LAYERS,
+  ...Object.fromEntries(off.map((key) => [key, false])),
+});
+
+/** Hidden by a layer switch: inside a `[data-layer]` group that is hidden and aria-hidden. */
+const hidden = (el: Element | null) => {
+  const group = el?.closest('[data-layer]');
+  return (
+    group?.getAttribute('visibility') === 'hidden' && group.getAttribute('aria-hidden') === 'true'
+  );
+};
 
 describe('FarmMap', () => {
   it('names every block with its water, decision and volume', () => {
@@ -86,6 +105,80 @@ describe('FarmMap', () => {
     expect(f1.getAttribute('aria-pressed')).toBe('true');
     fireEvent.focus(f1);
     expect(screen.getByText('01:01 → 04:28 GST')).toBeDefined();
+  });
+
+  it('shows every layer by default', () => {
+    const { container } = renderMap();
+    expect(container.querySelectorAll('[data-layer][visibility="hidden"]')).toHaveLength(0);
+    expect(container.querySelector('svg')?.getAttribute('viewBox')).toBe('0 0 1000 620');
+  });
+
+  it('keeps blocks selectable, with focus and selection outlines, when labels are off', () => {
+    const onSelect = vi.fn();
+    const { container } = renderMap(onSelect, 'D-2', { layers: without('labels') });
+    expect(screen.getAllByRole('button')).toHaveLength(7);
+    for (const tag of container.querySelectorAll('[data-tag]')) expect(hidden(tag)).toBe(true);
+
+    const d1 = screen.getByRole('button', { name: /^D-1 / });
+    act(() => d1.focus());
+    expect(d1.querySelector('.layer-focus')).not.toBeNull();
+    expect(hidden(d1.querySelector('.layer-focus'))).toBe(false);
+    fireEvent.keyDown(d1, { key: 'Enter' });
+    expect(onSelect).toHaveBeenCalledWith('D-1');
+    fireEvent.keyDown(d1, { key: 'ArrowRight' });
+    expect(document.activeElement?.getAttribute('data-block')).toBe('D-2');
+    expect(container.querySelector('[data-block="D-2"] .layer-selected')).not.toBeNull();
+  });
+
+  it('drops the water colours when plant-available water is off', () => {
+    const { container } = renderMap(vi.fn(), undefined, { layers: without('paw') });
+    const fills = [...container.querySelectorAll('[data-block-fill]')];
+    expect(fills).toHaveLength(7);
+    for (const fill of fills) expect(fill.getAttribute('fill')).toBe('var(--color-surface-well)');
+    expect(container.querySelector('[fill^="var(--color-water"]')).toBeNull();
+  });
+
+  it('switches tonight’s routes and the base pipe network independently', () => {
+    const { container, rerender } = renderMap(vi.fn(), undefined, { layers: without('flow') });
+    const route = () => container.querySelector('[data-scheduled="D-1"]');
+    const network = () => container.querySelector('.layer-pipes path');
+    expect(hidden(route())).toBe(true);
+    expect(hidden(network())).toBe(false);
+
+    rerender(
+      <FarmMap
+        farm={farm07}
+        decisions={scenarioDecisions}
+        schedule={scenarioSchedule}
+        onSelect={vi.fn()}
+        layers={without('pipes')}
+      />,
+    );
+    expect(hidden(route())).toBe(false);
+    expect(hidden(network())).toBe(true);
+  });
+
+  it('hides the stale hatch, textures and water sources with their switches', () => {
+    const { container } = renderMap(vi.fn(), undefined, {
+      layers: without('stale', 'texture', 'utilities'),
+    });
+    expect(hidden(container.querySelector('[data-stale="D-3"]'))).toBe(true);
+    expect(hidden(container.querySelector('.layer-texture'))).toBe(true);
+    expect(hidden(container.querySelector('.layer-utilities'))).toBe(true);
+    expect(hidden(container.querySelector('.layer-pipes path'))).toBe(false);
+  });
+
+  it('zooms around the farm centre and keeps the tooltip on the zoomed plan', () => {
+    renderMap(vi.fn(), undefined, { zoom: 2 });
+    expect(screen.getByRole('group', { name: /^Map of / }).getAttribute('viewBox')).toBe(
+      '250 155 500 310',
+    );
+    const d2 = screen.getByRole('button', { name: /^D-2 / });
+    fireEvent.focus(d2);
+    const block = farm07.blocks.find((b) => b.id === 'D-2');
+    const x = Math.min(1, Math.max(0, ((block?.geometry.label.x ?? 0) - 250) / 500));
+    const tooltip = screen.getByText('Skip').closest('[aria-hidden="true"]') as HTMLElement;
+    expect(tooltip.style.left).toBe(`${x * 100}%`);
   });
 });
 

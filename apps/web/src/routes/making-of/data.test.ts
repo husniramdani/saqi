@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { colourExcerpt, d1Formula, FALLBACK_STATS, fetchTestStats, storyDecisions } from './data';
+import { d1Formula, storyDecisions } from '@/features/landing/workedExample';
+import { FALLBACK_STATS, fetchTestStats } from '@/features/test-stats/data';
+import { colourExcerpt } from './data';
 
 describe('making-of data', () => {
   it('shows 18 real lines of the design.md colour block, water scale included', () => {

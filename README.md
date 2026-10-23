@@ -37,10 +37,10 @@ saqi/
 │   ├── web/                 Vite + React 19, React Router 7, TanStack Query, react-i18next
 │   │   └── src/
 │   │       ├── app/         router, providers, AppShell, QueryState
-│   │       ├── routes/      today, block, field, making-of, not-found (lazy-loaded)
+│   │       ├── routes/      landing, today, block, field, making-of, not-found (lazy-loaded)
 │   │       ├── api/         typed fetch client, query keys, hooks, outbox interface
 │   │       ├── i18n/        en/ar/ur strings, setLocale (lang + dir), formatters
-│   │       ├── features/    farm-map, moisture-chart, recommendation, schedule, budget, weather, tasks, attention
+│   │       ├── features/    landing, farm-map, moisture-chart, recommendation, schedule, budget, weather, tasks, attention
 │   │       ├── ui/          Nightfield design primitives
 │   │       └── motion/      GSAP setup, tokens, presets (reduced motion jumps to the end)
 │   └── api/                 Hono on Node (:8787) and Vercel
@@ -99,4 +99,4 @@ The dev switches `NOW`, `WEATHER_FIXTURE` and `SCENARIOS` stay off: the API refu
 pnpm smoke --base https://saqi-web.vercel.app --api https://saqi-api.vercel.app
 ```
 
-It checks health (memory mode), the plan against `DayPlanSchema`, live weather, CORS both ways, that `?scenario=` does nothing, the app shell on `/`, `/blocks/D-1`, `/field` and `/making-of`, and the social image.
+It checks health (memory mode), the plan against `DayPlanSchema`, live weather, CORS both ways, that `?scenario=` does nothing, the public landing page on `/`, the cockpit on `/today`, the SPA entries `/blocks/D-1`, `/field`, and `/making-of`, and the social image.

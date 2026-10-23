@@ -19,19 +19,22 @@ export function Toggle({
       onClick={() => onChange(!checked)}
       className="inline-grid min-h-11 min-w-11 place-items-center rounded-full"
     >
-      <span
-        aria-hidden="true"
-        className={cx(
-          'flex h-6 w-10 items-center rounded-full p-1',
-          checked
-            ? 'justify-end bg-accent'
-            : 'justify-start border border-border-strong bg-surface-well',
-        )}
-      >
-        <span
-          className={cx('size-4 rounded-full', checked ? 'bg-accent-foreground' : 'bg-text-muted')}
-        />
-      </span>
+      <SwitchTrack on={checked} />
     </button>
+  );
+}
+
+/** The 40 × 24 switch track alone, for a control that carries its own label and state. */
+export function SwitchTrack({ on }: { on: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cx(
+        'flex h-6 w-10 shrink-0 items-center rounded-full p-1',
+        on ? 'justify-end bg-accent' : 'justify-start border border-border-strong bg-surface-well',
+      )}
+    >
+      <span className={cx('size-4 rounded-full', on ? 'bg-accent-foreground' : 'bg-text-muted')} />
+    </span>
   );
 }

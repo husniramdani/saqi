@@ -121,12 +121,12 @@ export const useOutboxSyncing = () =>
     () => outbox.isFlushing(),
     () => false,
   );
+
+const NO_ACTIONS: readonly OutboxAction[] = [];
+
+/** The queued actions, oldest first (a stable snapshot: same array until the queue changes). */
+export const useOutboxActions = (): readonly OutboxAction[] =>
+  useSyncExternalStore(outbox.subscribe, outbox.list, () => NO_ACTIONS);
+
 /** Task ids with a queued "done": shown as done until the server agrees. */
-export const useQueuedTaskIds = () =>
-  new Set(
-    useSyncExternalStore(
-      outbox.subscribe,
-      () => outbox.list(),
-      () => [],
-    ).map((a) => a.taskId),
-  );
+export const useQueuedTaskIds = () => new Set(useOutboxActions().map((a) => a.taskId));
