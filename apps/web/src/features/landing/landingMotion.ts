@@ -62,7 +62,10 @@ function createRevealer() {
 }
 type Revealer = ReturnType<typeof createRevealer>;
 
-/** Count a figure up from zero, then hand back the exact rendered text. */
+/**
+ * Count a figure up from zero, then hand back the exact rendered text. Interrupted (a revert
+ * mid-count), it hands the text back too: the next run reads `final` from the element.
+ */
 function countUp(el: HTMLElement, delay: number, revealer?: Revealer) {
   const to = Number(el.dataset['to']);
   const digits = Number(el.dataset['dec'] ?? 0);
@@ -83,6 +86,9 @@ function countUp(el: HTMLElement, delay: number, revealer?: Revealer) {
       el.textContent = format(value.v);
     },
     onComplete: () => {
+      el.textContent = final;
+    },
+    onInterrupt: () => {
       el.textContent = final;
     },
   });
@@ -365,7 +371,11 @@ export function useLandingMotion(
         mm?.revert();
       };
     },
-    { scope, dependencies: [reduced, dirSign] },
+    // revertOnUpdate: a dependency change must revert this run before the next one hides the
+    // page again. Without it useGSAP stacks the runs, and the new run's from() tweens record the
+    // old run's hidden state as their end state, so sections stay invisible after a language
+    // or reduced-motion change.
+    { scope, dependencies: [reduced, dirSign], revertOnUpdate: true },
   );
 
   // A new decision: reasons slide in from the inline start, the verdict rises.
@@ -407,7 +417,7 @@ export function useLandingMotion(
       });
       return () => mm.revert();
     },
-    { scope, dependencies: [scenarioKey] },
+    { scope, dependencies: [scenarioKey], revertOnUpdate: true },
   );
 
   // Map ⇄ list: the new view rises into place; the map draws itself again.
@@ -439,6 +449,6 @@ export function useLandingMotion(
       });
       return () => mm.revert();
     },
-    { scope, dependencies: [farmView] },
+    { scope, dependencies: [farmView], revertOnUpdate: true },
   );
 }

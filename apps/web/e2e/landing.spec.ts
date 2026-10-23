@@ -44,3 +44,18 @@ test('Arabic mirrors the landing page but keeps Western digits and the farm plan
   const map = page.getByRole('img', { name: /^خريطة/ }).first();
   await expect(map).toHaveAttribute('viewBox', '0 0 1000 620');
 });
+
+test('sections below the fold still appear after a language change at the top', async ({
+  page,
+}) => {
+  await page.goto('/');
+  // Each change re-runs the landing motion while the lower sections are still hidden; the
+  // previous run must be reverted first or they never come back.
+  await switchLocale(page, 'ar');
+  await switchLocale(page, 'en');
+  const heading = page.getByRole('heading', { name: 'Four surfaces, one decision.' });
+  await heading.scrollIntoViewIfNeeded();
+  // The reveal fades the heading's wrapper and the lead paragraph, not the heading itself.
+  await expect(heading.locator('..')).toHaveCSS('opacity', '1');
+  await expect(page.getByText(/^The farm manager plans in the evening/)).toHaveCSS('opacity', '1');
+});

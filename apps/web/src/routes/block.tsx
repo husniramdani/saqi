@@ -104,8 +104,16 @@ export function Component() {
         ) : null}
       </header>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
-        <Panel title={t('block.chartPanel')} meta="GST">
+      {/* One grid, so the columns stack independently: the decision column spans both rows and
+          the flexible second row (auto | 1fr) absorbs whatever it needs beyond the chart, so a
+          tall recommendation never leaves a hole under the chart. Phones: the chart, the
+          decision and its tasks, then the history. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr]">
+        <Panel
+          title={t('block.chartPanel')}
+          meta="GST"
+          className="lg:col-start-1 lg:row-start-1"
+        >
           <div className="flex flex-col gap-4">
             {readings.data ? <StaleBanner series={readings.data} /> : null}
             <QueryState
@@ -131,24 +139,24 @@ export function Component() {
           </div>
         </Panel>
 
-        <QueryState query={recommendation} skeleton={<Skeleton block={420} />}>
-          {(d) => <RecommendationCard decision={d} schedule={plan.data?.schedule ?? []} />}
-        </QueryState>
-      </div>
+        <div className="flex flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <QueryState query={recommendation} skeleton={<Skeleton block={420} />}>
+            {(d) => <RecommendationCard decision={d} schedule={plan.data?.schedule ?? []} />}
+          </QueryState>
+          <Panel title={t('block.tasks', { code: blockId })}>
+            <div className="flex flex-col gap-5">
+              <QueryState query={tasks} skeleton={<Skeleton block={120} />}>
+                {(list) => <BlockTasks tasks={list.filter((task) => task.blockId === blockId)} />}
+              </QueryState>
+              {block ? <LogIrrigation block={block} /> : null}
+            </div>
+          </Panel>
+        </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] lg:items-start">
-        <Panel title={t('block.events')}>
+        <Panel title={t('block.events')} className="lg:col-start-1 lg:row-start-2">
           <QueryState query={events} skeleton={<Skeleton block={200} />}>
             {(list) => <EventsTable events={list} />}
           </QueryState>
-        </Panel>
-        <Panel title={t('block.tasks', { code: blockId })}>
-          <div className="flex flex-col gap-5">
-            <QueryState query={tasks} skeleton={<Skeleton block={120} />}>
-              {(list) => <BlockTasks tasks={list.filter((task) => task.blockId === blockId)} />}
-            </QueryState>
-            {block ? <LogIrrigation block={block} /> : null}
-          </div>
         </Panel>
       </div>
     </div>
