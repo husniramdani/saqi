@@ -9,7 +9,17 @@ const EnvSchema = z
     FARM_LAT: z.coerce.number().min(-90).max(90).default(24.21),
     FARM_LON: z.coerce.number().min(-180).max(180).default(55.74),
     WEATHER_TTL_SECONDS: z.coerce.number().int().positive().default(1800),
-    CORS_ORIGIN: z.string().min(1).default('http://localhost:5173'),
+    /** One origin, or several separated by commas (custom domain plus the vercel.app one). */
+    CORS_ORIGIN: z
+      .string()
+      .default('http://localhost:5173')
+      .transform((value) =>
+        value
+          .split(',')
+          .map((origin) => origin.trim())
+          .filter(Boolean),
+      )
+      .pipe(z.array(z.url()).min(1)),
     PORT: z.coerce.number().int().positive().default(8787),
     /** E2E: serve the recorded worked-example forecast instead of calling Open-Meteo. */
     WEATHER_FIXTURE: z.enum(['0', '1']).default('0'),

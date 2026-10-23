@@ -21,9 +21,9 @@ import { createWeatherService } from '../services/weather';
 import { workedExampleFetch as recordedFetch } from '../sim/workedExample';
 
 /** Wired like production: memory mode rebuilt for the current hour, behind the (zero) time-shift. */
-const makeApp = () => {
+const makeApp = (env: Record<string, string> = {}) => {
   const now = () => new Date();
-  const config = loadConfig({});
+  const config = loadConfig(env);
   const stored = createHourlyMemoryRepo(now);
   const weather = createWeatherService({
     fetch: recordedFetch,
@@ -121,6 +121,17 @@ describe('routes: happy paths return schema-valid bodies', () => {
       headers: { Origin: 'http://localhost:5173' },
     });
     expect(res.headers.get('access-control-allow-origin')).toBe('http://localhost:5173');
+  });
+
+  it('allows each listed origin and refuses any other', async () => {
+    const app = makeApp({ CORS_ORIGIN: 'https://saqi.example, https://saqi-web.example' });
+    const allowed = async (origin: string) =>
+      (await app.request('/api/health', { headers: { Origin: origin } })).headers.get(
+        'access-control-allow-origin',
+      );
+    expect(await allowed('https://saqi.example')).toBe('https://saqi.example');
+    expect(await allowed('https://saqi-web.example')).toBe('https://saqi-web.example');
+    expect(await allowed('https://evil.example')).toBeNull();
   });
 });
 

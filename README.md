@@ -4,7 +4,7 @@
 
 Saqi tells a UAE farm how much to irrigate each block tonight, and why. The farm (Farm 07, Al Ain) is fictional and its sensors are simulated.
 
-Live: **[saqi-web.vercel.app](https://saqi-web.vercel.app)** (API: [saqi-api.vercel.app/api/health](https://saqi-api.vercel.app/api/health)). Weather and ET₀ are live from Open-Meteo; the sensors are simulated and the UI says so. Working notes and decisions: [NOTES.md](NOTES.md).
+Live: **[saqi.spindyzel.com](https://saqi.spindyzel.com)** (also [saqi-web.vercel.app](https://saqi-web.vercel.app); API: [saqi-api.vercel.app/api/health](https://saqi-api.vercel.app/api/health)). Weather and ET₀ are live from Open-Meteo; the sensors are simulated and the UI says so. Working notes and decisions: [NOTES.md](NOTES.md).
 
 ## Run it locally
 
@@ -84,10 +84,10 @@ What that costs: a Field "Mark done" or a manual irrigation log lives in the mem
 
 **API build:** the zero-config Hono entry is the default export of `src/app.ts`. The project sets `VERCEL_EXPERIMENTAL_BACKENDS=1`, Vercel's newer backend build. It compiles the workspace packages, which export TypeScript source with extensionless imports, and the JSON fixtures. The default build fails on them.
 
-| Project  | Environment variables (Production)                                                                                                                                                                  |
-| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| saqi-api | `DATA_SOURCE=memory`, `CORS_ORIGIN=https://saqi-web.vercel.app`, `FARM_LAT=24.21`, `FARM_LON=55.74`, `WEATHER_TTL_SECONDS=1800`, `VERCEL_EXPERIMENTAL_BACKENDS=1`, `ENABLE_EXPERIMENTAL_COREPACK=1` |
-| saqi-web | `VITE_API_URL=https://saqi-api.vercel.app` (read at build time), `ENABLE_EXPERIMENTAL_COREPACK=1`                                                                                                   |
+| Project  | Environment variables (Production)                                                                                                                                                                                                                    |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| saqi-api | `DATA_SOURCE=memory`, `CORS_ORIGIN=https://saqi.spindyzel.com,https://saqi-web.vercel.app` (comma-separated list), `FARM_LAT=24.21`, `FARM_LON=55.74`, `WEATHER_TTL_SECONDS=1800`, `VERCEL_EXPERIMENTAL_BACKENDS=1`, `ENABLE_EXPERIMENTAL_COREPACK=1` |
+| saqi-web | `VITE_API_URL=https://saqi-api.vercel.app` (read at build time), `ENABLE_EXPERIMENTAL_COREPACK=1`                                                                                                                                                     |
 
 The dev switches `NOW`, `WEATHER_FIXTURE` and `SCENARIOS` stay off: the API refuses to start with any of them on Vercel. No variable is a secret, and none is committed.
 
@@ -96,7 +96,7 @@ The dev switches `NOW`, `WEATHER_FIXTURE` and `SCENARIOS` stay off: the API refu
 **Check it:**
 
 ```bash
-pnpm smoke --base https://saqi-web.vercel.app --api https://saqi-api.vercel.app
+pnpm smoke --base https://saqi.spindyzel.com --api https://saqi-api.vercel.app
 ```
 
 It checks health (memory mode), the plan against `DayPlanSchema`, live weather, CORS both ways, that `?scenario=` does nothing, the public landing page on `/`, the cockpit on `/today`, the SPA entries `/blocks/D-1`, `/field`, and `/making-of`, and the social image.
