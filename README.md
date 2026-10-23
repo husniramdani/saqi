@@ -12,7 +12,19 @@ pnpm i             # pnpm 9
 pnpm dev           # web http://localhost:5173 · API http://localhost:8787
 ```
 
-Checks: `pnpm lint && pnpm typecheck && pnpm test && pnpm build`.
+## Tests and CI
+
+```bash
+pnpm lint && pnpm typecheck && pnpm test && pnpm build   # the gate before every commit
+pnpm e2e           # Playwright: 7 journeys, axe (en, ar), memory API, frozen clock (~25 s)
+pnpm e2e:docker    # the same with the browser in Linux, so visual snapshots are compared
+pnpm stats         # after test:ci + e2e: writes apps/web/public/test-stats.json
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push and pull request, with no secrets:
+`verify` (design check, lint, types, unit and API tests, build), then `e2e` inside the
+Playwright image that renders the visual baselines, which also writes the test stats.
+`snapshots.yml` re-renders the baselines on demand.
 
 ## Structure
 

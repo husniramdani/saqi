@@ -8,8 +8,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# No secrets anywhere: memory data, recorded weather, a frozen clock.
+permissions:
+  contents: read
+
 jobs:
   verify:
+    name: Design, lint, types, unit + API tests, build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -20,8 +25,55 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm i --frozen-lockfile
-      - run: pnpm design:check
+      - name: Design check (design.md against Stylebase v1, tokens regenerated)
+        run: pnpm design:check
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test
+      - name: Unit and API tests (memory mode)
+        run: pnpm test:ci
       - run: pnpm build
+      # Each package's Vitest JSON, for the test stats written after E2E.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vitest-reports
+          path: '**/.vitest/results.json'
+          include-hidden-files: true
+          retention-days: 7
+
+  e2e:
+    name: Playwright journeys, axe and visual snapshots
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The image that renders the visual baselines (apps/web/e2e/docker.sh): same Chromium, same
+    # fonts, same pixels. Its browsers are preinstalled, so there's nothing to download or cache.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm i --frozen-lockfile
+      - name: E2E (memory API on :8788, frozen clock, recorded weather)
+        run: pnpm e2e
+      - uses: actions/download-artifact@v4
+        with:
+          name: vitest-reports
+      - name: Test stats for the Making-of page
+        run: pnpm stats
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-stats
+          path: apps/web/public/test-stats.json
+      - name: Upload the report and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          retention-days: 14

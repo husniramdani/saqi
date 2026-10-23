@@ -233,7 +233,7 @@
         "api": "API tests",
         "web": "Web tests",
         "e2e": "E2E specs",
-        "ci": "CI minutes"
+        "ci": "Test minutes"
       },
       "pending": "After the first CI run"
     },

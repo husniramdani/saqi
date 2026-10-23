@@ -49,6 +49,17 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Every timestamp leaves the API as UTC `Z`**, including schedule times (the engine works in `+04:00`). Reason params keep `HH:mm` in GST.
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
 
+## CI (T22)
+
+- **`ci.yml`:** `verify` (install, design check, lint, typecheck, `pnpm test:ci`, build; uploads each package's Vitest JSON) then `e2e` (needs verify). `concurrency` per ref with cancel-in-progress, `permissions: contents: read`, no secrets.
+- **`e2e` runs inside `mcr.microsoft.com/playwright:v1.64.1-noble`**, the image that renders the visual baselines, instead of `ubuntu-latest` + a cached `playwright install --with-deps` (the task's version). Same Chromium and fonts means the screenshot comparisons are like for like, and its browsers are preinstalled, so there's nothing to cache. Bump the image tag together with `@playwright/test` and `e2e/docker.sh`.
+- **`pnpm test:ci`** is `pnpm -r run test --reporter=default --reporter=json --outputFile=.vitest/results.json` (`run`: pnpm's built-in `test` command swallows the flags). Playwright also writes `apps/web/.playwright/results.json` (not `test-results/`, which it clears on every run). Both folders are gitignored; the artifact upload needs `include-hidden-files`.
+- **`scripts/test-stats.ts`** (`pnpm stats`, Node's built-in type stripping, zod on both reports) writes `{ engine, api, web, e2e, durationSec, commit, at }`. It refuses to write when any suite failed (checked with a deliberately broken engine test), and names the command that produces a missing report. **`durationSec` is summed test runtime** from the runners' own clocks, not the CI job's wall time, so the Making-of label now says "Test minutes" (en/ar/ur). The committed default was generated locally at `97d9e1a` (56 / 96 / 154 / 23, 52 s); CI uploads a fresh one as the `test-stats` artifact. Vercel builds from git, so refresh the committed file with `pnpm test:ci && pnpm e2e && pnpm stats` before a release.
+- **`snapshots.yml`** (manual) re-renders the baselines in the same image and uploads them as an artifact, rather than opening a PR: that would need write permissions or a third-party action.
+- **Broken-test drill:** changing D-1's expected volume to 90.5 made `pnpm test:ci` exit 1 with "FAIL decide.test.ts > … D-1 at PAW 68 → irrigate" and a `volumeM3` 90.5 / 90.4 diff. Reverted.
+- **Local dry run of both jobs inside `playwright:v1.64.1-noble`** (working tree copied without `node_modules`, `CI=true`): frozen-lockfile install 82 s, design check, all unit and API suites green, **E2E 23/23 in 39 s with the five screenshot comparisons live**, then stats. It caught one bug: without `GITHUB_SHA` and without a `.git` folder the script crashed on `git rev-parse`; the commit now falls back to "unknown" (Actions always sets `GITHUB_SHA`). The workflows parse with the intended job graph; **actionlint was not run** (its Docker Hub image pull hung); `snapshots.yml`'s `--project` flags reach Playwright (checked with `--list`).
+- **Not done yet: the push.** The repo has no GitHub remote, so the "both jobs green in < 8 minutes" check and the README badge (needs the owner/repo) wait for it.
+
 ## Playwright E2E (T21)
 
 - **Run:** `pnpm e2e` (about 25 s, 23 tests), `pnpm e2e:ui`, `pnpm e2e:docker` (same suite, browser in Linux). Config, fixtures and specs live in `apps/web/e2e/`; Vitest only picks up `src/**/*.test.*`.

@@ -23,7 +23,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env['CI']),
   retries: process.env['CI'] ? 1 : 0,
-  reporter: [['list'], ['html', { open: 'never', outputFolder: '../playwright-report' }]],
+  reporter: [
+    ['list'],
+    ['html', { open: 'never', outputFolder: '../playwright-report' }],
+    // Read by scripts/test-stats.ts for the Making-of counters.
+    ['json', { outputFile: '../.playwright/results.json' }],
+  ],
   outputDir: '../test-results',
   // One baseline per screenshot for every OS: they're rendered on Linux (Docker or CI).
   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}-{projectName}{ext}',

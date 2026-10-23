@@ -11,12 +11,14 @@
     "dev": "pnpm -r --parallel dev",
     "build": "pnpm -r build",
     "lint": "eslint .",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm -r typecheck && tsc -p scripts",
     "test": "pnpm -r test",
+    "test:ci": "pnpm -r run test --reporter=default --reporter=json --outputFile=.vitest/results.json",
     "format": "prettier --write .",
     "e2e": "pnpm --filter web e2e",
     "e2e:ui": "pnpm --filter web e2e:ui",
-    "e2e:docker": "pnpm --filter web e2e:docker"
+    "e2e:docker": "pnpm --filter web e2e:docker",
+    "stats": "node scripts/test-stats.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -28,6 +30,7 @@
     "prettier": "^3.9.10",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.72.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "zod": "^4.6.7"
   }
 }
