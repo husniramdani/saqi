@@ -13,6 +13,8 @@ interface SegmentedControlProps<T extends string> {
   options: readonly Option<T>[];
   value: T;
   onChange: (value: T) => void;
+  /** `field`: 56 px segments for outdoor use (design.md button size `field`). */
+  size?: 'md' | 'field';
 }
 
 /**
@@ -24,6 +26,7 @@ export function SegmentedControl<T extends string>({
   options,
   value,
   onChange,
+  size = 'md',
 }: SegmentedControlProps<T>) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -77,7 +80,8 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(option.value)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cx(
-              'inline-flex min-h-11 items-center rounded-full px-4 text-sm font-medium',
+              'inline-flex items-center rounded-full font-medium',
+              size === 'field' ? 'min-h-14 px-6 text-base' : 'min-h-11 px-4 text-sm',
               selected ? 'bg-primary text-primary-foreground' : 'text-text-secondary',
             )}
           >

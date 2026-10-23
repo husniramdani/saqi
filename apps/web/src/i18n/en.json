@@ -170,7 +170,25 @@
     "markDone": "Mark done",
     "done": "Done",
     "empty": "No tasks for today.",
-    "subtitle": "{date} · {count, plural, one {{count} task} other {{count} tasks}}"
+    "subtitle": "{date} · {count, plural, one {{count} task} other {{count} tasks}}",
+    "offline": "Offline · {count, plural, =0 {changes will be saved on this phone} one {{count} change saved on this phone} other {{count} changes saved on this phone}}",
+    "queued": "{count, plural, one {{count} change} other {{count} changes}} waiting to sync",
+    "syncing": "Syncing…",
+    "synced": "{count, plural, one {{count} change} other {{count} changes}} synced",
+    "conflict": "Updated by someone else on another phone. Their change was kept.",
+    "syncFailed": "A change could not be saved: {message}",
+    "context": "{kind} · {place}",
+    "doneToday": "Done today ({count})",
+    "sheet": {
+      "title": "Mark done",
+      "note": "Note (optional)",
+      "addPhoto": "Add photo",
+      "replacePhoto": "Replace photo",
+      "removePhoto": "Remove photo",
+      "photoNote": "Stays on this phone; not uploaded.",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    }
   },
   "makingOf": {
     "title": "How Saqi is built",

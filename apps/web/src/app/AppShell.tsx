@@ -9,7 +9,9 @@ import { cx } from '@/ui';
 import { LanguageSwitch } from './LanguageSwitch';
 import { LogoMark } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
+import { Toaster } from './Toaster';
 import { useLastUpdated } from './useLastUpdated';
+import { useOutboxSync } from './useOutboxSync';
 
 const NAV = [
   { to: '/', key: 'today', end: true },
@@ -29,6 +31,7 @@ export function AppShell() {
   const farm = useFarm();
   const plan = usePlanToday();
   const lastUpdated = useLastUpdated();
+  useOutboxSync();
   const main = useRef<HTMLElement>(null);
   const { pathname } = useLocation();
   const shownPath = useRef(pathname);
@@ -131,6 +134,7 @@ export function AppShell() {
         <Outlet />
       </main>
 
+      <Toaster />
       <nav
         aria-label={t('shell.nav.label')}
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-overlay pb-[env(safe-area-inset-bottom)] md:hidden"

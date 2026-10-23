@@ -9,12 +9,14 @@ import {
   type Assignee,
   type IrrigationEvent,
   type NewIrrigationEvent,
+  type Task,
   type TaskPatch,
 } from '@saqi/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
-import { apiGet, apiPatch, apiPost } from './client';
+import { ApiError, apiGet, apiPatch, apiPost } from './client';
 import { keys } from './keys';
+import { outbox } from './outbox';
 
 const SeriesList = z.array(SensorSeriesSchema);
 const EventList = z.array(IrrigationEventSchema);
@@ -58,13 +60,56 @@ export const useTasks = (date: string, assignee?: Assignee) =>
     },
   });
 
-// TODO(T17): optimistic update + offline outbox on network failure.
+/**
+ * Update a task, offline-safe (plan/02 §3.2): the cache updates at once; then PATCH. Without a
+ * connection (offline, or no answer at all) a "done" goes to the outbox instead and syncs later.
+ * Other failures (a 409 conflict, a validation error) roll back and reach the caller.
+ */
 export function useUpdateTask() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...patch }: TaskPatch & { id: string }) =>
-      apiPatch(`/api/tasks/${encodeURIComponent(id)}`, TaskSchema, patch),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.tasks }),
+    // Offline is handled here (the outbox survives a reload); TanStack's own pause would not.
+    networkMode: 'always',
+    mutationFn: async ({
+      id,
+      ...patch
+    }: TaskPatch & { id: string }): Promise<{ queued: boolean }> => {
+      const queue = () => {
+        outbox.enqueue({
+          id: crypto.randomUUID(),
+          type: 'task.done',
+          taskId: id,
+          clientUpdatedAt: patch.clientUpdatedAt,
+          createdAt: new Date().toISOString(),
+          ...(patch.note ? { note: patch.note } : {}),
+        });
+        return { queued: true };
+      };
+      if (patch.status === 'done' && !navigator.onLine) return queue();
+      try {
+        await apiPatch(`/api/tasks/${encodeURIComponent(id)}`, TaskSchema, patch);
+        return { queued: false };
+      } catch (err) {
+        if (patch.status === 'done' && err instanceof ApiError && err.code === 'NETWORK')
+          return queue();
+        throw err;
+      }
+    },
+    onMutate: async ({ id, status, note }) => {
+      await queryClient.cancelQueries({ queryKey: keys.tasks });
+      const previous = queryClient.getQueriesData<Task[]>({ queryKey: keys.tasks });
+      queryClient.setQueriesData<Task[]>({ queryKey: keys.tasks }, (old) =>
+        old?.map((t) => (t.id === id ? { ...t, status, ...(note ? { note } : {}) } : t)),
+      );
+      return { previous };
+    },
+    onError: (_err, _patch, context) => {
+      for (const [key, data] of context?.previous ?? []) queryClient.setQueryData(key, data);
+    },
+    onSettled: (result) => {
+      // A queued change has nothing to fetch yet; the outbox sync refreshes after it lands.
+      if (!result?.queued) void queryClient.invalidateQueries({ queryKey: keys.tasks });
+    },
   });
 }
 

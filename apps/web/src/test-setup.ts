@@ -18,5 +18,15 @@ if (typeof window.matchMedia !== 'function') {
     }) as MediaQueryList;
 }
 
+// jsdom has no modal dialog; this only toggles `open`. Real browsers add the focus trap and inert page.
+if (typeof HTMLDialogElement.prototype.showModal !== 'function') {
+  HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+    this.open = true;
+  };
+  HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+    this.open = false;
+  };
+}
+
 // Testing Library only auto-cleans with Vitest globals, which this repo doesn't use.
 afterEach(cleanup);

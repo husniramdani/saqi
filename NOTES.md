@@ -6,13 +6,11 @@ Working notes for whoever (human or Claude Code) picks up the next task. Read th
 
 Search the code for `TODO(Txx)` to find each seam.
 
-| Seam                                            | Where                                                    | Filled by    |
-| ----------------------------------------------- | -------------------------------------------------------- | ------------ |
-| Postgres repo, Neon client, `db:migrate` driver | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07          |
-| Today, Block detail and Field screens           | `apps/web/src/routes/*`, `src/features/*` (empty)        | T12–T14, T17 |
-| Offline outbox and optimistic task updates      | `apps/web/src/api/outbox.ts` (no-op), `useUpdateTask`    | T17          |
-| Arabic and Urdu UI strings                      | `apps/web/src/i18n/ar.json`, `ur.json` (English copies)  | T18          |
-| Making-of story                                 | `apps/web/src/routes/making-of.tsx`                      | T19          |
+| Seam                                            | Where                                                    | Filled by |
+| ----------------------------------------------- | -------------------------------------------------------- | --------- |
+| Postgres repo, Neon client, `db:migrate` driver | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07       |
+| Arabic and Urdu UI strings                      | `apps/web/src/i18n/ar.json`, `ur.json` (English copies)  | T18       |
+| Making-of story                                 | `apps/web/src/routes/making-of.tsx`                      | T19       |
 
 ## Reason params (engine → web contract)
 
@@ -52,6 +50,18 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Repo interface changes:** `getSeedAnchor()` was added; `getMonthUsage(month)` became `getUsage(sinceIso, untilIso)` (half-open), so the shifted view can translate bounds. `/api/health` returns `seedAnchor`.
 - **Every timestamp leaves the API as UTC `Z`**, including schedule times (the engine works in `+04:00`). Reason params keep `HH:mm` in GST.
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
+
+## Field companion (T17)
+
+- **The route stays `routes/field.tsx`** (the task says `routes/field/FieldPage.tsx`); every other route is one flat file exporting `Component` for the router's `lazy`.
+- **Outbox flow:** `useUpdateTask` updates the cache at once, then PATCHes. Offline (`navigator.onLine` false, or a `NETWORK` error) a "done" goes to `saqi.outbox.v1` instead. `useOutboxSync` (mounted in the shell) flushes on `online`, on window focus and every 30 s while anything is queued. One flush at a time. A 409 drops the action, refetches (the server's value wins) and toasts. Queued task ids render as done even after a refetch.
+- **`networkMode: 'always'` on the task mutation.** TanStack's default pauses mutations while offline, so `mutationFn` never ran and nothing reached the outbox (found in the browser, not in tests). The paused mutation would also have lived only in memory and been lost on reload.
+- **The sheet is a native `<dialog>` opened with `showModal()`**: the browser does the focus trap, the inert page, Escape and returning focus. The backdrop is a real element so M10 can animate it (GSAP can't reach `::backdrop`). jsdom has no `showModal`; `test-setup.ts` stubs it to toggle `open` only, so the tests prove modal-ness, not the trap itself (T21's Playwright can).
+- **Buttons:** "Mark done" is `ink` and Confirm is `accent`. The task says `secondary` and `water`; `Button` has neither, and design.md calls `ink` the secondary pill and allows one accent per view (the sheet's Confirm).
+- **M9** (`features/tasks/taskDone.ts`): the check draws and the strike grows from the inline start, in place; then Flip state is recorded, the mutation commits, and `Flip.from` runs once the done list changes. It reuses `loadMapPlugins()` (DrawSVG + Flip only). Reduced motion skips straight to the move.
+- **Context line** is "kind · block name", not "No data since 12:00": the seeded task titles already carry the sensor detail ("Check 60 cm sensor, no data since 20:00").
+- **Tap targets at 375 px:** everything on Field is ≥ 56 px (`SegmentedControl` gained `size="field"`). The shell header controls (logo, EN/ع/ار, theme) stay 44 px per design.md; T20 can decide whether Field's acceptance line covers the shell too.
+- **After confirm, focus lands on `<body>`** because the opener ("Mark done") unmounts as the card moves. T20 could focus the "Done today" summary instead.
 
 ## Signature motion (T16)
 

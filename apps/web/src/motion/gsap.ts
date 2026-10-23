@@ -1,6 +1,7 @@
 /**
  * The only place GSAP plugins are registered. Core + useGSAP ship with every route; the map and
- * story plugins load on demand, so Field never downloads them (plan/06 §2, NFR2).
+ * story plugins load on demand: Field fetches DrawSVG + Flip only when a task is confirmed (M9),
+ * and never the story plugins (plan/06 §2, NFR2).
  */
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
@@ -12,7 +13,7 @@ let flip: (typeof import('gsap/Flip'))['Flip'] | null = null;
 let storyPlugins: Promise<void> | null = null;
 
 /**
- * DrawSVG and Flip: Today's map reveal and the block Flip. (Water flow animates the stroke
+ * DrawSVG and Flip: Today's map reveal, the block Flip and Field's task done. (Water flow animates the stroke
  * offset, as on the Nightfield canvas, so MotionPath isn't needed.)
  */
 export function loadMapPlugins(): Promise<void> {
