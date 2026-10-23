@@ -9,7 +9,7 @@ afterEach(() => act(() => setLocale('en')));
 describe('Figure', () => {
   it('sets the value at its precision with the unit beside it', () => {
     render(<Figure value={90.43} unit="m³" />);
-    const figure = screen.getByText('90.4', { exact: false });
+    const figure = screen.getByText('90.4').closest('[data-value]') as HTMLElement;
     expect(figure.textContent).toBe('90.4m³');
     expect(figure.dataset['value']).toBe('90.43');
     expect(figure.className).toContain('num');
@@ -24,10 +24,21 @@ describe('Figure', () => {
 
   it('marks tonight’s figure with orange text, never the fill', () => {
     render(<Figure value={245.9} unit="m³" accent />);
-    const figure = screen.getByText('245.9', { exact: false });
+    const figure = screen.getByText('245.9').closest('[data-value]') as HTMLElement;
     expect(figure.className).toContain('text-accent-text');
     expect(figure.className.split(' ')).not.toContain('text-accent');
   });
+});
+
+it('counts from the previous value when it changes (M3), and starts final', async () => {
+  const { container, rerender } = render(<Figure value={90.4} unit="m³" />);
+  const number = container.querySelector('[data-value] > span') as HTMLElement;
+  expect(number.textContent).toBe('90.4');
+  rerender(<Figure value={155.5} unit="m³" />);
+  // Mid-count: the text starts from the old value, not from 0 and not already final.
+  expect(Number(number.textContent)).toBeGreaterThanOrEqual(90.4);
+  await new Promise((r) => setTimeout(r, 1100));
+  expect(number.textContent).toBe('155.5');
 });
 
 describe('Stat', () => {

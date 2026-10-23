@@ -8,17 +8,20 @@ import gsap from 'gsap';
 gsap.registerPlugin(useGSAP);
 
 let mapPlugins: Promise<void> | null = null;
+let flip: (typeof import('gsap/Flip'))['Flip'] | null = null;
 let storyPlugins: Promise<void> | null = null;
 
-/** DrawSVG, MotionPath and Flip: Today's map reveal, water flow and the block Flip. */
+/**
+ * DrawSVG and Flip: Today's map reveal and the block Flip. (Water flow animates the stroke
+ * offset, as on the Nightfield canvas, so MotionPath isn't needed.)
+ */
 export function loadMapPlugins(): Promise<void> {
-  mapPlugins ??= Promise.all([
-    import('gsap/DrawSVGPlugin'),
-    import('gsap/MotionPathPlugin'),
-    import('gsap/Flip'),
-  ]).then(([{ DrawSVGPlugin }, { MotionPathPlugin }, { Flip }]) => {
-    gsap.registerPlugin(DrawSVGPlugin, MotionPathPlugin, Flip);
-  });
+  mapPlugins ??= Promise.all([import('gsap/DrawSVGPlugin'), import('gsap/Flip')]).then(
+    ([{ DrawSVGPlugin }, { Flip }]) => {
+      gsap.registerPlugin(DrawSVGPlugin, Flip);
+      flip = Flip;
+    },
+  );
   return mapPlugins;
 }
 
@@ -31,5 +34,8 @@ export function loadStoryPlugins(): Promise<void> {
   );
   return storyPlugins;
 }
+
+/** Flip, once the map plugins have loaded (null before). */
+export const getFlip = () => flip;
 
 export { gsap, useGSAP };

@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+import { meterTo, useGSAP, useMotion } from '@/motion';
 import { cx } from './cx';
 
 interface MeterProps {
@@ -15,6 +17,17 @@ interface MeterProps {
  */
 export function Meter({ value, mark, label, className }: MeterProps) {
   const share = Math.min(1, Math.max(0, value));
+  const fill = useRef<HTMLSpanElement>(null);
+  const previous = useRef(0);
+  const { reduced } = useMotion();
+  // M4 · fills from the inline start: from empty on first show, then from the previous share.
+  useGSAP(
+    () => {
+      if (fill.current) meterTo(fill.current, share, { from: previous.current, reduced });
+      previous.current = share;
+    },
+    { dependencies: [share, reduced] },
+  );
   return (
     <div
       role="meter"
@@ -25,6 +38,7 @@ export function Meter({ value, mark, label, className }: MeterProps) {
       className={cx('relative h-3 w-full overflow-hidden rounded-sm bg-surface-well', className)}
     >
       <span
+        ref={fill}
         data-meter-fill
         className="absolute inset-0 origin-left rounded-sm bg-accent rtl:origin-right"
         style={{ transform: `scaleX(${share})` }}

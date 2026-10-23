@@ -53,6 +53,25 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Every timestamp leaves the API as UTC `Z`**, including schedule times (the engine works in `+04:00`). Reason params keep `HH:mm` in GST.
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
 
+## Signature motion (T16)
+
+- **M1 map reveal** (`features/farm-map/mapMotion.ts`, Today only, once per session): block outlines draw (DrawSVG), water fills fade in, textures and the stale hatch follow, pipes draw, tags rise, utilities appear; about 1.9 s. Any pointerdown or keydown finishes it. The session flag (`saqi.mapRevealed`) is set on complete/skip, not at start.
+- **M2 water flow:** the dashes on tonight's pipes travel pump → block by animating `strokeDashoffset` (as on the canvas), not capsules on a MotionPath. MotionPath is therefore not loaded at all. Paused on `visibilitychange` and when the map is off-screen (IntersectionObserver). Reduced motion: still dashes.
+- **M3** counters in `Figure` (from the previous value, never 0; the first render is final). **M4** meter fills from 0 on first show, then from the previous share. **M6** schedule bars grow from the start edge, then pulse chips fade in. **M7** reasons rise one by one. **M8** hover thickens the outline and lifts the tag 2 px; the tooltip enters with a 4 px rise.
+- **M5 Flip:** "Open D-1" in the rail records the map block (`motion/flip.ts`); the Block page morphs its header swatch out of it (settle, power3.inOut, absolute + scale). Today preloads the map plugins so Flip is ready by the first click. Only a click records, so back/forward and deep links never play it.
+- **Two StrictMode traps, both fixed and commented:**
+  - `useGSAP` hands the second dev run the context the first run's cleanup reverted, so anything `context.add`-ed after an async load is killed on arrival. The reveal owns its timeline and kills it in its own cleanup.
+  - The Block page's double mount consumed the Flip state before the real mount. `takeBlock` lets the same block retake it within 300 ms, never later. Tested with fake timers.
+- **Verification note:** the Claude browser pane throttles animation frames while hidden, so GSAP looked frozen. Moments were verified by driving `gsap.ticker.tick()` by hand:
+  - reveal at 500 ms: outlines drawing, fills at 0.77, tags pending; done by 2.3 s;
+  - flow offset moving;
+  - Flip from the map block's box (794, 345, 223 × 125) to the 32 × 32 swatch;
+  - no replay on back/forward;
+  - one flow tween after three visits to Today;
+  - no GSAP console warnings.
+- **Not verified here:** frame rate under Chrome's 4× CPU throttle (T16 asks ≥ 55 fps) and the OS reduced-motion setting end to end (each preset's reduced path is unit-tested). Both go on T21's or the manual QA list.
+- **Bundle:** DrawSVG 1.9 kB and Flip 9.3 kB gzip are lazy chunks. Field's first load is about 207 kB gzip (entry 205.5 kB, which now holds GSAP core and the shared UI), under NFR2's 250 kB.
+
 ## Motion foundation (T15)
 
 - `apps/web/src/motion/`:

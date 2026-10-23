@@ -1,5 +1,7 @@
 import type { DayPlan, Farm } from '@saqi/shared';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { duration, ease, gsap, growFromStart, stagger, useGSAP, useMotion } from '@/motion';
 import { useLocale } from '@/i18n';
 import { formatTimeGst, formatTimeRangeGst } from '@/i18n/format';
 import { EmptyState, Figure, TimeTrack } from '@/ui';
@@ -21,6 +23,26 @@ export function SchedulePanel({
   const { t } = useTranslation();
   const locale = useLocale();
   const window = nightWindow(plan.date, farm);
+  const scope = useRef<HTMLElement>(null);
+  const { reduced } = useMotion();
+  // M6 · bars grow from their start edge (right in RTL); tomorrow's pulses fade in after.
+  useGSAP(
+    () => {
+      const root = scope.current;
+      if (!root) return;
+      growFromStart(root.querySelectorAll('[data-schedule-bar]'), { reduced });
+      if (!reduced) {
+        gsap.from(root.querySelectorAll('[data-pulse-block] > span'), {
+          opacity: 0,
+          duration: duration.settle,
+          ease: ease.standard,
+          stagger: stagger.list,
+          delay: duration.step,
+        });
+      }
+    },
+    { scope, dependencies: [plan.generatedAt, reduced] },
+  );
   const night = plan.schedule.filter((i) => i.kind === 'night');
   const pulses = plan.schedule.filter((i) => i.kind === 'pulse');
   const hourLabel = (h: number) => {

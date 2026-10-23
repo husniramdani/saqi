@@ -40,6 +40,7 @@ export function FarmMapPanel({
   header,
   footer,
   className,
+  reveal = false,
 }: {
   farm: UseQueryResult<Farm>;
   plan: UseQueryResult<DayPlan>;
@@ -50,6 +51,8 @@ export function FarmMapPanel({
   /** Below the map and legend (Today puts tonight's schedule here). */
   footer?: ReactNode;
   className?: string;
+  /** Play the map's once-per-session draw-in. */
+  reveal?: boolean;
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
@@ -82,6 +85,7 @@ export function FarmMapPanel({
         schedule={plan.data.schedule}
         selectedId={selectedId}
         onSelect={onSelect}
+        reveal={reveal}
       />
     ) : (
       <BlockList

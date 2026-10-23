@@ -85,16 +85,26 @@ export function countTo(
 }
 
 /** M4 · budget meter: the fill scales to its share from the inline start. */
-export function meterTo(el: Element, share: number, { reduced = false } = {}) {
-  const scaleX = Math.min(1, Math.max(0, share));
+export function meterTo(
+  el: Element,
+  share: number,
+  { reduced = false, from }: { reduced?: boolean; from?: number } = {},
+) {
+  const clamp = (x: number) => Math.min(1, Math.max(0, x));
+  const scaleX = clamp(share);
   const transformOrigin = originAt(el);
   if (reduced) {
     gsap.set(el, { scaleX, transformOrigin });
     return done();
   }
-  return gsap
-    .timeline()
-    .to(el, { scaleX, transformOrigin, duration: duration.drift, ease: ease.reveal });
+  const tl = gsap.timeline();
+  return from === undefined
+    ? tl.to(el, { scaleX, transformOrigin, duration: duration.drift, ease: ease.reveal })
+    : tl.fromTo(
+        el,
+        { scaleX: clamp(from), transformOrigin },
+        { scaleX, duration: duration.drift, ease: ease.reveal },
+      );
 }
 
 /** M10 · bottom sheet in: slides up while the backdrop dims. */

@@ -2,6 +2,7 @@ import type { BlockDecision, Farm, ScheduleItem } from '@saqi/shared';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { useLocale } from '@/i18n';
+import { captureBlock } from '@/motion';
 import { buttonClasses, Chip, cx, DECISION_CHIP, Figure, MoistureSwatch, PillArrow } from '@/ui';
 import { windowLabel } from '@/features/farm-map/window';
 import { byRisk } from './risk';
@@ -105,6 +106,7 @@ export function BlockRail({
                   <Chip variant={DECISION_CHIP[d.decision]}>{t(`decision.${d.decision}`)}</Chip>
                   <Link
                     to={`/blocks/${d.blockId}`}
+                    onClick={() => captureBlock(d.blockId)}
                     className={buttonClasses({ variant: 'ink', arrow: true })}
                   >
                     {t('today.openBlock', { code: d.blockId })} <PillArrow variant="ink" />

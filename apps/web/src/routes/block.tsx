@@ -1,5 +1,5 @@
 import { gstDate, type SensorSeries } from '@saqi/shared';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { ApiError } from '@/api/client';
@@ -19,6 +19,7 @@ import { RecommendationCard } from '@/features/recommendation/RecommendationCard
 import { BlockTasks } from '@/features/tasks/BlockTasks';
 import { useLocale } from '@/i18n';
 import { formatTimeGst } from '@/i18n/format';
+import { duration, ease, getFlip, takeBlock, useGSAP, useMotion } from '@/motion';
 import { Arrow, Chip, EmptyState, MoistureSwatch, Panel, Skeleton, textLinkClasses } from '@/ui';
 
 /** "60 cm sensor offline since 12:00 GST…": stale sensors say so inside the chart panel. */
@@ -65,6 +66,24 @@ export function Component() {
   const [today] = useState(() => gstDate(new Date()));
   const tasks = useTasks(today);
   const block = farm.data?.blocks.find((b) => b.id === blockId);
+  const swatch = useRef<HTMLSpanElement>(null);
+  const { reduced } = useMotion();
+  // M5 · arriving from the map: the block's swatch morphs out of where the map block was.
+  useGSAP(
+    () => {
+      const state = takeBlock(blockId);
+      const Flip = getFlip();
+      if (!state || !Flip || reduced || !swatch.current) return;
+      Flip.from(state, {
+        targets: swatch.current,
+        duration: duration.settle,
+        ease: ease.emphasized,
+        absolute: true,
+        scale: true,
+      });
+    },
+    { dependencies: [blockId] },
+  );
   const source = farm.data?.sources.find((s) => s.id === block?.sourceId);
 
   const back = (
@@ -91,7 +110,7 @@ export function Component() {
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-4">
           {/* The Flip target (T16): the map block's swatch morphs into this one. */}
-          <span data-flip-id={`block-${blockId}`} className="inline-flex">
+          <span ref={swatch} data-flip-id={`block-${blockId}`} className="inline-flex">
             <MoistureSwatch paw={recommendation.data?.pawNow ?? null} size={32} />
           </span>
           <h1 className="flex items-baseline gap-3 text-3xl font-light tracking-[-0.035em] sm:text-4xl">

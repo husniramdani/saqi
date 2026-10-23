@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFarm, usePlanToday, useWeather } from '@/api/queries';
 import { QueryState } from '@/app/QueryState';
@@ -8,6 +8,7 @@ import { FarmMapPanel } from '@/features/farm-map';
 import { SchedulePanel } from '@/features/schedule/SchedulePanel';
 import { WeatherSection } from '@/features/weather/WeatherSection';
 import { useLocale } from '@/i18n';
+import { loadMapPlugins } from '@/motion';
 import { formatDateGst } from '@/i18n/format';
 import { ErrorState, Figure, SegmentedControl, Skeleton } from '@/ui';
 
@@ -26,6 +27,10 @@ export function Component() {
   const [picked, setSelected] = useState<string | undefined>();
   const [tab, setTab] = useState<'plan' | 'water'>('plan');
 
+  // The map plugins (DrawSVG, Flip) load with Today, so the block Flip is ready by the first click.
+  useEffect(() => {
+    void loadMapPlugins();
+  }, []);
   const p = plan.data;
   // Until someone picks, open on the riskiest block, as the canvas does.
   const selected = picked ?? (p ? byRisk(p.decisions)[0]?.blockId : undefined);
@@ -104,6 +109,7 @@ export function Component() {
         plan={plan}
         selectedId={selected}
         onSelect={setSelected}
+        reveal
         header={header}
         footer={p && f ? <SchedulePanel plan={p} farm={f} onSelect={setSelected} /> : null}
       />

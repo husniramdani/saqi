@@ -16,6 +16,7 @@ import {
   VIEW,
   type Rect,
 } from './geometry';
+import { useHoverLift, useMapReveal, usePipeFlow } from './mapMotion';
 import { MapTooltip } from './MapTooltip';
 
 interface FarmMapProps {
@@ -24,6 +25,8 @@ interface FarmMapProps {
   schedule: ScheduleItem[];
   selectedId?: string | undefined;
   onSelect: (blockId: string) => void;
+  /** Play the once-per-session draw-in (Today only). */
+  reveal?: boolean;
 }
 
 /** Rendered px per SVG unit, kept current with the map's width (1 where unmeasurable). */
@@ -48,7 +51,14 @@ function useScale() {
  * orange, ink tags with block codes, and the utility strip. The plan itself never mirrors in RTL.
  * Each layer is its own `<g class="layer-*">` for the motion moments (T16).
  */
-export function FarmMap({ farm, decisions, schedule, selectedId, onSelect }: FarmMapProps) {
+export function FarmMap({
+  farm,
+  decisions,
+  schedule,
+  selectedId,
+  onSelect,
+  reveal = false,
+}: FarmMapProps) {
   const { t } = useTranslation();
   const locale = useLocale();
   const uid = useId().replace(/:/g, '');
@@ -56,6 +66,7 @@ export function FarmMap({ farm, decisions, schedule, selectedId, onSelect }: Far
   const [active, setActive] = useState<string | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
   const groups = useRef(new Map<string, SVGGElement>());
+  const scope = useRef<HTMLDivElement>(null);
 
   const blocks = useMemo(
     () => farm.blocks.map((b) => ({ block: b, rect: blockRect(b.geometry.points) })),
@@ -64,6 +75,9 @@ export function FarmMap({ farm, decisions, schedule, selectedId, onSelect }: Far
   const byId = new Map(decisions.map((d) => [d.blockId, d]));
   const tonight = scheduledTonight(schedule);
   const font = tagFontSize(scale);
+  useMapReveal(scope, reveal);
+  usePipeFlow(scope, [...tonight].join(','));
+  useHoverLift(scope, active);
 
   const name = (id: string) => farm.blocks.find((b) => b.id === id)?.name[locale] ?? id;
   const label = (id: string) => {
@@ -134,7 +148,7 @@ export function FarmMap({ farm, decisions, schedule, selectedId, onSelect }: Far
   const tooltipDecision = active ? byId.get(active) : undefined;
 
   return (
-    <div className="relative">
+    <div ref={scope} className="relative">
       <svg
         ref={ref}
         viewBox={`0 0 ${VIEW.width} ${VIEW.height}`}
@@ -285,10 +299,10 @@ export function FarmMap({ farm, decisions, schedule, selectedId, onSelect }: Far
             .map(({ block }) => (
               <g key={block.id} data-scheduled={block.id}>
                 <path d={block.geometry.pipePath} stroke="var(--color-accent)" strokeWidth={7} />
-                {/* Static dashes until T16's water flow animates along this path. */}
+                {/* Water flow (M2): these dashes travel pump → block; still under reduced motion. */}
                 <path
                   d={block.geometry.pipePath}
-                  className="flow"
+                  data-flow={block.id}
                   stroke="var(--color-tag-text)"
                   strokeWidth={2.4}
                   strokeDasharray="4 12"
@@ -398,28 +412,30 @@ export function FarmMap({ farm, decisions, schedule, selectedId, onSelect }: Far
                       3,
                     )
                   : null}
-                <rect
-                  x={x - tagW / 2}
-                  y={y - tagH / 2}
-                  width={tagW}
-                  height={tagH}
-                  rx={10}
-                  fill={selected ? 'var(--color-accent)' : 'var(--color-tag)'}
-                  pointerEvents="none"
-                />
-                <text
-                  x={x}
-                  y={y}
-                  dy="0.35em"
-                  textAnchor="middle"
-                  fontSize={font}
-                  fontWeight={500}
-                  className="font-mono"
-                  fill={selected ? 'var(--color-accent-foreground)' : 'var(--color-tag-text)'}
-                  pointerEvents="none"
-                >
-                  {id}
-                </text>
+                <g data-tag>
+                  <rect
+                    x={x - tagW / 2}
+                    y={y - tagH / 2}
+                    width={tagW}
+                    height={tagH}
+                    rx={10}
+                    fill={selected ? 'var(--color-accent)' : 'var(--color-tag)'}
+                    pointerEvents="none"
+                  />
+                  <text
+                    x={x}
+                    y={y}
+                    dy="0.35em"
+                    textAnchor="middle"
+                    fontSize={font}
+                    fontWeight={500}
+                    className="font-mono"
+                    fill={selected ? 'var(--color-accent-foreground)' : 'var(--color-tag-text)'}
+                    pointerEvents="none"
+                  >
+                    {id}
+                  </text>
+                </g>
               </g>
             );
           })}

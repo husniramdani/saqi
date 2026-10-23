@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { useLocale } from '@/i18n';
+import { countTo, useGSAP, useMotion } from '@/motion';
 import { formatNumber } from '@/i18n/format';
 import { cx } from './cx';
 
@@ -42,6 +44,23 @@ export function Figure({
   className,
 }: FigureProps) {
   const locale = useLocale();
+  const number = useRef<HTMLSpanElement>(null);
+  const previous = useRef<number | null>(null);
+  const { reduced } = useMotion();
+  // M3 · when the value changes, count from the previous one (never from 0). First render: final.
+  useGSAP(
+    () => {
+      const from = previous.current;
+      previous.current = value;
+      if (from === null || from === value || !number.current) return;
+      countTo(number.current, from, value, {
+        precision,
+        format: (v) => formatNumber(v, locale, precision),
+        reduced,
+      });
+    },
+    { dependencies: [value] },
+  );
   return (
     <span
       data-value={value}
@@ -52,7 +71,7 @@ export function Figure({
         className,
       )}
     >
-      {formatNumber(value, locale, precision)}
+      <span ref={number}>{formatNumber(value, locale, precision)}</span>
       <span className={cx('tracking-normal text-text-muted', UNIT[size])}>{unit}</span>
     </span>
   );

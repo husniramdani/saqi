@@ -1,5 +1,7 @@
 import type { Block, BlockDecision, ScheduleItem } from '@saqi/shared';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { duration, ease, gsap, useGSAP, useMotion } from '@/motion';
 import { useLocale } from '@/i18n';
 import { Chip, cx, DECISION_CHIP, Figure, StaleTag } from '@/ui';
 import { isStale } from './geometry';
@@ -24,10 +26,21 @@ export function MapTooltip({
 }) {
   const { t } = useTranslation();
   const locale = useLocale();
+  const ref = useRef<HTMLDivElement>(null);
+  const { reduced } = useMotion();
+  // M8 · the card enters with a 4 px rise and a fade (`step`); reduced motion: it is just there.
+  useGSAP(
+    () => {
+      if (!reduced)
+        gsap.from(ref.current, { opacity: 0, y: 4, duration: duration.step, ease: ease.standard });
+    },
+    { dependencies: [block.id, reduced] },
+  );
   const window = windowLabel(block.id, schedule, locale);
   const staleHours = decision.reasons.find((r) => r.code === 'SENSOR_STALE')?.params['hours'];
   return (
     <div
+      ref={ref}
       aria-hidden="true"
       className={cx(
         'pointer-events-none absolute z-10 w-max max-w-64 -translate-y-full rounded-md border border-border bg-overlay p-3 shadow-floating',

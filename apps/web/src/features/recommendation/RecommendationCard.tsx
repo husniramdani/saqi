@@ -1,5 +1,7 @@
 import type { BlockDecision, ScheduleItem } from '@saqi/shared';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { fadeUpStagger, useGSAP, useMotion } from '@/motion';
 import { useLocale } from '@/i18n';
 import { ReasonText } from '@/i18n/ReasonText';
 import { Chip, DECISION_CHIP, Figure, Panel } from '@/ui';
@@ -16,6 +18,16 @@ export function RecommendationCard({
   const { t } = useTranslation();
   const locale = useLocale();
   const window = windowLabel(d.blockId, schedule, locale);
+  const reasons = useRef<HTMLOListElement>(null);
+  const { reduced } = useMotion();
+  // M7 · reasons rise in one after another when the card mounts or the decision changes.
+  useGSAP(
+    () => {
+      if (reasons.current)
+        fadeUpStagger(reasons.current.querySelectorAll('[data-reason]'), { reduced });
+    },
+    { dependencies: [d.blockId, d.decision, reduced] },
+  );
   return (
     <Panel
       title={t('block.tonight')}
@@ -44,7 +56,7 @@ export function RecommendationCard({
           {d.reasons.length === 0 ? (
             <p className="text-text-secondary">{t('block.noReasons')}</p>
           ) : (
-            <ol className="flex flex-col">
+            <ol ref={reasons} className="flex flex-col">
               {d.reasons.map((r, i) => (
                 <li
                   key={`${r.code}-${i}`}
