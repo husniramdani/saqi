@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { duration, ease, gsap, growFromStart, stagger, useGSAP, useMotion } from '@/motion';
 import { useLocale } from '@/i18n';
-import { formatTimeGst, formatTimeRangeGst } from '@/i18n/format';
+import { formatM3, formatTimeGst, formatTimeRangeGst } from '@/i18n/format';
 import { EmptyState, Figure, TimeTrack } from '@/ui';
 import { barShare, nightWindow } from './axis';
 
@@ -86,20 +86,29 @@ export function SchedulePanel({
               window: range,
               m3: item.volumeM3,
             });
-            // The whole row is the 44 px target; it shares the ruler's columns via subgrid.
+            // The whole row is the 44 px target; it shares the ruler's columns via subgrid. Its
+            // name comes from what it shows (code, volume) plus the window as screen-reader text,
+            // so the visible label is in the name (WCAG 2.5.3).
             return (
               <button
                 key={item.blockId}
                 type="button"
-                aria-label={label}
                 onClick={() => onSelect(item.blockId)}
                 className="col-span-full grid min-h-11 grid-cols-subgrid items-center rounded-md text-start hover:bg-surface-well"
               >
-                <span className="num text-sm font-medium">{item.blockId}</span>
-                <TimeTrack hours={window.hours} bars={[{ ...barShare(item, window), label }]} />
+                <span className="num text-sm font-medium">
+                  {item.blockId}
+                  <span className="sr-only">, {range},</span>
+                </span>
+                {/* Decorative here: the row's own name already says the window. */}
+                <span aria-hidden="true" className="contents">
+                  <TimeTrack hours={window.hours} bars={[{ ...barShare(item, window), label }]} />
+                </span>
                 <span className="hidden text-end sm:block">
                   <Figure value={item.volumeM3} unit="m³" size="sm" />
                 </span>
+                {/* Phones hide the volume column; screen readers still hear it. */}
+                <span className="sr-only sm:hidden">{formatM3(item.volumeM3, locale)}</span>
               </button>
             );
           })}
@@ -114,9 +123,13 @@ export function SchedulePanel({
               {pulses
                 .filter((p) => p.blockId === id)
                 .map((p) => (
-                  <span key={p.start} className="rounded-sm bg-surface-well px-1.5 py-0.5">
+                  <time
+                    key={p.start}
+                    dateTime={p.start}
+                    className="rounded-sm bg-surface-well px-1.5 py-0.5"
+                  >
                     {formatTimeGst(p.start, locale).replace(' GST', '')}
-                  </span>
+                  </time>
                 ))}
             </span>
           ))}

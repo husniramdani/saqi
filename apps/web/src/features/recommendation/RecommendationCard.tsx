@@ -1,5 +1,5 @@
 import type { BlockDecision, ScheduleItem } from '@saqi/shared';
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { fadeUpStagger, useGSAP, useMotion } from '@/motion';
 import { useLocale } from '@/i18n';
@@ -20,6 +20,7 @@ export function RecommendationCard({
   const window = windowLabel(d.blockId, schedule, locale);
   const reasons = useRef<HTMLOListElement>(null);
   const { reduced } = useMotion();
+  const whyId = useId();
   // M7 · reasons rise in one after another when the card mounts or the decision changes.
   useGSAP(
     () => {
@@ -52,11 +53,13 @@ export function RecommendationCard({
           {window ? <p className="num text-sm text-text-secondary">{window}</p> : null}
         </div>
         <div className="flex flex-col gap-2">
-          <h3 className="text-xs font-medium text-text-muted">{t('block.why')}</h3>
+          <h3 id={whyId} className="text-xs font-medium text-text-muted">
+            {t('block.why')}
+          </h3>
           {d.reasons.length === 0 ? (
             <p className="text-text-secondary">{t('block.noReasons')}</p>
           ) : (
-            <ol ref={reasons} className="flex flex-col">
+            <ol ref={reasons} aria-labelledby={whyId} className="flex flex-col">
               {d.reasons.map((r, i) => (
                 <li
                   key={`${r.code}-${i}`}

@@ -18,17 +18,7 @@ import { loadConfig } from '../config';
 import { createHourlyMemoryRepo } from '../repo/hourly';
 import { withTimeShift } from '../services/timeshift';
 import { createWeatherService } from '../services/weather';
-import recordedForecast from '../sim/fixtures/openmeteo-forecast.json' with { type: 'json' };
-
-/** The recorded Open-Meteo payload with ET₀ pinned to the worked example's 5.8 mm. */
-const forecast58 = {
-  ...recordedForecast,
-  daily: {
-    ...recordedForecast.daily,
-    et0_fao_evapotranspiration: recordedForecast.daily.et0_fao_evapotranspiration.map(() => 5.8),
-  },
-};
-const recordedFetch: typeof fetch = async () => Response.json(forecast58);
+import { workedExampleFetch as recordedFetch } from '../sim/workedExample';
 
 /** Wired like production: memory mode rebuilt for the current hour, behind the (zero) time-shift. */
 const makeApp = () => {

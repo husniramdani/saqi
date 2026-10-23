@@ -80,15 +80,15 @@ describe('AppShell', () => {
   it('switches language and direction from the header', async () => {
     renderShell();
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Arabic' }));
+      fireEvent.click(screen.getByRole('button', { name: 'ع, Arabic' }));
     });
     expect(document.documentElement.dir).toBe('rtl');
     expect(document.documentElement.lang).toBe('ar');
     // The labels are Arabic now too.
-    expect(screen.getByRole('button', { name: 'العربية' }).getAttribute('aria-pressed')).toBe(
+    expect(screen.getByRole('button', { name: 'ع, العربية' }).getAttribute('aria-pressed')).toBe(
       'true',
     );
-    expect(screen.getByRole('link', { name: 'Saqi، اليوم' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /^Saqi.*, اليوم$/ })).toBeTruthy();
   });
 
   it('crossfades the app around the switch (M12) and still lands it', async () => {
@@ -96,7 +96,7 @@ describe('AppShell', () => {
     root.id = 'root';
     document.body.append(root);
     renderShell();
-    fireEvent.click(screen.getByRole('button', { name: 'Urdu' }));
+    fireEvent.click(screen.getByRole('button', { name: 'ار, Urdu' }));
     await vi.waitFor(() => expect(document.documentElement.lang).toBe('ur'));
     expect(document.documentElement.dir).toBe('rtl');
     await vi.waitFor(() => expect(root.style.opacity).toBe('1'));

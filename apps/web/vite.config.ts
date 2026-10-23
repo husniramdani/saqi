@@ -9,5 +9,10 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   server: { port: 5173, strictPort: true },
-  test: { environment: 'jsdom', setupFiles: ['./src/test-setup.ts'] },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test-setup.ts'],
+    // Unit and component tests only; e2e/*.spec.ts belong to Playwright.
+    include: ['src/**/*.test.{ts,tsx}'],
+  },
 });

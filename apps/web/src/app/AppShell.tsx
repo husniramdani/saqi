@@ -62,14 +62,15 @@ export function AppShell() {
       <header className="mx-auto flex min-h-14 max-w-[1440px] items-center justify-between gap-4 px-4 py-2 sm:px-6">
         <Link
           to="/"
-          aria-label={t('shell.home')}
           className="inline-flex min-h-11 items-center gap-2.5 text-text-primary no-underline"
         >
+          {/* Named by what it shows (WCAG 2.5.3 label in name), then where it goes. */}
           <LogoMark />
           <span className="text-lg font-semibold tracking-[-0.02em]">{t('shell.brand')}</span>
           <span className="hidden text-sm font-medium whitespace-nowrap text-text-muted xl:inline">
             {farm.data?.name[locale] ?? t('shell.farm')}
           </span>
+          <span className="sr-only">, {t('shell.nav.today')}</span>
         </Link>
 
         <nav aria-label={t('shell.nav.label')} className="hidden md:block">

@@ -33,7 +33,8 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/web/**/*.{ts,tsx}'],
+    // App code only: Playwright's fixture callback `use` (apps/web/e2e) isn't a React hook.
+    files: ['apps/web/src/**/*.{ts,tsx}'],
     ...reactHooks.configs.flat.recommended,
   },
   {

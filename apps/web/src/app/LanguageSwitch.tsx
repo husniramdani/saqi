@@ -34,7 +34,8 @@ export function LanguageSwitch() {
           type="button"
           lang={l.value}
           aria-pressed={l.value === locale}
-          aria-label={t(`shell.languages.${l.value}`)}
+          // "EN, English": the name starts with what's on the button (WCAG 2.5.3 label in name).
+          aria-label={`${l.label}, ${t(`shell.languages.${l.value}`)}`}
           onClick={() => switchTo(l.value)}
           className={cx(
             'num h-11 min-w-11 rounded-full px-2 text-xs font-medium',

@@ -25,7 +25,7 @@ describe('SchedulePanel', () => {
   it('draws one row per night run, each a full-row button to its block', () => {
     const onSelect = vi.fn();
     render(<SchedulePanel plan={plan()} farm={farm07} onSelect={onSelect} />);
-    const d1 = screen.getByRole('button', { name: 'D-1, 22:00 → 01:01 GST, 90.4 m³' });
+    const d1 = screen.getByRole('button', { name: /^D-1, 22:00 → 01:01 GST, ?90\.4/ });
     expect(screen.getByRole('button', { name: /^F-1, 01:01 → 04:28 GST/ })).toBeDefined();
     fireEvent.click(d1);
     expect(onSelect).toHaveBeenCalledWith('D-1');

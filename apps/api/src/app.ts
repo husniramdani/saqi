@@ -15,6 +15,7 @@ import { weatherRoutes } from './routes/weather';
 import { createPlanService, type PlanService } from './services/plan';
 import { ScenarioSchema, withScenario, type Scenario } from './services/scenario';
 import { withTimeShift } from './services/timeshift';
+import { workedExampleFetch } from './sim/workedExample';
 import { createWeatherService, type WeatherService } from './services/weather';
 
 export interface Deps {
@@ -84,12 +85,13 @@ function apiRoutes(deps: Deps) {
 
 export function defaultDeps(): Deps {
   const config = loadConfig();
-  const now = () => new Date();
+  const frozen = config.NOW;
+  const now = frozen ? () => new Date(frozen) : () => new Date();
   const stored = createRepo(config, now);
   // pg: the stored scenario replayed at the current hour. Memory is already live (zero shift).
   const repo = withTimeShift(stored, now);
   const weather = createWeatherService({
-    fetch: globalThis.fetch,
+    fetch: config.WEATHER_FIXTURE === '1' ? workedExampleFetch : globalThis.fetch,
     repo: stored,
     now,
     lat: config.FARM_LAT,

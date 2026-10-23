@@ -1,6 +1,6 @@
 import { AssigneeSchema, gstDate, type Assignee, type Block, type Task } from '@saqi/shared';
 import type { Flip } from 'gsap/Flip';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOutboxCount, useOutboxSyncing, useQueuedTaskIds } from '@/api/outbox';
 import { useFarm, useTasks, useUpdateTask } from '@/api/queries';
@@ -12,7 +12,7 @@ import { TaskCard } from '@/features/tasks/TaskCard';
 import { playTaskDone, TASK_CARDS } from '@/features/tasks/taskDone';
 import { useLocale } from '@/i18n';
 import { formatDateGst } from '@/i18n/format';
-import { duration, ease, getFlip, useMotion } from '@/motion';
+import { duration, ease, getFlip, loadMapPlugins, useMotion } from '@/motion';
 import { Chip, SegmentedControl, Skeleton } from '@/ui';
 
 const WORKER_KEY = 'saqi.worker';
@@ -58,6 +58,10 @@ export function Component() {
   const tasks = useTasks(today, worker);
   const updateTask = useUpdateTask();
   const queued = useQueuedTaskIds();
+  // Fetch M9's plugins while still online, so marking done outdoors still animates.
+  useEffect(() => {
+    loadMapPlugins().catch(() => undefined);
+  }, []);
   usePageTitle(t('field.title'));
 
   // M9 · second half: the Flip state recorded before the move plays once the done list changes.
@@ -91,8 +95,13 @@ export function Component() {
   const confirm = async (task: Task, note: string) => {
     const card = document.querySelector(`[data-flip-id="task-${task.id}"]`);
     if (!reduced && card) {
-      await playTaskDone(card);
-      pendingFlip.current = getFlip()?.getState(TASK_CARDS) ?? null;
+      try {
+        await playTaskDone(card);
+        pendingFlip.current = getFlip()?.getState(TASK_CARDS) ?? null;
+      } catch {
+        // The animation is decoration: if its plugins can't load (offline before they were
+        // cached), the card just moves. The worker's change must never be lost to it.
+      }
     }
     focusDone.current = true;
     updateTask.mutate({
