@@ -9,7 +9,6 @@ Search the code for `TODO(Txx)` to find each seam.
 | Seam                                            | Where                                                    | Filled by |
 | ----------------------------------------------- | -------------------------------------------------------- | --------- |
 | Postgres repo, Neon client, `db:migrate` driver | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07       |
-| Arabic and Urdu UI strings                      | `apps/web/src/i18n/ar.json`, `ur.json` (English copies)  | T18       |
 | Making-of story                                 | `apps/web/src/routes/making-of.tsx`                      | T19       |
 
 ## Reason params (engine → web contract)
@@ -50,6 +49,19 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Repo interface changes:** `getSeedAnchor()` was added; `getMonthUsage(month)` became `getUsage(sinceIso, untilIso)` (half-open), so the shifted view can translate bounds. `/api/health` returns `seedAnchor`.
 - **Every timestamp leaves the API as UTC `Z`**, including schedule times (the engine works in `+04:00`). Reason params keep `HH:mm` in GST.
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
+
+## Arabic and Urdu, RTL (T18)
+
+- **Translations are machine-assisted** and reviewed for consistency; `apps/web/src/i18n/TRANSLATIONS.md` has the rules and a glossary. Native review welcome.
+- **`i18n/parity.test.ts`** fails on a missing or extra key, different ICU params (read from the parsed AST: a regex took `{runs}` plural branches for params), a message that doesn't compile, or a Latin-only string that isn't on its allowlist (brand, `budgetUsed`, `context`, `RO`).
+- **Arabic plurals use all six categories** where a count shows; Urdu uses one/other. Messages whose English plural only changes a verb keep a plural in Arabic and Urdu too, so the params match.
+- **Most RTL was already in place** from T03–T17: logical properties everywhere (the audit grep found only the map tooltip, physical on purpose), the chart x-axis and the schedule track flow with the reading direction, `growFromStart`, the strike line and `Arrow` mirror.
+- **"Geist Mono for numbers only", applied:** map utility labels hold words, so they drop `font-mono` in `ar`/`ur` (Arabic in a mono fallback lost its joins); the header's "Updated" pill renders only the time as `num`, with the words in the locale's font, in every language. Block code tags stay mono.
+- **No letter-spacing in `ar`/`ur`** via an unlayered `:where(:lang(ar), :lang(ur))` rule, which outranks Tailwind's layered `tracking-*` utilities without `!important`. Plex Sans Arabic now also loads weight 300 for the display headings.
+- **Varieties** (Khalas, Fard, …) are plain strings in the fixture, so the web translates them through `block.variety.*` with the raw string as fallback, instead of changing the shared contract, the DB and the seed.
+- **Arrows in reason text** point with the reading direction (`←` in `ar`/`ur`). `formatTimeRangeGst` stays `→` inside its LTR-isolated figure.
+- **M12** crossfades `#root` around the switch. Gotcha: in a hidden tab `requestAnimationFrame` stops, so a switch made there would hold at opacity 0 until the tab is visible again.
+- **Kept Latin on purpose:** units (`m³`, `mm`, `cm`, `m³/h`), `GST`, `ET₀`, block codes, `RO`, `TSE`, `Saqi`, `Open-Meteo`.
 
 ## Field companion (T17)
 

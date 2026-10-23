@@ -84,9 +84,23 @@ describe('AppShell', () => {
     });
     expect(document.documentElement.dir).toBe('rtl');
     expect(document.documentElement.lang).toBe('ar');
-    expect(screen.getByRole('button', { name: 'Arabic' }).getAttribute('aria-pressed')).toBe(
+    // The labels are Arabic now too.
+    expect(screen.getByRole('button', { name: 'العربية' }).getAttribute('aria-pressed')).toBe(
       'true',
     );
+    expect(screen.getByRole('link', { name: 'Saqi، اليوم' })).toBeTruthy();
+  });
+
+  it('crossfades the app around the switch (M12) and still lands it', async () => {
+    const root = document.createElement('div');
+    root.id = 'root';
+    document.body.append(root);
+    renderShell();
+    fireEvent.click(screen.getByRole('button', { name: 'Urdu' }));
+    await vi.waitFor(() => expect(document.documentElement.lang).toBe('ur'));
+    expect(document.documentElement.dir).toBe('rtl');
+    await vi.waitFor(() => expect(root.style.opacity).toBe('1'));
+    root.remove();
   });
 
   it('toggles and remembers the night theme', () => {

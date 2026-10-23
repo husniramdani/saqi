@@ -122,7 +122,8 @@ export function Component() {
           <p className="text-text-secondary">
             {[
               t(`block.crop.${block.crop}`),
-              block.variety,
+              // Cultivar names from the fixture; unknown ones show as recorded.
+              t(`block.variety.${block.variety}`, { defaultValue: block.variety }),
               t('block.area', { ha: block.areaHa }),
               block.trees ? t('block.trees', { count: block.trees }) : null,
               t(`block.method.${block.method}`),

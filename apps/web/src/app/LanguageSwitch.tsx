@@ -1,6 +1,7 @@
 import type { Locale } from '@saqi/shared';
 import { useTranslation } from 'react-i18next';
 import { setLocale, useLocale } from '@/i18n';
+import { crossfadeSwap, useMotion } from '@/motion';
 import { cx } from '@/ui';
 
 // Each language names itself in its own script; the accessible name says which it is.
@@ -13,6 +14,14 @@ const LANGUAGES: { value: Locale; label: string }[] = [
 export function LanguageSwitch() {
   const { t } = useTranslation();
   const locale = useLocale();
+  const { reduced } = useMotion();
+  // M12 · the whole app fades out, flips language and direction unseen, and fades back in.
+  const switchTo = (next: Locale) => {
+    if (next === locale) return;
+    const root = document.getElementById('root');
+    if (root) crossfadeSwap(root, () => setLocale(next), { reduced });
+    else void setLocale(next);
+  };
   return (
     <div
       role="group"
@@ -26,7 +35,7 @@ export function LanguageSwitch() {
           lang={l.value}
           aria-pressed={l.value === locale}
           aria-label={t(`shell.languages.${l.value}`)}
-          onClick={() => void setLocale(l.value)}
+          onClick={() => switchTo(l.value)}
           className={cx(
             'num h-11 min-w-11 rounded-full px-2 text-xs font-medium',
             l.value === locale ? 'bg-primary text-primary-foreground' : 'text-text-secondary',

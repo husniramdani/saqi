@@ -1,7 +1,7 @@
 import type { BlockDecision, Farm, ScheduleItem } from '@saqi/shared';
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocale } from '@/i18n';
+import { isRtl, useLocale } from '@/i18n';
 import { moistureToken } from '@/ui';
 import {
   blockRect,
@@ -348,7 +348,8 @@ export function FarmMap({
                     y={594}
                     textAnchor="middle"
                     fontSize={17}
-                    className="font-mono"
+                    // Mono for Latin codes; Arabic-script words need their own font to join.
+                    className={isRtl(locale) ? undefined : 'font-mono'}
                     fill={
                       u.kind === 'pump' ? 'var(--color-accent-text)' : 'var(--color-text-secondary)'
                     }

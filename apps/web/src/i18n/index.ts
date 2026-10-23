@@ -6,7 +6,6 @@ import ar from './ar.json';
 import en from './en.json';
 import ur from './ur.json';
 
-// TODO(T18): ar.json and ur.json are English copies until the translation pass.
 const STORAGE_KEY = 'saqi.locale';
 
 export const isRtl = (locale: Locale) => locale === 'ar' || locale === 'ur';

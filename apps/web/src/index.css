@@ -32,3 +32,11 @@
   direction: ltr;
   unicode-bidi: isolate;
 }
+
+/*
+ * Letter-spacing breaks Arabic letter joins, so `ar` and `ur` never track. Unlayered on purpose:
+ * it outranks the `tracking-*` utilities (which live in a cascade layer) without !important.
+ */
+:where(:lang(ar), :lang(ur)) {
+  letter-spacing: 0;
+}

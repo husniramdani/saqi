@@ -156,6 +156,14 @@
       "cancel": "Cancel",
       "saved": "Saved {m3} at {time}.",
       "volumeError": "Enter between 0.1 and 500 m³."
+    },
+    "variety": {
+      "Khalas": "Khalas",
+      "Lulu": "Lulu",
+      "Fard": "Fard",
+      "Barhi": "Barhi",
+      "soilless (coco)": "soilless (coco)",
+      "Rhodes grass": "Rhodes grass"
     }
   },
   "field": {

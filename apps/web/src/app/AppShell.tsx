@@ -107,11 +107,7 @@ export function AppShell() {
           {lastUpdated > 0 ? (
             <span className={cx(pill, 'hidden sm:inline-flex')}>
               <span aria-hidden="true" className={cx(dot, 'size-2 bg-success')} />
-              <span className="num">
-                {t('shell.updated', {
-                  time: formatTimeGst(new Date(lastUpdated).toISOString(), locale),
-                })}
-              </span>
+              <UpdatedLabel time={formatTimeGst(new Date(lastUpdated).toISOString(), locale)} />
             </span>
           ) : null}
           {attention ? (
@@ -161,5 +157,18 @@ export function AppShell() {
         </ul>
       </nav>
     </>
+  );
+}
+
+/** "Updated 21:04 GST": only the time is a mono figure; the words follow the locale's font. */
+function UpdatedLabel({ time }: { time: string }) {
+  const { t } = useTranslation();
+  const [before = '', after = ''] = t('shell.updated', { time: '\u0000' }).split('\u0000');
+  return (
+    <span>
+      {before}
+      <span className="num">{time}</span>
+      {after}
+    </span>
   );
 }
