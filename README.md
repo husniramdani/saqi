@@ -1,5 +1,7 @@
 # Saqi
 
+[![CI](https://github.com/husniramdani/saqi/actions/workflows/ci.yml/badge.svg)](https://github.com/husniramdani/saqi/actions/workflows/ci.yml)
+
 Saqi tells a UAE farm how much to irrigate each block tonight, and why. The farm (Farm 07, Al Ain) is fictional and its sensors are simulated.
 
 > **Status: skeleton.** Structure, contracts, wiring and tests run end to end. The engine maths, simulator, live weather and all visual design are placeholders. See [NOTES.md](NOTES.md).

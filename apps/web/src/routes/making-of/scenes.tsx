@@ -292,9 +292,10 @@ export function TestsScene({ stats }: { stats: TestStats }) {
   );
 }
 
-/** Author links. ponytail: only links that exist are listed; T24 fills repo, LinkedIn, email. */
+/** Author links. ponytail: only links that exist are listed; T24 fills LinkedIn and email. */
 const LINKS: { key: string; href: string; external: boolean }[] = [
   { key: 'app', href: '/', external: false },
+  { key: 'repo', href: 'https://github.com/husniramdani/saqi', external: true },
   { key: 'stylebase', href: 'https://stylebase.dev', external: true },
 ];
 

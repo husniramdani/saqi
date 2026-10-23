@@ -60,6 +60,6 @@ describe('Making-of', () => {
       within(author)
         .getAllByRole('link')
         .map((a) => a.textContent),
-    ).toEqual(['Open the app', 'Stylebase']);
+    ).toEqual(['Open the app', 'Source on GitHub', 'Stylebase']);
   });
 });
