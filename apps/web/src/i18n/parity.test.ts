@@ -59,7 +59,13 @@ describe.each(Object.entries(locales))('%s strings', (locale, strings) => {
       ([, message]) => !/\p{Script_Extensions=Arabic}/u.test(message),
     );
     // ponytail: allowlist by key; a new all-Latin string must be added here on purpose.
-    const allowed = new Set(['shell.brand', 'today.budgetUsed', 'field.context', 'map.utility.ro']);
+    const allowed = new Set([
+      'shell.brand',
+      'today.budgetUsed',
+      'field.context',
+      'map.utility.ro',
+      'makingOf.scene5.links.stylebase',
+    ]);
     expect(latin.map(([key]) => key).filter((k) => !allowed.has(k))).toEqual([]);
   });
 });

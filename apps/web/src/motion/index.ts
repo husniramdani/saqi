@@ -1,5 +1,6 @@
 export { captureBlock, takeBlock } from './flip';
 export { getFlip, gsap, loadMapPlugins, loadStoryPlugins, useGSAP } from './gsap';
+export type { StoryPlugins } from './gsap';
 export { MotionProvider, useMotion, type Motion } from './MotionProvider';
 export {
   countTo,

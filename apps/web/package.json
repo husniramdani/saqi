@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
+    "@saqi/engine": "workspace:^",
     "@saqi/shared": "workspace:^",
     "@saqi/tokens": "workspace:^",
     "@tanstack/react-query": "^5.104.5",

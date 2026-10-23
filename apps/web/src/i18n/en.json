@@ -200,9 +200,51 @@
   },
   "makingOf": {
     "title": "How Saqi is built",
-    "intro": "The story page arrives with the design session.",
-    "farm": "{name} · {count} blocks",
-    "home": "Back to Saqi"
+    "intro": "Five short scenes: the design system, the water maths, the explanations, the tests, and who made it.",
+    "scene1": {
+      "title": "One file decides how it looks.",
+      "body": "Every colour, size and motion in Saqi comes from design.md. It is checked against the Stylebase schema and compiled into tokens, so the water scale on the map is these seven lines.",
+      "caption": "design.md · the colour block (excerpt)",
+      "palette": "Water scale, dry to wet"
+    },
+    "scene2": {
+      "title": "Water first.",
+      "body": "A block is watered only when tomorrow’s crop use would take it below its threshold, and only back up to its target. This is the whole sum for D-1, Khalas palms, with ET₀ at 5.8 mm.",
+      "note": "The engine never rounds inside; figures round only when shown.",
+      "terms": {
+        "target": "target %",
+        "projected": "projected %",
+        "taw": "TAW mm",
+        "efficiency": "efficiency",
+        "area": "area ha",
+        "wetted": "wetted",
+        "volume": "Volume tonight"
+      }
+    },
+    "scene3": {
+      "title": "Every decision explains itself.",
+      "body": "No black box. Each recommendation carries the reasons that produced it, in the order the engine checked them. These three come straight from the engine."
+    },
+    "scene4": {
+      "title": "Tested like production.",
+      "body": "The engine is pure functions under table-driven tests. The API and the web app have their own suites, and every change has to pass all of them.",
+      "stats": {
+        "engine": "Engine tests",
+        "api": "API tests",
+        "web": "Web tests",
+        "e2e": "E2E specs",
+        "ci": "CI minutes"
+      },
+      "pending": "After the first CI run"
+    },
+    "scene5": {
+      "title": "Built by Husni Ramdani.",
+      "body": "Built for a farm that doesn’t exist yet, to show how I’d build for one that does.",
+      "links": {
+        "app": "Open the app",
+        "stylebase": "Stylebase"
+      }
+    }
   },
   "decision": {
     "irrigate": "Irrigate",

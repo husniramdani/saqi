@@ -9,7 +9,6 @@ Search the code for `TODO(Txx)` to find each seam.
 | Seam                                            | Where                                                    | Filled by |
 | ----------------------------------------------- | -------------------------------------------------------- | --------- |
 | Postgres repo, Neon client, `db:migrate` driver | `apps/api/src/repo/pg.ts` (throws `NotImplementedError`) | T07       |
-| Making-of story                                 | `apps/web/src/routes/making-of.tsx`                      | T19       |
 
 ## Reason params (engine → web contract)
 
@@ -49,6 +48,19 @@ The engine passes pre-rounded numbers. Avoid ICU `#` and `{x, number}` in messag
 - **Repo interface changes:** `getSeedAnchor()` was added; `getMonthUsage(month)` became `getUsage(sinceIso, untilIso)` (half-open), so the shifted view can translate bounds. `/api/health` returns `seedAnchor`.
 - **Every timestamp leaves the API as UTC `Z`**, including schedule times (the engine works in `+04:00`). Reason params keep `HH:mm` in GST.
 - **`/api/plan/today` is memoised** per (hour, weather `fetchedAt`) for 5 minutes; `POST /api/blocks/:id/events` invalidates it.
+
+## Making-of story (T19)
+
+- **Honest by construction:** the code panel is the real `design.md` colour block (`?raw`, 18 lines: `colors:`, the first eight tokens, an ellipsis, the water scale and `stale`); the formula and the three decision cards are computed by `@saqi/engine` (now a web dependency) from the worked example (plan/04 §3), so they read 90.4 m³, Skip and Deficit 155.5 m³ because the engine says so. `data.test.ts` pins all three.
+- **The formula shows projected PAW as 60.35 %, not 60.3 %:** with the one-decimal value the terms multiply out to 90.6, not the engine's 90.4. The engine never rounds inside; the scene says so.
+- **Mini map:** D-3, D-4 and G-2 have no worked-example PAW, so the story gives them plausible skips (76, 81, 78 %). It's `inert` and `aria-hidden`; the code panel and palette carry the meaning.
+- **Test counts:** `FALLBACK_STATS` was counted by hand on 2026-10-23 (engine 56, API 86, web 151). E2E and CI minutes show "—" with "After the first CI run" until T22's `public/test-stats.json` exists (schema `{ engine, api, web, e2e, durationSec }`, validated with zod; a missing file falls back, since the dev server answers it with `index.html`).
+- **Author links:** only "Open the app" and Stylebase are listed. **T24 fills the GitHub repo, LinkedIn and email** in `LINKS` (`routes/making-of/scenes.tsx`) plus their `makingOf.scene5.links.*` strings; none of them exist in the repo or the plan, and none were invented.
+- **Scene 5 doesn't pin:** it's the ending; its links fade in once. Scenes 1–4 pin for one screen each and hold their finished state for the last third of the pin, so counters aren't still climbing at release.
+- **Remount on language change:** `<Story key={locale}>`. SplitText and pin spacers rewrite the DOM, and React must never reconcile text inside a node GSAP rewrote; remounting runs the revert first.
+- **`useGSAP` gotcha (also for T20):** with `dependencies` but without `revertOnUpdate: true`, a dependency change does **not** revert the previous run; it stacks a new one. The story built twice (20 triggers, 8 pins) when the stats query resolved. Fixed here with `revertOnUpdate: true`. Other calls use the same pattern: `Spinner` (an infinite spin, deps `[reduced]`), `mapMotion` (pipe flow loops, deps `[routeKey, reduced]`), `Meter`, `Figure`, `MapTooltip`, `RecommendationCard`, `SchedulePanel`, `block.tsx`. Most are one-shot tweens that harmlessly overwrite, but the looping ones can stack on change. Not fixed here (out of scope); T20 should audit them.
+- **Vite dev gotcha:** after replacing `routes/making-of.tsx` with a `routes/making-of/` folder, the running dev server kept the old resolution until `router.tsx` was touched.
+- **Lighthouse and the 4× CPU-throttle fps check were not run** (no DevTools in the built-in browser). Checked instead: one build (10 triggers, 4 pins of exactly one screen), clean revert across the 768 px breakpoint, no horizontal scroll at 375 px, RTL prose with LTR code and arithmetic.
 
 ## Arabic and Urdu, RTL (T18)
 

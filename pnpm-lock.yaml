@@ -84,6 +84,9 @@ importers:
       '@gsap/react':
         specifier: ^2.1.2
         version: 2.1.2(gsap@3.15.0)(react@19.3.1)
+      '@saqi/engine':
+        specifier: workspace:^
+        version: link:../../packages/engine
       '@saqi/shared':
         specifier: workspace:^
         version: link:../../packages/shared

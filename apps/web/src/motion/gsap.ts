@@ -10,7 +10,7 @@ gsap.registerPlugin(useGSAP);
 
 let mapPlugins: Promise<void> | null = null;
 let flip: (typeof import('gsap/Flip'))['Flip'] | null = null;
-let storyPlugins: Promise<void> | null = null;
+let storyPlugins: Promise<StoryPlugins> | null = null;
 
 /**
  * DrawSVG and Flip: Today's map reveal, the block Flip and Field's task done. (Water flow animates the stroke
@@ -26,11 +26,17 @@ export function loadMapPlugins(): Promise<void> {
   return mapPlugins;
 }
 
-/** ScrollTrigger and SplitText: the Making-of story only. */
-export function loadStoryPlugins(): Promise<void> {
+export interface StoryPlugins {
+  ScrollTrigger: (typeof import('gsap/ScrollTrigger'))['ScrollTrigger'];
+  SplitText: (typeof import('gsap/SplitText'))['SplitText'];
+}
+
+/** ScrollTrigger and SplitText: the Making-of story only. Resolves with the registered classes. */
+export function loadStoryPlugins(): Promise<StoryPlugins> {
   storyPlugins ??= Promise.all([import('gsap/ScrollTrigger'), import('gsap/SplitText')]).then(
     ([{ ScrollTrigger }, { SplitText }]) => {
       gsap.registerPlugin(ScrollTrigger, SplitText);
+      return { ScrollTrigger, SplitText };
     },
   );
   return storyPlugins;
