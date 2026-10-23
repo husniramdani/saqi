@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useOutboxCount, useOutboxSyncing, useQueuedTaskIds } from '@/api/outbox';
 import { useFarm, useTasks, useUpdateTask } from '@/api/queries';
 import { QueryState } from '@/app/QueryState';
+import { usePageTitle } from '@/app/usePageTitle';
 import { useOnline } from '@/app/useOnline';
 import { DoneSheet } from '@/features/tasks/DoneSheet';
 import { TaskCard } from '@/features/tasks/TaskCard';
@@ -57,6 +58,7 @@ export function Component() {
   const tasks = useTasks(today, worker);
   const updateTask = useUpdateTask();
   const queued = useQueuedTaskIds();
+  usePageTitle(t('field.title'));
 
   // M9 · second half: the Flip state recorded before the move plays once the done list changes.
   const pendingFlip = useRef<Flip.FlipState | null>(null);
@@ -65,6 +67,15 @@ export function Component() {
     .filter(isDone)
     .map((task) => task.id)
     .join();
+  // After a confirm the opener ("Mark done") is gone, so focus follows the task to "Done today".
+  const doneSummary = useRef<HTMLElement>(null);
+  const focusDone = useRef(false);
+  useLayoutEffect(() => {
+    if (focusDone.current && doneSummary.current) {
+      focusDone.current = false;
+      doneSummary.current.focus({ preventScroll: true });
+    }
+  }, [doneKey]);
   useLayoutEffect(() => {
     const state = pendingFlip.current;
     const Flip = getFlip();
@@ -83,6 +94,7 @@ export function Component() {
       await playTaskDone(card);
       pendingFlip.current = getFlip()?.getState(TASK_CARDS) ?? null;
     }
+    focusDone.current = true;
     updateTask.mutate({
       id: task.id,
       status: 'done',
@@ -157,7 +169,10 @@ export function Component() {
                   onToggle={(e) => setDoneOpen(e.currentTarget.open)}
                   className="flex flex-col"
                 >
-                  <summary className="flex min-h-14 cursor-pointer items-center font-medium">
+                  <summary
+                    ref={doneSummary}
+                    className="flex min-h-14 cursor-pointer items-center font-medium"
+                  >
                     {t('field.doneToday', { count: done.length })}
                   </summary>
                   <ul className="flex flex-col gap-3">

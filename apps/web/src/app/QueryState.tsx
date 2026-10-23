@@ -1,6 +1,7 @@
 import type { UseQueryResult } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ApiError } from '@/api/client';
 import { EmptyState, ErrorState, Skeleton } from '@/ui';
 
 interface Props<T> {
@@ -22,14 +23,24 @@ export function QueryState<T>({ query, isEmpty, emptyText, skeleton, children }:
       </div>
     );
   }
-  if (query.isError) {
-    return (
-      <ErrorState
-        message={t('state.error', { message: query.error.message })}
-        onRetry={() => void query.refetch()}
-      />
-    );
-  }
+  if (query.isError) return <QueryError error={query.error} onRetry={() => void query.refetch()} />;
   if (isEmpty?.(query.data)) return <EmptyState title={emptyText ?? t('state.empty')} />;
   return <>{children(query.data)}</>;
+}
+
+/**
+ * A failed request in words a farm worker can act on: "can't reach Saqi" for no answer at all,
+ * the server's own message otherwise. Retry refetches; the rest of the page stays usable.
+ */
+export function QueryError({ error, onRetry }: { error: Error | null; onRetry: () => void }) {
+  const { t } = useTranslation();
+  const unreachable = error instanceof ApiError && error.code === 'NETWORK';
+  return (
+    <ErrorState
+      message={
+        unreachable ? t('state.unreachable') : t('state.error', { message: error?.message ?? '' })
+      }
+      onRetry={onRetry}
+    />
+  );
 }

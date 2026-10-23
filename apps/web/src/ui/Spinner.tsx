@@ -9,7 +9,8 @@ export function Spinner() {
     () => {
       if (ref.current) spin(ref.current, { reduced });
     },
-    { dependencies: [reduced] },
+    // revertOnUpdate: reduced motion turning on must stop the running loop, not keep it.
+    { dependencies: [reduced], revertOnUpdate: true },
   );
   return (
     <svg ref={ref} width="18" height="18" viewBox="0 0 18 18" fill="none" data-spinner>

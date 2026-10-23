@@ -116,7 +116,7 @@ export function DoneSheet({ task, onConfirm, onClose }: DoneSheetProps) {
               }}
             />
           </label>
-          <p className="text-sm text-text-muted">{t('field.sheet.photoNote')}</p>
+          <p className="text-sm text-text-secondary">{t('field.sheet.photoNote')}</p>
         </div>
 
         <div className="flex flex-col gap-3">

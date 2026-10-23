@@ -112,11 +112,13 @@ describe('AppShell', () => {
     expect(document.documentElement.dataset['theme']).toBeUndefined();
   });
 
-  it('moves focus to the page after navigating, not on first load', async () => {
+  it('moves focus to the page heading after navigating, not on first load', async () => {
     const router = renderShell();
     const main = document.getElementById('main');
     expect(document.activeElement).not.toBe(main);
     await act(() => router.navigate('/field'));
-    expect(document.activeElement).toBe(main);
+    expect(document.activeElement).toBe(
+      screen.getByRole('heading', { level: 1, name: 'Field page' }),
+    );
   });
 });

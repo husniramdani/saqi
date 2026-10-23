@@ -58,7 +58,7 @@ export function TaskCard({ task, context, done, onMarkDone }: TaskCardProps) {
           />
         </h3>
         <p className="text-sm text-text-secondary">{context}</p>
-        {done && task.note ? <p className="text-sm text-text-muted">{task.note}</p> : null}
+        {done && task.note ? <p className="text-sm text-text-secondary">{task.note}</p> : null}
       </div>
       {done ? (
         <span className="sr-only">{t('field.done')}</span>

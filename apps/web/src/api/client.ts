@@ -1,7 +1,42 @@
 import { ApiErrorSchema, type ApiErrorCode } from '@saqi/shared';
 import type { z } from 'zod';
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8787';
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8787';
+
+/** Dev scenarios (T20); the API serves all but `api-down` in memory mode. */
+export const DEV_SCENARIOS = [
+  'normal',
+  'api-down',
+  'weather-stale',
+  'no-irrigation-tonight',
+  'budget-over',
+  'all-sensors-stale-D3',
+] as const;
+const SCENARIO_KEY = 'saqi.scenario';
+
+/**
+ * Dev builds only: `?scenario=` on any page URL picks a scenario for this tab (kept in
+ * sessionStorage, since in-app links drop the query); `?scenario=normal` clears it.
+ */
+function readDevScenario(): string | null {
+  if (!import.meta.env.DEV || typeof location === 'undefined') return null;
+  try {
+    const fromUrl = new URLSearchParams(location.search).get('scenario');
+    if (fromUrl === 'normal') sessionStorage.removeItem(SCENARIO_KEY);
+    else if (fromUrl) sessionStorage.setItem(SCENARIO_KEY, fromUrl);
+    return sessionStorage.getItem(SCENARIO_KEY);
+  } catch {
+    return null; // storage blocked: no scenario
+  }
+}
+
+export const devScenario = readDevScenario();
+// `api-down`: a port nothing listens on, so every request fails like a dead API.
+const BASE_URL = devScenario === 'api-down' ? 'http://127.0.0.1:9' : API_URL;
+const withScenario = (path: string) =>
+  devScenario && devScenario !== 'api-down'
+    ? `${path}${path.includes('?') ? '&' : '?'}scenario=${encodeURIComponent(devScenario)}`
+    : path;
 
 /** Every failed request becomes one of these; `NETWORK` means the request never got an answer. */
 export class ApiError extends Error {
@@ -29,7 +64,7 @@ async function request<S extends z.ZodType>(
 
   let res: Response;
   try {
-    res = await fetch(`${BASE_URL}${path}`, init);
+    res = await fetch(`${BASE_URL}${withScenario(path)}`, init);
   } catch (err) {
     throw new ApiError(0, 'NETWORK', err instanceof Error ? err.message : 'Network error');
   }

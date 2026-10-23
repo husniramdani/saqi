@@ -36,13 +36,15 @@ export function AppShell() {
   const { pathname } = useLocation();
   const shownPath = useRef(pathname);
 
-  // Route changes move focus to the new page, so keyboard and screen-reader users land on it.
-  // Compared with the last path (not a first-render flag, which StrictMode's double effect
-  // defeats); ScrollRestoration owns the scroll, so focusing must not scroll.
+  // Route changes move focus to the new page's <h1> (its name is read out), or to <main> while
+  // the page is still loading. Compared with the last path (not a first-render flag, which
+  // StrictMode's double effect defeats); ScrollRestoration owns the scroll, so never scroll.
   useEffect(() => {
     if (shownPath.current === pathname) return;
     shownPath.current = pathname;
-    main.current?.focus({ preventScroll: true });
+    const h1 = main.current?.querySelector('h1');
+    if (h1) h1.tabIndex = -1;
+    (h1 ?? main.current)?.focus({ preventScroll: true });
   }, [pathname]);
 
   const attention = plan.data?.decisions.filter(needsAttention).length;

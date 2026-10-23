@@ -74,7 +74,7 @@
     "budgetUsed": "{used} / {allocation} m³",
     "budgetProjected": "projected",
     "budgetMeter": "Projected {pct} percent of the monthly allocation",
-    "deficitNote": "The month was heading {over}% over, so {blocks} {count, plural, one {runs} other {run}} at {pct}% tonight. Greenhouses are never cut.",
+    "deficitNote": "The month was heading {over}% over, so {count, plural, one {one block is} other {{count} blocks are}} cut tonight to a share of the usual volume: {cuts}. Greenhouses are never cut.",
     "et0Week": "ET₀ · next 7 days",
     "et0Label": "Reference evapotranspiration over the next seven days, {min} to {max} mm; {tomorrow} mm tomorrow",
     "weatherNow": "Weather now · Al Ain",
@@ -260,9 +260,11 @@
   "state": {
     "loading": "Loading…",
     "error": "Couldn't load this: {message}",
+    "unreachable": "Can’t reach Saqi right now. Check the connection, then retry.",
     "retry": "Retry",
     "empty": "Nothing here yet.",
     "notFound": "Page not found",
+    "notFoundBody": "Farm 07 has seven blocks, D-1 to G-2. Pick one on Today’s map, or open today’s field tasks.",
     "home": "Back to Today",
     "noData": "No data",
     "stale": "Stale · {hours} h"

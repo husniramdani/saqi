@@ -1,7 +1,9 @@
+import { gstDate } from '@saqi/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFarm, usePlanToday, useWeather } from '@/api/queries';
-import { QueryState } from '@/app/QueryState';
+import { QueryError, QueryState } from '@/app/QueryState';
+import { usePageTitle } from '@/app/usePageTitle';
 import { BlockRail, byRisk, DecisionList } from '@/features/attention';
 import { BudgetSection } from '@/features/budget/BudgetSection';
 import { FarmMapPanel } from '@/features/farm-map';
@@ -10,7 +12,7 @@ import { WeatherSection } from '@/features/weather/WeatherSection';
 import { useLocale } from '@/i18n';
 import { loadMapPlugins } from '@/motion';
 import { formatDateGst } from '@/i18n/format';
-import { ErrorState, Figure, SegmentedControl, Skeleton } from '@/ui';
+import { Figure, SegmentedControl, Skeleton } from '@/ui';
 
 const panel = 'rounded-lg border border-border bg-surface shadow-raised';
 
@@ -24,6 +26,7 @@ export function Component() {
   const farm = useFarm();
   const plan = usePlanToday();
   const weather = useWeather();
+  usePageTitle(t('block.tonight'));
   const [picked, setSelected] = useState<string | undefined>();
   const [tab, setTab] = useState<'plan' | 'water'>('plan');
 
@@ -35,13 +38,12 @@ export function Component() {
   // Until someone picks, open on the riskiest block, as the canvas does.
   const selected = picked ?? (p ? byRisk(p.decisions)[0]?.blockId : undefined);
   const f = farm.data;
-  const date = p ? formatDateGst(p.date, locale) : '';
+  // Today's GST date even when the plan fails, so the heading never reads "Tonight ·".
+  const date = formatDateGst(p?.date ?? gstDate(new Date()), locale);
 
   const header = (
     <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
-      <h1 className="text-2xl font-light tracking-[-0.03em]">
-        {p ? t('today.heading', { date }) : t('today.title', { date: '' })}
-      </h1>
+      <h1 className="text-2xl font-light tracking-[-0.03em]">{t('today.heading', { date })}</h1>
       {p ? (
         <div className="flex items-end gap-6">
           <Figure value={p.totals.tonightM3} unit="m³" size="md" accent />
@@ -63,16 +65,15 @@ export function Component() {
   const loading = <Skeleton block={320} className="m-4" />;
   const failed = (
     <div className="p-4">
-      <ErrorState
-        message={t('state.error', { message: plan.error?.message ?? '' })}
-        onRetry={() => void plan.refetch()}
-      />
+      <QueryError error={plan.error} onRetry={() => void plan.refetch()} />
     </div>
   );
 
   // Explicit minmax(0,1fr): an implicit grid column would grow to its widest content (tables).
+  // reading-flow: under 1180 px the panels are reordered with `order` (map, plan, rail); this
+  // makes Tab follow that visual order too (Chromium 137+; elsewhere Tab keeps DOM order).
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-3 pt-2 min-[1180px]:grid-cols-[330px_minmax(0,1fr)_340px] min-[1180px]:items-start">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-3 pt-2 [reading-flow:grid-order] min-[1180px]:grid-cols-[330px_minmax(0,1fr)_340px] min-[1180px]:items-start">
       <aside
         aria-label={t('today.blocks')}
         className={`${panel} order-3 overflow-hidden min-[1180px]:order-none`}
@@ -172,7 +173,13 @@ export function Component() {
             )
           ) : (
             <div className="flex flex-col gap-6">
-              {p ? <BudgetSection budget={p.budget} decisions={p.decisions} /> : loading}
+              {plan.isError ? (
+                failed
+              ) : p ? (
+                <BudgetSection budget={p.budget} decisions={p.decisions} />
+              ) : (
+                loading
+              )}
               <QueryState query={weather} skeleton={<Skeleton block={220} />}>
                 {(w) => <WeatherSection weather={w} />}
               </QueryState>

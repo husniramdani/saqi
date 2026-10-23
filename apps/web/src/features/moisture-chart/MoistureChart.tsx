@@ -2,7 +2,7 @@ import type { IrrigationEvent, Sensor, SensorSeries } from '@saqi/shared';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isRtl, useLocale } from '@/i18n';
-import { formatM3, formatNumber, formatPct, formatTimeGst, intlLocale } from '@/i18n/format';
+import { formatDateGst, formatM3, formatPct, formatTimeGst, intlLocale } from '@/i18n/format';
 import { blockSeries, dailyMeans, dayTicks, HOUR_MS, linePath, sensorPts } from './chart';
 
 const H = 260;
@@ -293,8 +293,8 @@ export function MoistureChart({ series, sensors, threshold, target, events }: Mo
         <tbody>
           {means.map((m) => (
             <tr key={m.date}>
-              <th scope="row">{m.date}</th>
-              <td>{formatNumber(m.mean, locale)} %</td>
+              <th scope="row">{formatDateGst(m.date, locale)}</th>
+              <td>{formatPct(m.mean, locale)}</td>
             </tr>
           ))}
         </tbody>

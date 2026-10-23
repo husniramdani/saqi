@@ -64,7 +64,7 @@ export function BlockRail({
                 </span>
               </span>
               {d.pawNow === null ? (
-                <span className="text-xs text-text-muted">{t('state.noData')}</span>
+                <span className="text-xs text-text-secondary">{t('state.noData')}</span>
               ) : (
                 <Figure value={d.pawNow} unit="%" size="sm" />
               )}
@@ -89,7 +89,7 @@ export function BlockRail({
                       <dt className="text-xs font-medium text-text-muted">{label}</dt>
                       <dd>
                         {value === null ? (
-                          <span className="text-sm text-text-muted">{t('state.noData')}</span>
+                          <span className="text-sm text-text-secondary">{t('state.noData')}</span>
                         ) : (
                           <Figure
                             value={Number(value)}

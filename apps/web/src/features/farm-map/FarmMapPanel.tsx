@@ -2,8 +2,9 @@ import type { DayPlan, Farm } from '@saqi/shared';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { QueryError } from '@/app/QueryState';
 import { useLocale } from '@/i18n';
-import { EmptyState, ErrorState, Panel, SegmentedControl } from '@/ui';
+import { EmptyState, Panel, SegmentedControl } from '@/ui';
 import { BlockList } from './BlockList';
 import { FarmMap } from './FarmMap';
 import { blockRect, VIEW } from './geometry';
@@ -61,8 +62,8 @@ export function FarmMapPanel({
   const body = () => {
     if (farm.isError || plan.isError) {
       return (
-        <ErrorState
-          message={t('state.error', { message: (farm.error ?? plan.error)?.message ?? '' })}
+        <QueryError
+          error={farm.error ?? plan.error}
           onRetry={() => {
             if (farm.isError) void farm.refetch();
             if (plan.isError) void plan.refetch();
@@ -122,7 +123,8 @@ export function FarmMapPanel({
           </div>
         ) : null}
         {body()}
-        {view === 'map' ? <MapLegend /> : null}
+        {/* A key with no map under it reads as broken: only with a map to explain. */}
+        {view === 'map' && farm.data && plan.data ? <MapLegend /> : null}
         {footer}
       </div>
     </Panel>

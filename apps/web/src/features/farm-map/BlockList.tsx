@@ -65,7 +65,7 @@ export function BlockList({
                 </th>
                 <td className={td}>
                   {d.pawNow === null ? (
-                    <span className="text-text-muted">{t('state.noData')}</span>
+                    <span className="text-text-secondary">{t('state.noData')}</span>
                   ) : (
                     <span className="inline-flex items-center gap-2">
                       <MoistureSwatch paw={d.pawNow} />

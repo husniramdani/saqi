@@ -43,9 +43,24 @@ describe('BudgetSection', () => {
     render(<BudgetSection budget={budget()} decisions={withDeficit} />);
     expect(
       screen.getByText(
-        'The month was heading 2% over, so F-1 runs at 70% tonight. Greenhouses are never cut.',
+        'The month was heading 2% over, so one block is cut tonight to a share of the usual volume: F-1 70%. Greenhouses are never cut.',
       ),
     ).toBeDefined();
+  });
+
+  it('gives each cut block its own share (tiers are cut by different factors)', () => {
+    const twoTiers = withDeficit.map((d) =>
+      d.blockId === 'D-1'
+        ? { ...d, reasons: [{ code: 'BUDGET_DEFICIT' as const, params: { factor: 0.85 } }] }
+        : d,
+    );
+    render(<BudgetSection budget={budget()} decisions={twoTiers} />);
+    expect(screen.getByText(/2 blocks are cut tonight .*: D-1 85% and F-1 70%\./)).toBeDefined();
+  });
+
+  it('keeps a small overshoot visible instead of rounding it to "0% over"', () => {
+    render(<BudgetSection budget={budget({ projectedM3: 7080 })} decisions={withDeficit} />);
+    expect(screen.getByText(/heading 0\.4% over/)).toBeDefined();
   });
 
   it('says nothing about cuts when there are none', () => {

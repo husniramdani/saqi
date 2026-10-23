@@ -13,7 +13,13 @@ export function EventsTable({ events }: { events: IrrigationEvent[] }) {
   const locale = useLocale();
   if (events.length === 0) return <EmptyState title={t('block.noEvents')} />;
   return (
-    <div className="max-h-96 overflow-auto">
+    // A scroll box keyboard users can reach and scroll (arrow keys), named for screen readers.
+    <div
+      role="region"
+      aria-label={t('block.irrigationEvents')}
+      tabIndex={0}
+      className="max-h-96 overflow-auto rounded-sm"
+    >
       <table className="w-full min-w-[420px] border-collapse">
         <thead>
           <tr>

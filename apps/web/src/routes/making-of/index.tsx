@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { LanguageSwitch } from '@/app/LanguageSwitch';
 import { LogoMark } from '@/app/Logo';
+import { usePageTitle } from '@/app/usePageTitle';
 import { useLocale } from '@/i18n';
 import { formatNumber } from '@/i18n/format';
 import { getFlip, loadMapPlugins, loadStoryPlugins, useGSAP, useMotion } from '@/motion';
@@ -15,6 +16,7 @@ import { buildStory } from './storyMotion';
 export function Component() {
   const { t } = useTranslation();
   const locale = useLocale();
+  usePageTitle(t('makingOf.title'));
   return (
     <div className="mx-auto max-w-[1180px] px-4 sm:px-10">
       <header className="flex min-h-14 items-center justify-between gap-4 py-2">

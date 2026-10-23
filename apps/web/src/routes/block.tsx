@@ -11,6 +11,8 @@ import {
   useRecommendation,
   useTasks,
 } from '@/api/queries';
+import { NotFound } from '@/app/NotFound';
+import { usePageTitle } from '@/app/usePageTitle';
 import { QueryState } from '@/app/QueryState';
 import { MoistureChart } from '@/features/moisture-chart/MoistureChart';
 import { EventsTable } from '@/features/recommendation/EventsTable';
@@ -20,7 +22,7 @@ import { BlockTasks } from '@/features/tasks/BlockTasks';
 import { useLocale } from '@/i18n';
 import { formatTimeGst } from '@/i18n/format';
 import { duration, ease, getFlip, takeBlock, useGSAP, useMotion } from '@/motion';
-import { Arrow, Chip, EmptyState, MoistureSwatch, Panel, Skeleton, textLinkClasses } from '@/ui';
+import { Arrow, Chip, MoistureSwatch, Panel, Skeleton, textLinkClasses } from '@/ui';
 
 /** "60 cm sensor offline since 12:00 GST…": stale sensors say so inside the chart panel. */
 function StaleBanner({ series }: { series: SensorSeries[] }) {
@@ -66,6 +68,10 @@ export function Component() {
   const [today] = useState(() => gstDate(new Date()));
   const tasks = useTasks(today);
   const block = farm.data?.blocks.find((b) => b.id === blockId);
+  const notFound = recommendation.error instanceof ApiError && recommendation.error.status === 404;
+  usePageTitle(
+    notFound ? t('state.notFound') : block ? `${block.id} ${block.name[locale]}` : blockId,
+  );
   const swatch = useRef<HTMLSpanElement>(null);
   const { reduced } = useMotion();
   // M5 · arriving from the map: the block's swatch morphs out of where the map block was.
@@ -95,13 +101,8 @@ export function Component() {
     </Link>
   );
 
-  if (recommendation.error instanceof ApiError && recommendation.error.status === 404) {
-    return (
-      <div className="flex flex-col items-start gap-6 pt-6">
-        {back}
-        <EmptyState title={t('block.notFound')} />
-      </div>
-    );
+  if (notFound) {
+    return <NotFound title={t('block.notFound')} />;
   }
 
   return (

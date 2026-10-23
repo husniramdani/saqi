@@ -37,6 +37,14 @@ export default tseslint.config(
     ...reactHooks.configs.flat.recommended,
   },
   {
+    files: ['apps/web/**/*.tsx'],
+    rules: {
+      // A labelled scroll box (role="region") must be focusable so keyboards can scroll it
+      // (axe scrollable-region-focusable); tabpanel is the rule's own default.
+      'jsx-a11y/no-noninteractive-tabindex': ['error', { roles: ['tabpanel', 'region'] }],
+    },
+  },
+  {
     // The engine is pure: time and randomness are inputs, never ambient.
     files: ['packages/engine/**/*.ts'],
     rules: {

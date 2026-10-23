@@ -26,10 +26,17 @@ export function BudgetSection({
     month: 'long',
     timeZone: 'UTC',
   }).format(new Date(`${budget.month}-01T00:00:00Z`));
-  const factor = decisions.flatMap((d) => d.reasons).find((r) => r.code === 'BUDGET_DEFICIT')
-    ?.params['factor'];
-  const over =
-    budget.allocationM3 > 0 ? Math.round((budget.projectedM3 / budget.allocationM3 - 1) * 100) : 0;
+  // Each cut block at its own share: the guard cuts tiers by different factors (0.7, 0.85).
+  const cuts = decisions.flatMap((d) => {
+    const factor = d.reasons.find((r) => r.code === 'BUDGET_DEFICIT')?.params['factor'];
+    return typeof factor === 'number'
+      ? [`${d.blockId} ${formatNumber(factor * 100, locale, 0)}%`]
+      : [];
+  });
+  const overPct =
+    budget.allocationM3 > 0 ? Math.max(0, (budget.projectedM3 / budget.allocationM3 - 1) * 100) : 0;
+  // Under 1 % a whole number reads "heading 0% over"; one decimal keeps the reason visible.
+  const over = formatNumber(overPct, locale, overPct < 1 ? 1 : 0);
 
   return (
     <div className="flex flex-col gap-3">
@@ -52,13 +59,12 @@ export function BudgetSection({
         </span>
         <span className="text-text-muted">{t('today.budgetProjected')}</span>
       </div>
-      {budget.deficitBlocks.length > 0 && typeof factor === 'number' ? (
+      {cuts.length > 0 ? (
         <p className="text-sm text-text-secondary">
           {t('today.deficitNote', {
-            over: Math.max(0, over),
-            blocks: budget.deficitBlocks.join(', '),
-            count: budget.deficitBlocks.length,
-            pct: Math.round(factor * 100),
+            over,
+            count: cuts.length,
+            cuts: new Intl.ListFormat(intlLocale(locale), { type: 'conjunction' }).format(cuts),
           })}
         </p>
       ) : null}

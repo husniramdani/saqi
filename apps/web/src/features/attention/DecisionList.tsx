@@ -46,14 +46,14 @@ export function DecisionList({
                 <span className="truncate font-medium">
                   {farm.blocks.find((b) => b.id === d.blockId)?.name[locale]}
                 </span>
-                <span className="num truncate text-xs text-text-muted">{window ?? '–'}</span>
+                <span className="num truncate text-xs text-text-secondary">{window ?? '–'}</span>
               </span>
               <span className="flex flex-col items-end gap-1">
                 <Chip variant={DECISION_CHIP[d.decision]}>{t(`decision.${d.decision}`)}</Chip>
                 {typeof hours === 'number' ? (
                   <StaleTag hours={hours} />
                 ) : (
-                  <span className="num text-xs text-text-muted">
+                  <span className="num text-xs text-text-secondary">
                     {formatM3(d.volumeM3, locale)}
                   </span>
                 )}

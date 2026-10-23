@@ -137,7 +137,9 @@ export function usePipeFlow(scope: RefObject<HTMLElement | null>, routeKey: stri
         observer?.disconnect();
       };
     },
-    { scope, dependencies: [routeKey, reduced] },
+    // revertOnUpdate: a new route or reduced motion must stop the old loop (and run its
+    // cleanup); without it the loops and listeners stack.
+    { scope, dependencies: [routeKey, reduced], revertOnUpdate: true },
   );
 }
 
@@ -158,6 +160,7 @@ export function useHoverLift(scope: RefObject<HTMLElement | null>, activeId: str
         );
       if (tag) gsap.to(tag, { y: -2, duration: duration.step, ease: ease.standard });
     },
-    { scope, dependencies: [activeId, reduced] },
+    // revertOnUpdate: the previous block settles back when another becomes active.
+    { scope, dependencies: [activeId, reduced], revertOnUpdate: true },
   );
 }

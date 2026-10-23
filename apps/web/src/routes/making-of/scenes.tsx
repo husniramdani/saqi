@@ -166,7 +166,7 @@ export function WaterScene() {
       body={
         <>
           <p>{t('makingOf.scene2.body')}</p>
-          <p className="mt-3 text-sm text-text-muted">{t('makingOf.scene2.note')}</p>
+          <p className="mt-3 text-sm text-text-secondary">{t('makingOf.scene2.note')}</p>
         </>
       }
     >
@@ -267,7 +267,7 @@ export function TestsScene({ stats }: { stats: TestStats }) {
                   </span>
                 </dd>
                 {value === null ? (
-                  <dd className="text-xs text-text-muted">{t('makingOf.scene4.pending')}</dd>
+                  <dd className="text-xs text-text-secondary">{t('makingOf.scene4.pending')}</dd>
                 ) : null}
               </div>
             );

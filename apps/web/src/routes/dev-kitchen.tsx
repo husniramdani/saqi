@@ -23,6 +23,7 @@ import {
   TimeTrack,
   Toggle,
 } from '@/ui';
+import { DEV_SCENARIOS, devScenario } from '@/api/client';
 import { BlockList, FarmMap, MapLegend } from '@/features/farm-map';
 import { MotionLab } from './dev-kitchen-motion';
 import { scenarioDecisions, scenarioSchedule } from '@/features/farm-map/scenario';
@@ -129,6 +130,28 @@ export function Component() {
           />
         </div>
       </header>
+
+      <Section
+        title="Scenarios"
+        note="Dev only. Reloads the app with an API scenario (memory mode) kept for this tab; Normal clears it."
+      >
+        <ul className="flex flex-wrap gap-2">
+          {DEV_SCENARIOS.map((s) => (
+            <li key={s}>
+              {/* A full reload: the scenario is read once, when the API client loads. */}
+              <a
+                href={`/?scenario=${s}`}
+                aria-current={(devScenario ?? 'normal') === s ? 'true' : undefined}
+                className={buttonClasses({
+                  variant: (devScenario ?? 'normal') === s ? 'ink' : 'ghost',
+                })}
+              >
+                {s}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </Section>
 
       <Section title="Colour" note="Every swatch reads its token, so it follows the theme.">
         <Swatches names={SURFACES} />
